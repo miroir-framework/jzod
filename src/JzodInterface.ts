@@ -45,12 +45,7 @@ export type JzodAttributeStringWithValidations = z.infer<typeof jzodAttributeStr
 export const jzodAttributeSchema = z.object({
   optional: z.boolean().optional(),
   type: z.literal('simpleType'),
-  definition: z.enum([
-    'any',
-    'boolean',
-    'number',
-    'string',
-  ])
+  definition: z.lazy(()=>jzodEnumTypesSchema),
 })
 
 export type JzodAttribute = z.infer<typeof jzodAttributeSchema>;
@@ -58,6 +53,7 @@ export type JzodAttribute = z.infer<typeof jzodAttributeSchema>;
 
 // ##############################################################################################################
 export const jzodEnumSchema = z.object({
+  optional: z.boolean().optional(),
   type: z.literal("enum"),
   definition: z.array(z.string()),
 })
@@ -65,7 +61,19 @@ export const jzodEnumSchema = z.object({
 export type JzodEnum = z.infer<typeof jzodEnumSchema>;
 
 // ##############################################################################################################
+export const jzodEnumTypesSchema = z.enum([
+  'any',
+  'boolean',
+  'number',
+  'string',
+  'uuid',
+])
+
+export type JzodEnumTypes = z.infer<typeof jzodEnumTypesSchema>;
+
+// ##############################################################################################################
 export const jzodLiteralSchema = z.object({
+  optional: z.boolean().optional(),
   type: z.literal("literal"),
   definition: z.string(),
 })
@@ -206,7 +214,7 @@ export const jzodBootstrapSchema: JzodElementSet = {
     definition: {
       "optional": { type: "simpleType", definition: "boolean", optional: true },
       "type": { type: "literal", definition: "simpleType" },
-      "definition": { type: "enum", definition: ['any','boolean','number','string',] },
+      "definition": { type: "schemaReference", definition: "JzodEnumTypesSchema" },
     },
   },
   JzodAttributeStringWithValidationsSchema: {
@@ -251,9 +259,20 @@ export const jzodBootstrapSchema: JzodElementSet = {
   JzodEnumSchema: {
     type: "object",
     definition: {
+      "optional": { type: "simpleType", definition: "boolean", optional: true },
       "type": { type: "literal", definition: "enum" },
       "definition": { type: "array", definition: { type: "simpleType", definition: "string" } },
     },
+  },
+  JzodEnumTypesSchema: {
+    type: "enum",
+    definition: [
+      'any',
+      'boolean',
+      'number',
+      'string',
+      'uuid',
+    ],
   },
   JzodFunctionSchema: {
     type: "object",
@@ -276,6 +295,7 @@ export const jzodBootstrapSchema: JzodElementSet = {
   jzodLiteralSchema: {
     type: "object",
     definition: {
+      "optional": { type: "simpleType", definition: "boolean", optional: true },
       "type": { type: "literal", definition: "literal" },
       "definition": { type: "simpleType", definition: "string" },
     },

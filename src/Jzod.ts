@@ -7,28 +7,46 @@ import {
   ZodSchemaAndDescription,
   JzodUnion,
   JzodAttributeStringWithValidations,
+  JzodObject,
 } from "./JzodInterface";
 
 export function getDescriptions(set:JzodToZodResult) {
  return  Object.fromEntries(Object.entries(set).map(a=>[a[0],a[1].description]))
 }
 
+export function getZodSchemas(set:JzodToZodResult) {
+ return  Object.fromEntries(Object.entries(set).map(a=>[a[0],a[1].zodSchema]))
+}
+
 // ######################################################################################################
-export function jzodSchemaSetToZodSchemaSet(elementSet:JzodElementSet,generateForTs?: boolean):JzodToZodResult {
+export function jzodSchemaSetToZodSchemaSet(elementSet:JzodElementSet):JzodToZodResult {
   let result:JzodToZodResult = {}
   
   for (const entry of Object.entries(elementSet)) {
-    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>result,generateForTs)
+    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>result)
   }
   return result;
 }
 
+// ######################################################################################################
+export function jzodSchemaObjectToZodSchemaSet(elementSet: JzodObject, additionalReferences?:JzodToZodResult):ZodSchemaAndDescription {
+  let result:JzodToZodResult = {}
+  
+  for (const entry of Object.entries(elementSet.definition)) {
+    /**
+     * what about external references: do we have a link to them afer conversion? (likely yes, external references give an interpretation context, like the schema in JSON schemas.)
+     */
+    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>Object.assign({},additionalReferences,result)) 
+  }
+  return {zodSchema:z.object(getZodSchemas(result)),description:JSON.stringify(getDescriptions(result))};
+}
+
 
 // ######################################################################################################
-export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchemaReferences:()=>JzodToZodResult,generateForTs?: boolean):ZodSchemaAndDescription {
+export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchemaReferences:()=>JzodToZodResult):ZodSchemaAndDescription {
   switch (element.type) {
     case "array": {
-      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences, generateForTs);
+      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences);
       return {
         zodSchema: element.optional?z.array(sub.zodSchema).optional():z.array(sub.zodSchema),
         description: element.optional?`z.array(${sub.description}).optional()`:`z.array(${sub.description})`
@@ -50,9 +68,9 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
       break;
     }
     case "function": {
-      const args = Object.entries(element.args).map(e=>jzodSchemaToZodSchema(name, e[1],getSchemaReferences,generateForTs));
+      const args = Object.entries(element.args).map(e=>jzodSchemaToZodSchema(name, e[1],getSchemaReferences));
       if (element.returns) {
-        const returns = jzodSchemaToZodSchema(name, element.returns,getSchemaReferences,generateForTs);
+        const returns = jzodSchemaToZodSchema(name, element.returns,getSchemaReferences);
         return {
           zodSchema:z.function().args(...args.map(z=>z.zodSchema) as any).returns(returns.zodSchema),
           description:`z.function().args(${JSON.stringify(args.map(z=>z.description))}).returns(${returns.description})`
@@ -74,7 +92,7 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
       break;
     }
     case "lazy": {
-      const sub = jzodSchemaToZodSchema(name, element.definition,getSchemaReferences,generateForTs);
+      const sub = jzodSchemaToZodSchema(name, element.definition,getSchemaReferences);
       return {
         zodSchema:z.lazy(()=>sub.zodSchema),
         description:`z.lazy(()=>${sub.description}),`
@@ -82,7 +100,7 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
       break;
     }
     case "object": {
-      const sub = Object.fromEntries(Object.entries(element.definition).map(a=>[a[0],jzodSchemaToZodSchema(name, a[1], getSchemaReferences, generateForTs)]))
+      const sub = Object.fromEntries(Object.entries(element.definition).map(a=>[a[0],jzodSchemaToZodSchema(name, a[1], getSchemaReferences)]))
       const schemas =  Object.fromEntries(Object.entries(sub).map(a=>[a[0],a[1].zodSchema]));
       const descriptions =  Object.fromEntries(Object.entries(sub).map(a=>[a[0],a[1].description]));
       return {
@@ -92,7 +110,7 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
       break;
     }
     case "record": {
-      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences, generateForTs)
+      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences)
       return {
         zodSchema:z.record(z.string(),sub.zodSchema),
         description:`z.record(z.string(),${sub.description})`,
@@ -121,9 +139,14 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
     }
     case "simpleType": {
       if (element && (element as JzodAttributeStringWithValidations).validations) {
-        const zodPreSchema = (element as JzodAttributeStringWithValidations).validations.reduce((acc,curr)=>(acc as any)[curr.type](curr.parameter),(z as any)[element.definition]())
+        const elementDefinitionSchema=(d:string) =>d == 'uuid'? z.string().uuid():(z as any)[d]();
+        const zodPreSchema = (element as JzodAttributeStringWithValidations).validations.reduce((acc,curr)=>(acc as any)[curr.type](curr.parameter),elementDefinitionSchema(element.definition))
         const zodSchema = element.optional?zodPreSchema.optional():zodPreSchema
-        const description = (element as JzodAttributeStringWithValidations).validations.reduce((acc,curr)=>acc + "." + curr.type + "(" + curr.parameter + ")",`z.${element.definition}()`) + (element.optional?`.optional()`:``)
+        const description =
+          (element as JzodAttributeStringWithValidations).validations.reduce(
+            (acc, curr) => acc + "." + curr.type + (curr.parameter?"(" + curr.parameter + ")":"()"),
+            `z.${element.definition}()`
+          ) + (element.optional ? `.optional()` : ``);
         return {zodSchema,description};
       } else {
         return {
@@ -134,7 +157,7 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
       break;
     }
     case "union": {
-      const sub = (element as JzodUnion).definition.map(e=>jzodSchemaToZodSchema(name, e, getSchemaReferences, generateForTs))
+      const sub = (element as JzodUnion).definition.map(e=>jzodSchemaToZodSchema(name, e, getSchemaReferences))
       return {
         zodSchema:z.union( sub.map(s=>s.zodSchema)as any),
         description:`z.union(${JSON.stringify(sub.map(s=>s.description))})`

@@ -20,8 +20,9 @@ import {
   jzodElementSchema,
   jzodAttributeStringWithValidationsSchema,
   jzodAttributeStringValidationsSchema,
+  jzodEnumTypesSchema,
 } from "../src/JzodInterface";
-import { convertAndWrite } from "./utils";
+import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
 
 
 describe(
@@ -64,13 +65,13 @@ describe(
         // const referenceSchemaFilePath = path.join(logsPath,'test2ZodSchemaJsonSchema.json');
         // const convertedElementSchemaFilePath = path.join(logsPath,'test2JsonZodSchemaJsonSchema.json');
 
-        const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertAndWrite(
+        const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "test2ZodSchema",
           referenceZodSchema,
           testJzodSchema,
           undefined
         );
-        const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertAndWrite(
+        const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "test2ZodSchema",
           jzodSchemaSetToZodSchemaSet(testJzodSchema),
           testJzodSchema,
@@ -115,6 +116,10 @@ describe(
             "zodSchema": jzodEnumSchema,
             description:""
           },
+          "JzodEnumTypesSchema": {
+            "zodSchema": jzodEnumTypesSchema,
+            description:""
+          },
           "JzodFunctionSchema": {
             "zodSchema": jzodFunctionSchema,
             description:""
@@ -151,8 +156,8 @@ describe(
 
         const convertedJsonZodSchema:JzodToZodResult = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
         
-        const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertAndWrite('jsonZodBootstrap_reference',test2ZodSchema,jzodBootstrapSchema,referenceSchemaFilePath);
-        const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertAndWrite('jsonZodBootstrap_converted',convertedJsonZodSchema,jzodBootstrapSchema,convertedElementSchemaFilePath);
+        const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile('jsonZodBootstrap_reference',test2ZodSchema,jzodBootstrapSchema,referenceSchemaFilePath);
+        const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile('jsonZodBootstrap_converted',convertedJsonZodSchema,jzodBootstrapSchema,convertedElementSchemaFilePath);
 
         // equivalence between "hard-coded" and converted schemas
         expect(test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString).toEqual(test2ZodSchemaJsonSchemaWithoutBootstrapElementString);
@@ -351,6 +356,8 @@ describe(
         expect(jzodElementSetSchema.safeParse(jzodBootstrapSchema).success).toBeTruthy();
 
         const referentialElementSetSchema = jzodSchemaSetToZodSchemaSet(referentialElementSetToBeConverted);
+        const test0_OK = "toto";
+        const test0_KO = 1;
         const test1_OK = {a:"toto"};
         const test1_KO = {a:1};
         const test2_OK = {c:{a:'test'}};
@@ -370,6 +377,9 @@ describe(
         const test8_KO2:string = 'not a function';
         const test9_OK = "12345";
         const test9_KO = "1234";
+        expect(referentialElementSetSchema.test0.zodSchema.safeParse(test0_OK).success).toBeTruthy();
+        expect(referentialElementSetSchema.test0.zodSchema.safeParse(test0_KO).success).toBeFalsy();
+        // #####
         expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_OK).success).toBeTruthy();
         expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_KO).success).toBeFalsy();
         // #####
