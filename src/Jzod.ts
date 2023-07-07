@@ -1,4 +1,4 @@
-import { optional, z } from "zod";
+import { ZodTypeAny, optional, z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import {
   JzodToZodResult,
@@ -10,27 +10,62 @@ import {
   JzodObject,
 } from "./JzodInterface";
 
-export function getDescriptions(set:JzodToZodResult) {
- return  Object.fromEntries(Object.entries(set).map(a=>[a[0],a[1].description]))
-}
+export function getJsCodeCorrespondingToZodSchemaAndDescription(
+  typeName: string,
+  entityDefinitionEntityDefinitionZodSchema: ZodSchemaAndDescription<ZodTypeAny>
+): string {
+  console.log("getJsCodeCorrespondingToZodSchemaAndDescription", entityDefinitionEntityDefinitionZodSchema.description);
 
-export function getZodSchemas(set:JzodToZodResult) {
- return  Object.fromEntries(Object.entries(set).map(a=>[a[0],a[1].zodSchema]))
+  const bodyJsCode = `export const ${typeName}ZodSchema = z.object(${entityDefinitionEntityDefinitionZodSchema.description});`;
+  console.log("convertedJsonZodSchema", bodyJsCode);
+
+  const header = `import { ZodType, ZodTypeAny, z } from "zod";
+import { jzodElementSchema, jzodObjectSchema } from "@miroir-framework/jzod";
+
+`;
+  const footer = `
+export type ${typeName} = z.infer<typeof ${typeName}ZodSchema>
+`;
+  return header + bodyJsCode + footer;
 }
 
 // ######################################################################################################
-export function jzodSchemaSetToZodSchemaSet(elementSet:JzodElementSet):JzodToZodResult {
-  let result:JzodToZodResult = {}
+export const objectToJsStringObject = (o:Object):string => Object.entries(o).reduce((acc:string,curr:[string,any])=>acc + curr[0] +':' + curr[1] + ',','{')+'}';
+// ######################################################################################################
+export const objectToJsStringArray = (o:Object):string => Object.entries(o).reduce((acc:string,curr:[string,any])=>acc + curr[1] + ',','[')+']';
+
+// ######################################################################################################
+export function getDescriptions(set:JzodToZodResult<ZodTypeAny>) {
+  return  Object.fromEntries(Object.entries(set).map(a=>[a[0],a[1].description]))
+}
+
+// ######################################################################################################
+export function getJsResultSetConstDeclarations(set:JzodToZodResult<ZodTypeAny>) {
+  return  Object.entries(set).reduce((acc,curr)=>acc + `export const ${curr[0]} = ${curr[1].description};`,'')
+}
+
+// export function getJsObjectConstDeclarations(set:ZodSchemaAndDescription<ZodTypeAny>) {
+//   return  Object.entries(set).reduce((acc,curr)=>acc + `export const ${curr[0]} = ${curr[1].description};`,'')
+// }
+
+// ######################################################################################################
+export function getZodSchemas(set:JzodToZodResult<ZodTypeAny>) {
+  return  Object.fromEntries(Object.entries(set).map(a=>[a[0],a[1].zodSchema]))
+}
+
+// ######################################################################################################
+export function jzodSchemaSetToZodSchemaSet(elementSet:JzodElementSet, additionalReferences?:JzodToZodResult<ZodTypeAny>):JzodToZodResult<ZodTypeAny> {
+  let result:JzodToZodResult<ZodTypeAny> = {}
   
   for (const entry of Object.entries(elementSet)) {
-    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>result)
+    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>Object.assign({},additionalReferences?additionalReferences:{},result))
   }
   return result;
 }
 
 // ######################################################################################################
-export function jzodSchemaObjectToZodSchemaSet(elementSet: JzodObject, additionalReferences?:JzodToZodResult):ZodSchemaAndDescription {
-  let result:JzodToZodResult = {}
+export function jzodSchemaObjectToZodSchemaSet(elementSet: JzodObject, additionalReferences?:JzodToZodResult<ZodTypeAny>):JzodToZodResult<ZodTypeAny> {
+  let result:JzodToZodResult<ZodTypeAny> = {}
   
   for (const entry of Object.entries(elementSet.definition)) {
     /**
@@ -38,12 +73,25 @@ export function jzodSchemaObjectToZodSchemaSet(elementSet: JzodObject, additiona
      */
     result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>Object.assign({},additionalReferences,result)) 
   }
-  return {zodSchema:z.object(getZodSchemas(result)),description:JSON.stringify(getDescriptions(result))};
+  return result;
+}
+
+// ######################################################################################################
+export function jzodSchemaObjectToZodSchemaAndDescription(elementSet: JzodObject, additionalReferences?:JzodToZodResult<ZodTypeAny>):ZodSchemaAndDescription<ZodTypeAny> {
+  let result:JzodToZodResult<ZodTypeAny> = {}
+  
+  for (const entry of Object.entries(elementSet.definition)) {
+    /**
+     * what about external references: do we have a link to them afer conversion? (likely yes, external references give an interpretation context, like the schema in JSON schemas.)
+     */
+    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>Object.assign({},additionalReferences,result)) 
+  }
+  return {zodSchema:z.object(getZodSchemas(result)),description:objectToJsStringObject(getDescriptions(result))};
 }
 
 
 // ######################################################################################################
-export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchemaReferences:()=>JzodToZodResult):ZodSchemaAndDescription {
+export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchemaReferences:()=>JzodToZodResult<ZodTypeAny>):ZodSchemaAndDescription<ZodTypeAny> {
   switch (element.type) {
     case "array": {
       const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences);
@@ -56,8 +104,8 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
     case "enum": {
       if (Array.isArray(element.definition) && element.definition.length > 1) {
         return {
-          zodSchema:z.enum([...element.definition] as any),
-          description:`z.enum(${JSON.stringify([...element.definition])} as any)`
+          zodSchema:element.optional?z.enum([...element.definition] as any).optional():z.enum([...element.definition] as any),
+          description:`z.enum(${JSON.stringify([...element.definition])} as any)${element.optional?'.optional()':''}`
         }
       } else {
         return {
@@ -86,8 +134,8 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
     }
     case "literal": {
       return {
-        zodSchema:z.literal(element.definition),
-        description: `z.literal(${element.definition})`
+        zodSchema:element.optional?z.literal(element.definition).optional():z.literal(element.definition),
+        description: `z.literal("${element.definition}")${element.optional?'.optional()':''}`
       }
       break;
     }
@@ -95,7 +143,7 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
       const sub = jzodSchemaToZodSchema(name, element.definition,getSchemaReferences);
       return {
         zodSchema:z.lazy(()=>sub.zodSchema),
-        description:`z.lazy(()=>${sub.description}),`
+        description:`z.lazy(()=>${sub.description})`
       }
       break;
     }
@@ -105,15 +153,16 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
       const descriptions =  Object.fromEntries(Object.entries(sub).map(a=>[a[0],a[1].description]));
       return {
         zodSchema: element.optional?z.object(schemas as any).optional():z.object(schemas as any),
-        description: element.optional?`z.object(${JSON.stringify(descriptions)})`:`z.object(${JSON.stringify(descriptions)}).optional()`
+        // description: element.optional?`z.object(${JSON.stringify(descriptions)})`:`z.object(${JSON.stringify(descriptions)}).optional()`
+        description: element.optional?`z.object(${objectToJsStringObject(descriptions)}).optional()`:`z.object(${objectToJsStringObject(descriptions)})`
       }
       break;
     }
     case "record": {
       const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences)
       return {
-        zodSchema:z.record(z.string(),sub.zodSchema),
-        description:`z.record(z.string(),${sub.description})`,
+        zodSchema:element.optional?z.record(z.string(),sub.zodSchema).optional():z.record(z.string(),sub.zodSchema),
+        description:`z.record(z.string(),${sub.description})${element.optional?'.optional()':''}`,
       }
     }
     case "schemaReference": {
@@ -133,7 +182,8 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
             );
           }
         }).bind(null,element.optional)),
-        description: `z.lazy(() =>references[${element.definition}].zodSchema` + (element.optional?'.optional()':''),
+        // description: `z.lazy(() =>references["${element.definition}"].zodSchema)` + (element.optional?'.optional()':''),
+        description: `z.lazy(() =>${element.definition}` + (element.optional?'.optional()':'') + ')',
       };
       break;
     }
@@ -159,8 +209,8 @@ export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchema
     case "union": {
       const sub = (element as JzodUnion).definition.map(e=>jzodSchemaToZodSchema(name, e, getSchemaReferences))
       return {
-        zodSchema:z.union( sub.map(s=>s.zodSchema)as any),
-        description:`z.union(${JSON.stringify(sub.map(s=>s.description))})`
+        zodSchema:element.optional?z.union( sub.map(s=>s.zodSchema)as any).optional():z.union( sub.map(s=>s.zodSchema)as any),
+        description:`z.union(${objectToJsStringArray(sub.map(s=>s.description))})${element.optional?'.optional()':''}`
       }
       break;
     }
@@ -213,7 +263,7 @@ export function referentialElementDependencies(element:JzodElement | JzodElement
 }
 
 // ##############################################################################################################
-export function _zodToJsonSchema(referentialSet:JzodToZodResult, dependencies:{[k:string]:string[]},name?: string):{[k:string]:any} {
+export function _zodToJsonSchema(referentialSet:JzodToZodResult<ZodTypeAny>, dependencies:{[k:string]:string[]},name?: string):{[k:string]:any} {
   const referentialSetEntries = Object.entries(referentialSet);
   let result:{[k:string]:any} = {};
 

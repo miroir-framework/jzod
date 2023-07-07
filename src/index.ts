@@ -1,15 +1,15 @@
 export {
+  jzodBootstrapSchema, // the bootstrapped schema: it defines / parses itself!
   JzodAttribute,
-  jzodBootstrapSchema,
   JzodToZodResult,
+  JzodElement,
+  JzodElementSet,
   JzodEnum,
   JzodEnumTypes,
   JzodFunction,
   JzodLazy,
   JzodLiteral,
   JzodArray,
-  JzodElementSet,
-  JzodElement,
   JzodObject,
   JzodRecord,
   JzodReference,
@@ -17,6 +17,7 @@ export {
   ZodSchemaAndDescription,
   jzodArraySchema,
   jzodAttributeSchema,
+  jzodElementSchema,
   jzodElementSetSchema,
   jzodEnumSchema,
   jzodEnumTypesSchema,
@@ -25,7 +26,19 @@ export {
   jzodLiteralSchema,
   jzodObjectSchema,
   jzodRecordSchema,
-  jzodElementSchema,
   jzodReferenceSchema,
   jzodUnionSchema,
 } from "./JzodInterface"
+export {
+  getDescriptions,
+  getZodSchemas,
+  jzodSchemaObjectToZodSchemaSet,
+  jzodSchemaObjectToZodSchemaAndDescription,
+  jzodSchemaSetToZodSchemaSet,
+  jzodSchemaToZodSchema,
+  getJsResultSetConstDeclarations,
+  getJsCodeCorrespondingToZodSchemaAndDescription,
+  objectToJsStringArray,
+  objectToJsStringObject,
+
+} from "./Jzod"

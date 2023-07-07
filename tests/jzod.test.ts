@@ -5,7 +5,7 @@ import { jzodSchemaSetToZodSchemaSet } from '../src/Jzod';
 import {
   jzodArraySchema as JzodArraySchema,
   JzodElementSet,
-  jzodObjectSchema as JzodObjectSchema,
+  jzodObjectSchema as jzodObjectSchema,
   JzodToZodResult,
   jzodBootstrapSchema,
   jzodElementSetSchema,
@@ -21,6 +21,7 @@ import {
   jzodAttributeStringWithValidationsSchema,
   jzodAttributeStringValidationsSchema,
   jzodEnumTypesSchema,
+  ZodSchemaAndDescription,
 } from "../src/JzodInterface";
 import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
 
@@ -50,8 +51,11 @@ describe(
           }
          };
 
-        
-        const referenceZodSchema:JzodToZodResult = {
+        const x = z.object({
+          a: z.string(),
+          b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
+        })
+        const referenceZodSchema:JzodToZodResult<typeof x> = {
           "test2":{
             zodSchema: z.object({
               a: z.string(),
@@ -83,11 +87,12 @@ describe(
       }
     )
 
+
     // ###########################################################################################
     it(
       'jzod bootstrap equivalence',
       () => {
-        const test2ZodSchema:JzodToZodResult = {
+        const test2ZodSchema = {
           "JzodArraySchema": {
             zodSchema: JzodArraySchema,
             description:""
@@ -104,7 +109,7 @@ describe(
             zodSchema: jzodAttributeStringValidationsSchema,
             description:""
           },
-          "JzodElementSchema": {
+          "jzodElementSchema": {
             zodSchema: jzodElementSchema,
             description:""
           },
@@ -132,8 +137,8 @@ describe(
             "zodSchema": jzodLiteralSchema,
             description:""
           },
-          "JzodObjectSchema": {
-            zodSchema: JzodObjectSchema,
+          "jzodObjectSchema": {
+            zodSchema: jzodObjectSchema,
             description:""
           },
           "JzodRecordSchema": {
@@ -154,8 +159,11 @@ describe(
         const referenceSchemaFilePath = path.join(logsPath,'jsonZodBootstrap_reference.json');
         const convertedElementSchemaFilePath = path.join(logsPath,'jsonZodBootstrap_converted.json');
 
-        const convertedJsonZodSchema:JzodToZodResult = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
+        // const convertedJsonZodSchema:JzodToZodResult<typeof jzodElementSetSchema> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
+        const convertedJsonZodSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
         
+        const test2ZodSchemaTyped:JzodToZodResult<ZodTypeAny> = test2ZodSchema;
+
         const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile('jsonZodBootstrap_reference',test2ZodSchema,jzodBootstrapSchema,referenceSchemaFilePath);
         const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile('jsonZodBootstrap_converted',convertedJsonZodSchema,jzodBootstrapSchema,convertedElementSchemaFilePath);
 
@@ -169,7 +177,7 @@ describe(
       'jzod schema simple parsing',
       () => {
   
-        const convertedJsonZodSchema:JzodToZodResult = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
+        const convertedJsonZodSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
 
         const referentialElementSetToBeConverted: JzodElementSet = {
           test0: { type: "simpleType", definition: "string", optional: true },
@@ -224,38 +232,38 @@ describe(
           test9: { type: "simpleType", definition: "string", optional: true, validations: [{type:"min",parameter:5}] },
         };
 
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test0).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test1).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test2).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test3).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test4).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test5).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test6).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test7).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test8).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test0).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test1).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test2).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test3).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test4).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test5).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test6).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test7).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(referentialElementSetToBeConverted.test8).success).toBeTruthy();
 
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodElementSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodElementSetSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodEnumSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodArraySchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodEnumSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodFunctionSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodLazySchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.jzodLiteralSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodObjectSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodRecordSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodReferenceSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodAttributeSchema).success).toBeTruthy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodUnionSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.jzodElementSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodElementSetSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodEnumSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodArraySchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodEnumSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodFunctionSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodLazySchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.jzodLiteralSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.jzodObjectSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodRecordSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodReferenceSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodAttributeSchema).success).toBeTruthy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSchema.JzodUnionSchema).success).toBeTruthy();
 
         // tests to fail
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse({type:"lazys",definition:"toto"}).success).toBeFalsy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse({type:"lazy",type2:"lazy2",definition:"toto"}).success).toBeFalsy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse({
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse({type:"lazys",definition:"toto"}).success).toBeFalsy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse({type:"lazy",type2:"lazy2",definition:"toto"}).success).toBeFalsy();
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse({
           type: "record",
           definition: { type: "object", definition: { a: { type: "simpleType", definition: "undefined!!!!!!" } } },
         }).success).toBeFalsy();
-        expect(convertedJsonZodSchema.JzodElementSchema.zodSchema.safeParse({
+        expect(convertedJsonZodSchema.jzodElementSchema.zodSchema.safeParse({
           type: "object",
           definition: {
             b: { type: "schemaReference", definitions: "test0" },
@@ -269,7 +277,7 @@ describe(
     it(
       'jzod bootstrap self parsing',
       () => {
-        const convertedJsonZodSchema:JzodToZodResult = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
+        const convertedJsonZodSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSchema);
         // ~~~~~~~~~~~~~~~~~ BOOTSTRAP TEST ~~~~~~~~~~~~~~~~~~~~~~~~
         expect(convertedJsonZodSchema.JzodElementSetSchema.zodSchema.safeParse(jzodBootstrapSchema).success).toBeTruthy();
       }

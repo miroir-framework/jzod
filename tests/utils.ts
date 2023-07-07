@@ -1,9 +1,10 @@
+import { ZodTypeAny } from "zod";
 import * as fs from "fs";
 
 import { _zodToJsonSchema, referentialElementDependencies } from "../src/Jzod";
 import { JzodElement, JzodElementSet, JzodToZodResult } from "../src/JzodInterface";
 
-export function convertZodSchemaToJsonSchemaAndWriteToFile(name:string,zodSchema:JzodToZodResult,jsonZodSchemaSet:JzodElementSet,path:string | undefined):string {
+export function convertZodSchemaToJsonSchemaAndWriteToFile(name:string,zodSchema:JzodToZodResult<ZodTypeAny>,jsonZodSchemaSet:JzodElementSet,path:string | undefined):string {
   const setDependencies = Object.fromEntries(
     Object.entries(jsonZodSchemaSet).map((e: [string, JzodElement]) => [
       e[0],
@@ -23,3 +24,4 @@ export function convertZodSchemaToJsonSchemaAndWriteToFile(name:string,zodSchema
   
   return setZodSchemaJsonSchemaString
 }
+
