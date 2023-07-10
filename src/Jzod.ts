@@ -8,6 +8,7 @@ import {
   JzodUnion,
   JzodAttributeStringWithValidations,
   JzodObject,
+  jzodReferenceSchema,
 } from "./JzodInterface";
 
 export function getJsCodeCorrespondingToZodSchemaAndDescription(
@@ -91,138 +92,200 @@ export function jzodSchemaObjectToZodSchemaAndDescription(elementSet: JzodObject
 
 
 // ######################################################################################################
-export function jzodSchemaToZodSchema(name:string, element:JzodElement,getSchemaReferences:()=>JzodToZodResult<ZodTypeAny>):ZodSchemaAndDescription<ZodTypeAny> {
+export function jzodSchemaToZodSchema(
+  name: string,
+  element: JzodElement,
+  getSchemaRelativeReferences: () => JzodToZodResult<ZodTypeAny>,
+  getAbsoluteReferences: () => JzodToZodResult<ZodTypeAny> = ()=> ({})
+): ZodSchemaAndDescription<ZodTypeAny> {
   switch (element.type) {
     case "array": {
-      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences);
+      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaRelativeReferences);
       return {
-        zodSchema: element.optional?z.array(sub.zodSchema).optional():z.array(sub.zodSchema),
-        description: element.optional?`z.array(${sub.description}).optional()`:`z.array(${sub.description})`
-      }
+        zodSchema: element.optional ? z.array(sub.zodSchema).optional() : z.array(sub.zodSchema),
+        description: element.optional ? `z.array(${sub.description}).optional()` : `z.array(${sub.description})`,
+      };
       break;
     }
     case "enum": {
       if (Array.isArray(element.definition) && element.definition.length > 1) {
         return {
-          zodSchema:element.optional?z.enum([...element.definition] as any).optional():z.enum([...element.definition] as any),
-          description:`z.enum(${JSON.stringify([...element.definition])} as any)${element.optional?'.optional()':''}`
-        }
+          zodSchema: element.optional
+            ? z.enum([...element.definition] as any).optional()
+            : z.enum([...element.definition] as any),
+          description: `z.enum(${JSON.stringify([...element.definition])} as any)${
+            element.optional ? ".optional()" : ""
+          }`,
+        };
       } else {
         return {
-          zodSchema:z.any(),
-          description: `z.any()`
+          zodSchema: z.any(),
+          description: `z.any()`,
         };
       }
       break;
     }
     case "function": {
-      const args = Object.entries(element.args).map(e=>jzodSchemaToZodSchema(name, e[1],getSchemaReferences));
+      const args = Object.entries(element.args).map((e) => jzodSchemaToZodSchema(name, e[1], getSchemaRelativeReferences));
       if (element.returns) {
-        const returns = jzodSchemaToZodSchema(name, element.returns,getSchemaReferences);
+        const returns = jzodSchemaToZodSchema(name, element.returns, getSchemaRelativeReferences);
         return {
-          zodSchema:z.function().args(...args.map(z=>z.zodSchema) as any).returns(returns.zodSchema),
-          description:`z.function().args(${JSON.stringify(args.map(z=>z.description))}).returns(${returns.description})`
+          zodSchema: z
+            .function()
+            .args(...(args.map((z) => z.zodSchema) as any))
+            .returns(returns.zodSchema),
+          description: `z.function().args(${JSON.stringify(args.map((z) => z.description))}).returns(${
+            returns.description
+          })`,
         };
-
       } else {
         return {
-          zodSchema:z.function().args(...args.map(z=>z.zodSchema) as any),
-          description:`z.function().args(${JSON.stringify(args.map(z=>z.description))})`
+          zodSchema: z.function().args(...(args.map((z) => z.zodSchema) as any)),
+          description: `z.function().args(${JSON.stringify(args.map((z) => z.description))})`,
         };
       }
       break;
     }
     case "literal": {
       return {
-        zodSchema:element.optional?z.literal(element.definition).optional():z.literal(element.definition),
-        description: `z.literal("${element.definition}")${element.optional?'.optional()':''}`
-      }
+        zodSchema: element.optional ? z.literal(element.definition).optional() : z.literal(element.definition),
+        description: `z.literal("${element.definition}")${element.optional ? ".optional()" : ""}`,
+      };
       break;
     }
     case "lazy": {
-      const sub = jzodSchemaToZodSchema(name, element.definition,getSchemaReferences);
+      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaRelativeReferences);
       return {
-        zodSchema:z.lazy(()=>sub.zodSchema),
-        description:`z.lazy(()=>${sub.description})`
-      }
+        zodSchema: z.lazy(() => sub.zodSchema),
+        description: `z.lazy(()=>${sub.description})`,
+      };
       break;
     }
     case "object": {
-      const sub = Object.fromEntries(Object.entries(element.definition).map(a=>[a[0],jzodSchemaToZodSchema(name, a[1], getSchemaReferences)]))
-      const schemas =  Object.fromEntries(Object.entries(sub).map(a=>[a[0],a[1].zodSchema]));
-      const descriptions =  Object.fromEntries(Object.entries(sub).map(a=>[a[0],a[1].description]));
+      const sub = Object.fromEntries(
+        Object.entries(element.definition).map((a) => [a[0], jzodSchemaToZodSchema(name, a[1], getSchemaRelativeReferences)])
+      );
+      const schemas = Object.fromEntries(Object.entries(sub).map((a) => [a[0], a[1].zodSchema]));
+      const descriptions = Object.fromEntries(Object.entries(sub).map((a) => [a[0], a[1].description]));
       return {
-        zodSchema: element.optional?z.object(schemas as any).optional():z.object(schemas as any),
+        zodSchema: element.optional ? z.object(schemas).strict().optional() : z.object(schemas).strict(),
         // description: element.optional?`z.object(${JSON.stringify(descriptions)})`:`z.object(${JSON.stringify(descriptions)}).optional()`
-        description: element.optional?`z.object(${objectToJsStringObject(descriptions)}).optional()`:`z.object(${objectToJsStringObject(descriptions)})`
-      }
+        description: element.optional
+          ? `z.object(${objectToJsStringObject(descriptions)}).strict().optional()`
+          : `z.object(${objectToJsStringObject(descriptions)}).strict()`,
+      };
       break;
     }
     case "record": {
-      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaReferences)
+      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaRelativeReferences);
       return {
-        zodSchema:element.optional?z.record(z.string(),sub.zodSchema).optional():z.record(z.string(),sub.zodSchema),
-        description:`z.record(z.string(),${sub.description})${element.optional?'.optional()':''}`,
-      }
+        zodSchema: element.optional
+          ? z.record(z.string(), sub.zodSchema).optional()
+          : z.record(z.string(), sub.zodSchema),
+        description: `z.record(z.string(),${sub.description})${element.optional ? ".optional()" : ""}`,
+      };
     }
     case "schemaReference": {
+      // const jzodToZodConversionRelativeReferences = getSchemaRelativeReferences();
+      // console.log("converting element schemaReference to zod schema",Object.keys(jzodToZodConversionRelativeReferences));
+      // throw an exception if the element does not respect the required format
+      // jzodToZodConversionRelativeReferences.jzodReferenceSchema.zodSchema.parse(element);
+      jzodReferenceSchema.parse(element);
       return {
-        zodSchema: z.lazy(((optional:boolean) => {
-          const references = getSchemaReferences();
-          if (references && references[element.definition]) {
-            return optional?references[element.definition].zodSchema.optional():references[element.definition].zodSchema;
-          } else {
-            throw new Error(
-              "when converting optional" +
-                name +
-                "could not find schema" +
-                element.definition +
-                " in " +
-                Object.keys(references)
-            );
-          }
-        }).bind(null,element.optional)),
+        zodSchema: z.lazy(
+          ((optional: boolean) => {
+            const relativeReferences = getSchemaRelativeReferences();
+            // console.log("parsing schemaReference relativeReferences",Object.keys(relativeReferences));
+            const relativePath:string | undefined = element.relativePath?element.relativePath:element.definition;
+            if (relativePath) {
+              if (relativeReferences[relativePath]) {
+                return optional
+                  ? relativeReferences[relativePath].zodSchema.optional()
+                  : relativeReferences[relativePath].zodSchema;
+              } else {
+                throw new Error(
+                  "when converting optional " +
+                    name +
+                    " could not find relative reference " +
+                    element.definition +
+                    " in " +
+                    Object.keys(relativeReferences)
+                );
+              }
+            } else {
+              const absoluteReferences = getAbsoluteReferences();
+              if (element.absolutePath) {
+                if (absoluteReferences[element.absolutePath]) {
+                  return absoluteReferences[element.absolutePath]
+                } else {
+                  throw new Error(
+                    "when converting optional " +
+                      name +
+                      " could not find absolute reference " +
+                      element.absolutePath +
+                      " in " +
+                      Object.keys(absoluteReferences)
+                  );
+                }
+              } else {
+                throw new Error(
+                  "when converting optional " +
+                    name +
+                    " could not find relative or absolute reference in element " +
+                    JSON.stringify(element)
+                );
+              }
+            }
+          }).bind(null, element.optional)
+        ),
         // description: `z.lazy(() =>references["${element.definition}"].zodSchema)` + (element.optional?'.optional()':''),
-        description: `z.lazy(() =>${element.definition}` + (element.optional?'.optional()':'') + ')',
+        description: `z.lazy(() =>${element.definition}` + (element.optional ? ".optional()" : "") + ")",
       };
       break;
     }
     case "simpleType": {
       if (element && (element as JzodAttributeStringWithValidations).validations) {
-        const elementDefinitionSchema=(d:string) =>d == 'uuid'? z.string().uuid():(z as any)[d]();
-        const zodPreSchema = (element as JzodAttributeStringWithValidations).validations.reduce((acc,curr)=>(acc as any)[curr.type](curr.parameter),elementDefinitionSchema(element.definition))
-        const zodSchema = element.optional?zodPreSchema.optional():zodPreSchema
+        const elementDefinitionSchema = (d: string) => (d == "uuid" ? z.string().uuid() : (z as any)[d]());
+        const zodPreSchema = (element as JzodAttributeStringWithValidations).validations.reduce(
+          (acc, curr) => (acc as any)[curr.type](curr.parameter),
+          elementDefinitionSchema(element.definition)
+        );
+        const zodSchema = element.optional ? zodPreSchema.optional() : zodPreSchema;
         const description =
           (element as JzodAttributeStringWithValidations).validations.reduce(
-            (acc, curr) => acc + "." + curr.type + (curr.parameter?"(" + curr.parameter + ")":"()"),
+            (acc, curr) => acc + "." + curr.type + (curr.parameter ? "(" + curr.parameter + ")" : "()"),
             `z.${element.definition}()`
           ) + (element.optional ? `.optional()` : ``);
-        return {zodSchema,description};
+        return { zodSchema, description };
       } else {
         return {
-          zodSchema: element.optional?(z as any)[element.definition]().optional():(z as any)[element.definition](),
-          description: element.optional?`z.${element.definition}().optional()`:`z.${element.definition}()`
-        }
+          zodSchema: element.optional ? (z as any)[element.definition]().optional() : (z as any)[element.definition](),
+          description: element.optional ? `z.${element.definition}().optional()` : `z.${element.definition}()`,
+        };
       }
       break;
     }
     case "union": {
-      const sub = (element as JzodUnion).definition.map(e=>jzodSchemaToZodSchema(name, e, getSchemaReferences))
+      const sub = (element as JzodUnion).definition.map((e) => jzodSchemaToZodSchema(name, e, getSchemaRelativeReferences));
       return {
-        zodSchema:element.optional?z.union( sub.map(s=>s.zodSchema)as any).optional():z.union( sub.map(s=>s.zodSchema)as any),
-        description:`z.union(${objectToJsStringArray(sub.map(s=>s.description))})${element.optional?'.optional()':''}`
-      }
+        zodSchema: element.optional
+          ? z.union(sub.map((s) => s.zodSchema) as any).optional()
+          : z.union(sub.map((s) => s.zodSchema) as any),
+        description: `z.union(${objectToJsStringArray(sub.map((s) => s.description))})${
+          element.optional ? ".optional()" : ""
+        }`,
+      };
       break;
     }
     default:
-      throw new Error("could not convert given json Zod schema, unknown type:" + element["type"])
+      throw new Error("could not convert given json Zod schema, unknown type:" + element["type"]);
       break;
   }
 }
 
 
 // ##############################################################################################################
-export function referentialElementDependencies(element:JzodElement | JzodElement):string[] {
+export function referentialElementRelativeDependencies(element:JzodElement | JzodElement):string[] {
   let result: string[]
   switch (element.type) {
     // case "simpleBootstrapElement":
@@ -237,21 +300,21 @@ export function referentialElementDependencies(element:JzodElement | JzodElement
       break;
     }
     case "schemaReference": {
-      result = [element.definition];
+      result = element.relativePath?[element.relativePath]:(element.definition?[element.definition]:[]);
       break;
     }
     case "lazy":
     case "record":
     case "array":{
-      result = referentialElementDependencies(element.definition)
+      result = referentialElementRelativeDependencies(element.definition)
       break;
     }
     case "union":{ // definition is an array of ZodReferentialElement
-      result = element.definition.reduce((acc:string[],curr:JzodElement)=>acc.concat(referentialElementDependencies(curr)),[]);
+      result = element.definition.reduce((acc:string[],curr:JzodElement)=>acc.concat(referentialElementRelativeDependencies(curr)),[]);
       break;
     }
     case "object": { // definition is an object of ZodReferentialElement
-      result = Object.entries(element.definition).reduce((acc:string[],curr:[string,JzodElement])=>acc.concat(referentialElementDependencies(curr[1])),[]);
+      result = Object.entries(element.definition).reduce((acc:string[],curr:[string,JzodElement])=>acc.concat(referentialElementRelativeDependencies(curr[1])),[]);
       break;
     }
     default:

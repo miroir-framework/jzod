@@ -1,5 +1,5 @@
 export {
-  jzodBootstrapSchema, // the bootstrapped schema: it defines / parses itself!
+  jzodBootstrapSetSchema, // the bootstrapped schema: it defines / parses itself!
   JzodAttribute,
   JzodToZodResult,
   JzodElement,
