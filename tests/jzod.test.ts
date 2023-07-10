@@ -189,8 +189,8 @@ describe(
           test2: {
             type: "object",
             definition: {
-              b: { type: "schemaReference", definition: "test0" },
-              c: { type: "schemaReference", definition: "test1" },
+              b: { type: "schemaReference", relativePath: "test0" },
+              c: { type: "schemaReference", relativePath: "test1" },
             },
           },
           test3: {
@@ -269,8 +269,8 @@ describe(
           type: "object",
           definition: {
             // b: { type: "schemaReference", definitionssssssssss: "test0" },
-            b: { type: "schemaReference", definitionS: "test0" },
-            c: { type: "schemaReference", definition: "test1" },
+            b: { type: "schemaReference", relativePathS: "test0" },
+            c: { type: "schemaReference", relativePath: "test1" },
           }
         };
         expect(convertedJsonZodSchema.jzodObjectSchema.zodSchema.safeParse(illShapedReference).success).toBeFalsy();
@@ -322,8 +322,8 @@ describe(
           test2: {
             type: "object",
             definition: {
-              b: { type: "schemaReference", definition: "test0" },
-              c: { type: "schemaReference", definition: "test1" },
+              b: { type: "schemaReference", relativePath: "test0" },
+              c: { type: "schemaReference", relativePath: "test1" },
             },
           },
           test3: {

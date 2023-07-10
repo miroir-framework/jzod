@@ -221,7 +221,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       optional: { type: "simpleType", definition: "boolean", optional: true },
       extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
       type: { type: "literal", definition: "array" },
-      definition: { type: "schemaReference", definition: "jzodElementSchema" },
+      definition: { type: "schemaReference", relativePath: "jzodElementSchema" },
     },
   },
   jzodAttributeSchema: {
@@ -230,7 +230,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       optional: { type: "simpleType", definition: "boolean", optional: true },
       extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
       type: { type: "literal", definition: "simpleType" },
-      definition: { type: "schemaReference", definition: "jzodEnumTypesSchema" },
+      definition: { type: "schemaReference", relativePath: "jzodEnumTypesSchema" },
     },
   },
   jzodAttributeStringWithValidationsSchema: {
@@ -242,7 +242,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       definition: { type: "literal", definition: "string" },
       validations: {
         type: "array",
-        definition: { type: "schemaReference", definition: "jzodAttributeStringValidationsSchema" },
+        definition: { type: "schemaReference", relativePath: "jzodAttributeStringValidationsSchema" },
       },
     },
   },
@@ -277,24 +277,24 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
   jzodElementSchema: {
     type: "union",
     definition: [
-      { type: "schemaReference", definition: "jzodArraySchema" },
-      { type: "schemaReference", definition: "jzodAttributeSchema" },
-      { type: "schemaReference", definition: "jzodAttributeStringWithValidationsSchema" },
-      { type: "schemaReference", definition: "jzodEnumSchema" },
-      { type: "schemaReference", definition: "jzodFunctionSchema" },
-      { type: "schemaReference", definition: "jzodLazySchema" },
-      { type: "schemaReference", definition: "jzodLiteralSchema" },
-      { type: "schemaReference", definition: "jzodObjectSchema" },
-      { type: "schemaReference", definition: "jzodRecordSchema" },
-      { type: "schemaReference", definition: "jzodReferenceSchema" },
-      { type: "schemaReference", definition: "jzodUnionSchema" },
+      { type: "schemaReference", relativePath: "jzodArraySchema" },
+      { type: "schemaReference", relativePath: "jzodAttributeSchema" },
+      { type: "schemaReference", relativePath: "jzodAttributeStringWithValidationsSchema" },
+      { type: "schemaReference", relativePath: "jzodEnumSchema" },
+      { type: "schemaReference", relativePath: "jzodFunctionSchema" },
+      { type: "schemaReference", relativePath: "jzodLazySchema" },
+      { type: "schemaReference", relativePath: "jzodLiteralSchema" },
+      { type: "schemaReference", relativePath: "jzodObjectSchema" },
+      { type: "schemaReference", relativePath: "jzodRecordSchema" },
+      { type: "schemaReference", relativePath: "jzodReferenceSchema" },
+      { type: "schemaReference", relativePath: "jzodUnionSchema" },
     ],
   },
   jzodElementSetSchema: {
     type: "record",
     definition: { 
       "type": "schemaReference", 
-      "definition": "jzodElementSchema" },
+      "relativePath": "jzodElementSchema" },
   },
   jzodEnumSchema: {
     type: "object",
@@ -315,16 +315,16 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       type: { type: "literal", definition: "function" },
       args: {
         type: "array",
-        definition: { type: "schemaReference", definition: "jzodAttributeSchema" },
+        definition: { type: "schemaReference", relativePath: "jzodAttributeSchema" },
       },
-      returns: { type: "schemaReference", definition: "jzodAttributeSchema", optional: true },
+      returns: { type: "schemaReference", relativePath: "jzodAttributeSchema", optional: true },
     },
   },
   jzodLazySchema: {
     type: "object",
     definition: {
       type: { type: "literal", definition: "lazy" },
-      definition: { type: "schemaReference", definition: "jzodFunctionSchema" },
+      definition: { type: "schemaReference", relativePath: "jzodFunctionSchema" },
     },
   },
   jzodLiteralSchema: {
@@ -344,7 +344,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       "type": { type: "literal", definition: "object" },
       "definition": {
         type: "record",
-        definition: { type: "schemaReference", definition: "jzodElementSchema" },
+        definition: { type: "schemaReference", relativePath: "jzodElementSchema" },
       },
     },
   },
@@ -376,7 +376,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       "type": { type: "literal", definition: "union" },
       "definition": {
         type: "array",
-        definition: { type: "schemaReference", definition: "jzodElementSchema" },
+        definition: { type: "schemaReference", relativePath: "jzodElementSchema" },
       },
     },
   },
