@@ -12,6 +12,35 @@ const jzodRootSchema = z.object({
 type JzodRoot = z.infer<typeof jzodRootSchema>;
 
 // ##############################################################################################################
+export const jzodEnumAttributeTypesSchema = z.enum([
+  'any',
+  'boolean',
+  'number',
+  'string',
+  'uuid',
+])
+
+export type JzodEnumTypes = z.infer<typeof jzodEnumAttributeTypesSchema>;
+
+// ##############################################################################################################
+export const jzodEnumElementTypesSchema = z.enum([
+  'array',
+  'enum',
+  // 'enumValue',
+  'function',
+  'lazy',
+  'literal',
+  'object',
+  'record',
+  'schemaReference',
+  'simpleType',
+  'union',
+])
+
+export type JzodEnumElementTypes = z.infer<typeof jzodEnumElementTypesSchema>;
+
+
+// ##############################################################################################################
 export interface JzodArray extends JzodRoot {
   optional?: boolean,
   extra?: {[k:string]:any},
@@ -24,6 +53,7 @@ export const jzodArraySchema: z.ZodType<JzodArray> = z.object({ // issue with Js
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
   type: z.literal('array'),
+  // type: jzodEnumElementTypesSchema.enum.array,
   definition: z.lazy(()=>jzodElementSchema)
 }).strict();
 
@@ -44,8 +74,10 @@ export type JzodAttributeStringValidations = z.infer<typeof jzodAttributeStringV
 export const jzodAttributeStringWithValidationsSchema = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal('simpleType'),
-  definition: z.literal('string'),
+  // type: z.literal('simpleType'),
+  type: z.literal(jzodEnumElementTypesSchema.enum.simpleType),
+  // definition: z.literal('string'),
+  definition: z.literal(jzodEnumAttributeTypesSchema.enum.string),
   validations: z.array(jzodAttributeStringValidationsSchema),
 }).strict();
 
@@ -55,8 +87,9 @@ export type JzodAttributeStringWithValidations = z.infer<typeof jzodAttributeStr
 export const jzodAttributeSchema = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal('simpleType'),
-  definition: z.lazy(()=>jzodEnumTypesSchema),
+  // type: z.literal('simpleType'),
+  type: z.literal(jzodEnumElementTypesSchema.enum.simpleType),
+  definition: z.lazy(()=>jzodEnumAttributeTypesSchema),
 }).strict();
 
 export type JzodAttribute = z.infer<typeof jzodAttributeSchema>;
@@ -102,22 +135,23 @@ export type JzodElementSet = z.infer<typeof jzodElementSetSchema>;
 export const jzodEnumSchema = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal("enum"),
+  // type: z.literal("enum"),
+  type: z.literal(jzodEnumElementTypesSchema.enum.enum),
   definition: z.array(z.string()),
 }).strict();
 
 export type JzodEnum = z.infer<typeof jzodEnumSchema>;
 
-// ##############################################################################################################
-export const jzodEnumTypesSchema = z.enum([
-  'any',
-  'boolean',
-  'number',
-  'string',
-  'uuid',
-])
+// // ##############################################################################################################
+// export const jzodEnumValueSchema = z.object({
+//   optional: z.boolean().optional(),
+//   extra: z.record(z.string(),z.any()).optional(),
+//   // type: z.literal("enum"),
+//   type: z.literal(jzodEnumElementTypesSchema.enum.enumValue),
+//   definition: z.array(z.string()),
+// }).strict();
 
-export type JzodEnumTypes = z.infer<typeof jzodEnumTypesSchema>;
+// export type JzodEnumValue = z.infer<typeof jzodEnumSchema>;
 
 // ##############################################################################################################
 // export interface JzodFunction {
@@ -127,27 +161,47 @@ export type JzodEnumTypes = z.infer<typeof jzodEnumTypesSchema>;
 // }
 
 export const jzodFunctionSchema = z.object({
-  type: z.literal("function"),
+  // type: z.literal("function"),
+  type: z.literal(jzodEnumElementTypesSchema.enum.function),
+  extra: z.record(z.string(),z.any()).optional(),
   // anyway, arg and returns types are not use upon validation to check the function's interface. Suffices for it to be a function, it is then valid.
-  args:z.array(jzodAttributeSchema),
-  returns: jzodAttributeSchema.optional(),
+  definition: z.object({
+    args:z.array(jzodAttributeSchema),
+    returns: jzodAttributeSchema.optional(),
+  })
 }).strict();
 
 export type JzodFunction = z.infer<typeof jzodFunctionSchema>;
 
 // ##############################################################################################################
 export const jzodLazySchema = z.object({
-  type: z.literal("lazy"),
+  // type: z.literal("lazy"),
+  type: z.literal(jzodEnumElementTypesSchema.enum.lazy),
+  extra: z.record(z.string(),z.any()).optional(),
   definition: jzodFunctionSchema,
 }).strict();
 
 export type JzodLazy = z.infer<typeof jzodLazySchema>;
 
 // ##############################################################################################################
+export const jzodReferenceSchema = z.object({ // inheritance from ZodRootSchema leads to a different JsonSchema thus invalidates tests, although it is semantically equivalent
+  optional: z.boolean().optional(),
+  extra: z.record(z.string(),z.any()).optional(),
+  // type: z.literal("schemaReference"),
+  type: z.literal(jzodEnumElementTypesSchema.enum.schemaReference),
+  relativePath: z.string().optional(),
+  absolutePath: z.string().optional(),
+}).strict()
+
+export type JzodReference = z.infer<typeof jzodReferenceSchema>;
+
+// ##############################################################################################################
 export const jzodLiteralSchema = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal("literal"),
+  // type: z.literal("literal"),
+  type: z.literal(jzodEnumElementTypesSchema.enum.literal),
+  // enumReference: jzodReferenceSchema.optional(),
   definition: z.string(),
 }).strict();
 
@@ -165,7 +219,8 @@ export interface JzodObject extends JzodRoot {
 export const jzodObjectSchema: z.ZodType<JzodObject> = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal('object'),
+  // type: z.literal('object'),
+  type: z.literal(jzodEnumElementTypesSchema.enum.object),
   definition: z.lazy(()=>z.record(z.string(),jzodElementSchema)),
 }).strict();
 
@@ -182,21 +237,10 @@ export interface JzodRecord {
 export const jzodRecordSchema: z.ZodType<JzodRecord> = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal('record'),
+  // type: z.literal('record'),
+  type: z.literal(jzodEnumElementTypesSchema.enum.record),
   definition: z.lazy(()=>jzodElementSchema)
 }).strict();
-
-// ##############################################################################################################
-export const jzodReferenceSchema = z.object({ // inheritance from ZodRootSchema leads to a different JsonSchema thus invalidates tests, although it is semantically equivalent
-  optional: z.boolean().optional(),
-  extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal("schemaReference"),
-  definition: z.string().optional(),
-  relativePath: z.string().optional(),
-  absolutePath: z.string().optional(),
-}).strict()
-
-export type JzodReference = z.infer<typeof jzodReferenceSchema>;
 
   // ##############################################################################################################
 export interface JzodUnion {
@@ -208,7 +252,8 @@ export interface JzodUnion {
 export const jzodUnionSchema: z.ZodType<JzodUnion> = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
-  type: z.literal("union"),
+  // type: z.literal("union"),
+  type: z.literal(jzodEnumElementTypesSchema.enum.union),
   definition: z.lazy(()=>z.array(jzodElementSchema))
 }).strict();
 
@@ -230,7 +275,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       optional: { type: "simpleType", definition: "boolean", optional: true },
       extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
       type: { type: "literal", definition: "simpleType" },
-      definition: { type: "schemaReference", relativePath: "jzodEnumTypesSchema" },
+      definition: { type: "schemaReference", relativePath: "jzodEnumAttributeTypesSchema" },
     },
   },
   jzodAttributeStringWithValidationsSchema: {
@@ -305,25 +350,57 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       "definition": { type: "array", definition: { type: "simpleType", definition: "string" } },
     },
   },
-  jzodEnumTypesSchema: {
+  // jzodEnumValueSchema: {
+  //   type: "object",
+  //   definition: {
+  //     "optional": { type: "simpleType", definition: "boolean", optional: true },
+  //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+  //     "type": { type: "literal", definition: "enumValue" },
+  //     "enumReference": { type: "schemaReference", relativePath: "jzodReferenceSchema" },
+  //     "definition": { type: "simpleType", definition: "string" },
+  //   },
+  // },
+  jzodEnumAttributeTypesSchema: {
     type: "enum",
     definition: ["any", "boolean", "number", "string", "uuid"],
+  },
+  jzodEnumElementTypesSchema: {
+    type: "enum",
+    definition: [
+      "array",
+      "enum",
+      "function",
+      "lazy",
+      "literal",
+      "object",
+      "record",
+      "schemaReference",
+      "simpleType",
+      "union",
+    ],
   },
   jzodFunctionSchema: {
     type: "object",
     definition: {
-      type: { type: "literal", definition: "function" },
-      args: {
-        type: "array",
-        definition: { type: "schemaReference", relativePath: "jzodAttributeSchema" },
-      },
-      returns: { type: "schemaReference", relativePath: "jzodAttributeSchema", optional: true },
+      "type": { type: "literal", definition: "function" },
+      "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+      "definition": {
+        type: "object",
+        definition: {
+          "args": {
+            type: "array",
+            definition: { type: "schemaReference", relativePath: "jzodAttributeSchema" },
+          },
+          "returns": { type: "schemaReference", relativePath: "jzodAttributeSchema", optional: true },
+        }
+      }
     },
   },
   jzodLazySchema: {
     type: "object",
     definition: {
       type: { type: "literal", definition: "lazy" },
+      "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
       definition: { type: "schemaReference", relativePath: "jzodFunctionSchema" },
     },
   },
@@ -341,6 +418,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
     definition: {
       "optional": { type: "simpleType", definition: "boolean", optional: true },
       "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+      // "type": { type: "enumValue", definition: "object", enumReference:{ type: "schemaReference", relativePath: "jzodEnumElementTypesSchema" } },
       "type": { type: "literal", definition: "object" },
       "definition": {
         type: "record",
@@ -354,7 +432,7 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       "optional": { type: "simpleType", definition: "boolean", optional: true },
       "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
       "type": { type: "literal", definition: "record" },
-      "definition": { type: "schemaReference", definition: "jzodElementSchema" },
+      "definition": { type: "schemaReference", relativePath: "jzodElementSchema" },
     },
   },
   jzodReferenceSchema: {
@@ -363,7 +441,6 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       "optional": { type: "simpleType", definition: "boolean", optional: true },
       "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
       "type": { type: "literal", definition: "schemaReference" },
-      "definition": { "type": "simpleType", "definition": "string", "optional": true },
       "relativePath": { "type": "simpleType", "definition": "string", "optional": true },
       "absolutePath": { "type": "simpleType", "definition": "string", "optional": true }
     },
@@ -382,174 +459,3 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
   },
 };
 
-// export const jzodBootstrapSchema: JzodObject = {
-//   "type": "object",
-//   "definition": {
-//     "jzodArraySchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "array" },
-//         "definition": { "type": "schemaReference", "definition": "jzodElementSchema" }
-//       }
-//     },
-//     "jzodAttributeSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "simpleType" },
-//         "definition": { "type": "schemaReference", "definition": "jzodEnumTypesSchema" }
-//       }
-//     },
-//     "jzodAttributeStringWithValidationsSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "simpleType" },
-//         "definition": { "type": "literal", "definition": "string" },
-//         "validations": {
-//           "type": "array",
-//           "definition": { "type": "schemaReference", "definition": "jzodAttributeStringValidationsSchema" }
-//         }
-//       }
-//     },
-//     "jzodAttributeStringValidationsSchema": {
-//       "type": "object",
-//       "definition": {
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": {
-//           "type": "enum",
-//           "definition": [
-//             "max",
-//             "min",
-//             "length",
-//             "email",
-//             "url",
-//             "emoji",
-//             "uuid",
-//             "cuid",
-//             "cuid2",
-//             "ulid",
-//             "regex",
-//             "includes",
-//             "startsWith",
-//             "endsWith",
-//             "datetime",
-//             "ip"
-//           ]
-//         },
-//         "parameter": { "type": "simpleType", "definition": "any" }
-//       }
-//     },
-//     "jzodElementSchema": {
-//       "type": "union",
-//       "definition": [
-//         { "type": "schemaReference", "definition": "jzodArraySchema" },
-//         { "type": "schemaReference", "definition": "jzodAttributeSchema" },
-//         { "type": "schemaReference", "definition": "jzodAttributeStringWithValidationsSchema" },
-//         { "type": "schemaReference", "definition": "jzodEnumSchema" },
-//         { "type": "schemaReference", "definition": "jzodFunctionSchema" },
-//         { "type": "schemaReference", "definition": "jzodLazySchema" },
-//         { "type": "schemaReference", "definition": "jzodLiteralSchema" },
-//         { "type": "schemaReference", "definition": "jzodObjectSchema" },
-//         { "type": "schemaReference", "definition": "jzodRecordSchema" },
-//         { "type": "schemaReference", "definition": "jzodReferenceSchema" },
-//         { "type": "schemaReference", "definition": "jzodUnionSchema" }
-//       ]
-//     },
-//     "jzodElementSetSchema": {
-//       "type": "record",
-//       "definition": {
-//         "type": "schemaReference",
-//         "definition": "jzodElementSchema"
-//       }
-//     },
-//     "jzodEnumSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "enum" },
-//         "definition": { "type": "array", "definition": { "type": "simpleType", "definition": "string" } }
-//       }
-//     },
-//     "jzodEnumTypesSchema": {
-//       "type": "enum",
-//       "definition": ["any", "boolean", "number", "string", "uuid"]
-//     },
-//     "jzodFunctionSchema": {
-//       "type": "object",
-//       "definition": {
-//         "type": { "type": "literal", "definition": "function" },
-//         "args": {
-//           "type": "array",
-//           "definition": { "type": "schemaReference", "definition": "jzodAttributeSchema" }
-//         },
-//         "returns": { "type": "schemaReference", "definition": "jzodAttributeSchema", "optional": true }
-//       }
-//     },
-//     "jzodLazySchema": {
-//       "type": "object",
-//       "definition": {
-//         "type": { "type": "literal", "definition": "lazy" },
-//         "definition": { "type": "schemaReference", "definition": "jzodFunctionSchema" }
-//       }
-//     },
-//     "jzodLiteralSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "literal" },
-//         "definition": { "type": "simpleType", "definition": "string" }
-//       }
-//     },
-//     "jzodObjectSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "object" },
-//         "definition": {
-//           "type": "record",
-//           "definition": { "type": "schemaReference", "definition": "jzodElementSchema" }
-//         }
-//       }
-//     },
-//     "jzodRecordSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "record" },
-//         "definition": { "type": "schemaReference", "definition": "jzodElementSchema" }
-//       }
-//     },
-//     "jzodReferenceSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "schemaReference" },
-//         "definition": { "type": "simpleType", "definition": "string", "optional": true },
-//         "relativePath": { "type": "simpleType", "definition": "string", "optional": true },
-//         "absolutePath": { "type": "simpleType", "definition": "string", "optional": true }
-//       }
-//     },
-//     "jzodUnionSchema": {
-//       "type": "object",
-//       "definition": {
-//         "optional": { "type": "simpleType", "definition": "boolean", "optional": true },
-//         "extra": { "type": "record", "definition": { "type": "simpleType", "definition": "any" }, "optional": true },
-//         "type": { "type": "literal", "definition": "union" },
-//         "definition": {
-//           "type": "array",
-//           "definition": { "type": "schemaReference", "definition": "jzodElementSchema" }
-//         }
-//       }
-//     }
-//   }
-// }

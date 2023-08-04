@@ -1,13 +1,13 @@
-import { ZodTypeAny, optional, z } from "zod";
+import { AnyZodObject, ZodTypeAny, z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import {
-  JzodToZodResult,
+  JzodAttributeStringWithValidations,
   JzodElement,
   JzodElementSet,
-  ZodSchemaAndDescription,
-  JzodUnion,
-  JzodAttributeStringWithValidations,
   JzodObject,
+  JzodToZodResult,
+  JzodUnion,
+  ZodSchemaAndDescription,
   jzodReferenceSchema,
 } from "./JzodInterface";
 
@@ -55,11 +55,20 @@ export function getZodSchemas(set:JzodToZodResult<ZodTypeAny>) {
 }
 
 // ######################################################################################################
-export function jzodSchemaSetToZodSchemaSet(elementSet:JzodElementSet, additionalReferences?:JzodToZodResult<ZodTypeAny>):JzodToZodResult<ZodTypeAny> {
-  let result:JzodToZodResult<ZodTypeAny> = {}
-  
+export function jzodSchemaSetToZodSchemaSet(
+  elementSet: JzodElementSet,
+  additionalRelativeReferences?: JzodToZodResult<ZodTypeAny>,
+  absoluteReferences?: JzodToZodResult<ZodTypeAny>
+): JzodToZodResult<ZodTypeAny> {
+  let result: JzodToZodResult<ZodTypeAny> = {};
+
   for (const entry of Object.entries(elementSet)) {
-    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>Object.assign({},additionalReferences?additionalReferences:{},result))
+    result[entry[0]] = jzodElementSchemaToZodSchemaAndDescription(
+      entry[0],
+      entry[1],
+      () => Object.assign({}, additionalRelativeReferences ? additionalRelativeReferences : {}, result),
+      () => absoluteReferences?absoluteReferences:{}
+    );
   }
   return result;
 }
@@ -72,27 +81,36 @@ export function jzodSchemaObjectToZodSchemaSet(elementSet: JzodObject, additiona
     /**
      * what about external references: do we have a link to them afer conversion? (likely yes, external references give an interpretation context, like the schema in JSON schemas.)
      */
-    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>Object.assign({},additionalReferences,result)) 
+    result[entry[0]] = jzodElementSchemaToZodSchemaAndDescription(entry[0],entry[1],()=>Object.assign({},additionalReferences,result)) 
   }
   return result;
 }
 
 // ######################################################################################################
-export function jzodSchemaObjectToZodSchemaAndDescription(elementSet: JzodObject, additionalReferences?:JzodToZodResult<ZodTypeAny>):ZodSchemaAndDescription<ZodTypeAny> {
-  let result:JzodToZodResult<ZodTypeAny> = {}
-  
+export function jzodSchemaObjectToZodSchemaAndDescription(
+  elementSet: JzodObject,
+  additionalReferences?: JzodToZodResult<ZodTypeAny>,
+  absoluteReferences?: JzodToZodResult<ZodTypeAny>,
+): ZodSchemaAndDescription<ZodTypeAny> {
+  let result: JzodToZodResult<ZodTypeAny> = {};
+
   for (const entry of Object.entries(elementSet.definition)) {
     /**
      * what about external references: do we have a link to them afer conversion? (likely yes, external references give an interpretation context, like the schema in JSON schemas.)
      */
-    result[entry[0]] = jzodSchemaToZodSchema(entry[0],entry[1],()=>Object.assign({},additionalReferences,result)) 
+    result[entry[0]] = jzodElementSchemaToZodSchemaAndDescription(
+      entry[0],
+      entry[1],
+      () => Object.assign({}, additionalReferences, result),
+      () => (absoluteReferences ? absoluteReferences : {})
+    );
   }
-  return {zodSchema:z.object(getZodSchemas(result)),description:objectToJsStringObject(getDescriptions(result))};
+  return { zodSchema: z.object(getZodSchemas(result)), description: objectToJsStringObject(getDescriptions(result)) };
 }
 
 
 // ######################################################################################################
-export function jzodSchemaToZodSchema(
+export function jzodElementSchemaToZodSchemaAndDescription(
   name: string,
   element: JzodElement,
   getSchemaRelativeReferences: () => JzodToZodResult<ZodTypeAny>,
@@ -100,7 +118,7 @@ export function jzodSchemaToZodSchema(
 ): ZodSchemaAndDescription<ZodTypeAny> {
   switch (element.type) {
     case "array": {
-      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaRelativeReferences);
+      const sub = jzodElementSchemaToZodSchemaAndDescription(name, element.definition, getSchemaRelativeReferences, getAbsoluteReferences);
       return {
         zodSchema: element.optional ? z.array(sub.zodSchema).optional() : z.array(sub.zodSchema),
         description: element.optional ? `z.array(${sub.description}).optional()` : `z.array(${sub.description})`,
@@ -126,9 +144,9 @@ export function jzodSchemaToZodSchema(
       break;
     }
     case "function": {
-      const args = Object.entries(element.args).map((e) => jzodSchemaToZodSchema(name, e[1], getSchemaRelativeReferences));
-      if (element.returns) {
-        const returns = jzodSchemaToZodSchema(name, element.returns, getSchemaRelativeReferences);
+      const args = Object.entries(element.definition.args).map((e) => jzodElementSchemaToZodSchemaAndDescription(name, e[1], getSchemaRelativeReferences, getAbsoluteReferences));
+      if (element.definition.returns) {
+        const returns = jzodElementSchemaToZodSchemaAndDescription(name, element.definition.returns, getSchemaRelativeReferences);
         return {
           zodSchema: z
             .function()
@@ -154,7 +172,7 @@ export function jzodSchemaToZodSchema(
       break;
     }
     case "lazy": {
-      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaRelativeReferences);
+      const sub = jzodElementSchemaToZodSchemaAndDescription(name, element.definition, getSchemaRelativeReferences, getAbsoluteReferences);
       return {
         zodSchema: z.lazy(() => sub.zodSchema),
         description: `z.lazy(()=>${sub.description})`,
@@ -163,7 +181,10 @@ export function jzodSchemaToZodSchema(
     }
     case "object": {
       const sub = Object.fromEntries(
-        Object.entries(element.definition).map((a) => [a[0], jzodSchemaToZodSchema(name, a[1], getSchemaRelativeReferences)])
+        Object.entries(element.definition).map((a) => [
+          a[0],
+          jzodElementSchemaToZodSchemaAndDescription(name, a[1], getSchemaRelativeReferences, getAbsoluteReferences),
+        ])
       );
       const schemas = Object.fromEntries(Object.entries(sub).map((a) => [a[0], a[1].zodSchema]));
       const descriptions = Object.fromEntries(Object.entries(sub).map((a) => [a[0], a[1].description]));
@@ -177,7 +198,7 @@ export function jzodSchemaToZodSchema(
       break;
     }
     case "record": {
-      const sub = jzodSchemaToZodSchema(name, element.definition, getSchemaRelativeReferences);
+      const sub = jzodElementSchemaToZodSchemaAndDescription(name, element.definition, getSchemaRelativeReferences, getAbsoluteReferences);
       return {
         zodSchema: element.optional
           ? z.record(z.string(), sub.zodSchema).optional()
@@ -195,67 +216,82 @@ export function jzodSchemaToZodSchema(
         zodSchema: z.lazy(
           ((optional: boolean) => {
             const relativeReferences = getSchemaRelativeReferences();
+            const absoluteReferences = getAbsoluteReferences();
+            // console.log("converting schemaReference absolute path", element.absolutePath,Object.keys(absoluteReferences),element.relativePath,Object.keys(relativeReferences),);
+            
             // console.log("parsing schemaReference relativeReferences",Object.keys(relativeReferences));
-            const relativePath:string | undefined = element.relativePath?element.relativePath:element.definition;
+            const relativePath:string | undefined = element.relativePath;
+            let targetObject:any
+            if (element.absolutePath) {
+              targetObject = Object.fromEntries(Object.entries((absoluteReferences[element.absolutePath].zodSchema as AnyZodObject).shape as any).map((e:[string,any])=>[e[0],{zodSchema:e[1],description:''}]) as [string,any][])
+            } else {
+              targetObject = relativeReferences;
+            }
+            // console.log("converting schemaReference relative path targetObject", targetObject, element.relativePath,Object.keys(targetObject),);
             if (relativePath) {
-              if (relativeReferences[relativePath]) {
-                return optional
-                  ? relativeReferences[relativePath].zodSchema.optional()
-                  : relativeReferences[relativePath].zodSchema;
+              if (targetObject[relativePath]) {
+                const result = optional
+                  ? targetObject[relativePath].zodSchema.optional()
+                  : targetObject[relativePath].zodSchema
+                ;
+                // console.log("converting schemaReference relative path result",result);
+                  
+                return result;
               } else {
                 throw new Error(
                   "when converting optional " +
                     name +
                     " could not find relative reference " +
-                    element.definition +
+                    element.relativePath +
                     " in " +
                     Object.keys(relativeReferences)
                 );
               }
             } else {
-              const absoluteReferences = getAbsoluteReferences();
-              if (element.absolutePath) {
-                if (absoluteReferences[element.absolutePath]) {
-                  return absoluteReferences[element.absolutePath]
-                } else {
-                  throw new Error(
-                    "when converting optional " +
-                      name +
-                      " could not find absolute reference " +
-                      element.absolutePath +
-                      " in " +
-                      Object.keys(absoluteReferences)
-                  );
-                }
-              } else {
-                throw new Error(
-                  "when converting optional " +
-                    name +
-                    " could not find relative or absolute reference in element " +
-                    JSON.stringify(element)
-                );
-              }
+              return targetObject
+              // if (element.absolutePath) {
+              //   if (absoluteReferences[element.absolutePath]) {
+              //     return absoluteReferences[element.absolutePath]
+              //   } else {
+              //     throw new Error(
+              //       "when converting optional " +
+              //         name +
+              //         " could not find absolute reference " +
+              //         element.absolutePath +
+              //         " in " +
+              //         Object.keys(absoluteReferences)
+              //     );
+              //   }
+              // } else {
+              //   throw new Error(
+              //     "when converting optional " +
+              //       name +
+              //       " could not find relative or absolute reference in element " +
+              //       JSON.stringify(element)
+              //   );
+              // }
             }
           }).bind(null, element.optional)
         ),
         // description: `z.lazy(() =>references["${element.definition}"].zodSchema)` + (element.optional?'.optional()':''),
-        description: `z.lazy(() =>${element.definition}` + (element.optional ? ".optional()" : "") + ")",
+        description: `z.lazy(() =>${element.relativePath}` + (element.optional ? ".optional()" : "") + ")",
       };
       break;
     }
     case "simpleType": {
-      if (element && (element as JzodAttributeStringWithValidations).validations) {
+      const castElement = element as JzodAttributeStringWithValidations;
+      if (element && (castElement.validations || element.definition == "uuid")) {
         const elementDefinitionSchema = (d: string) => (d == "uuid" ? z.string().uuid() : (z as any)[d]());
-        const zodPreSchema = (element as JzodAttributeStringWithValidations).validations.reduce(
+        const zodPreSchema = castElement.validations?castElement.validations.reduce(
           (acc, curr) => (acc as any)[curr.type](curr.parameter),
           elementDefinitionSchema(element.definition)
-        );
+        ):elementDefinitionSchema(element.definition);
         const zodSchema = element.optional ? zodPreSchema.optional() : zodPreSchema;
         const description =
-          (element as JzodAttributeStringWithValidations).validations.reduce(
+          (castElement.validations?castElement.validations.reduce(
             (acc, curr) => acc + "." + curr.type + (curr.parameter ? "(" + curr.parameter + ")" : "()"),
             `z.${element.definition}()`
-          ) + (element.optional ? `.optional()` : ``);
+          ) : `z.${element.definition}()`) + (element.optional ? `.optional()` : ``);
         return { zodSchema, description };
       } else {
         return {
@@ -266,7 +302,7 @@ export function jzodSchemaToZodSchema(
       break;
     }
     case "union": {
-      const sub = (element as JzodUnion).definition.map((e) => jzodSchemaToZodSchema(name, e, getSchemaRelativeReferences));
+      const sub = (element as JzodUnion).definition.map((e) => jzodElementSchemaToZodSchemaAndDescription(name, e, getSchemaRelativeReferences, getAbsoluteReferences));
       return {
         zodSchema: element.optional
           ? z.union(sub.map((s) => s.zodSchema) as any).optional()
@@ -300,7 +336,7 @@ export function referentialElementRelativeDependencies(element:JzodElement | Jzo
       break;
     }
     case "schemaReference": {
-      result = element.relativePath?[element.relativePath]:(element.definition?[element.definition]:[]);
+      result = element.relativePath?[element.relativePath]:[];
       break;
     }
     case "lazy":
