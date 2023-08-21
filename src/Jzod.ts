@@ -15,17 +15,19 @@ export function getJsCodeCorrespondingToZodSchemaAndDescription(
   typeName: string,
   entityDefinitionEntityDefinitionZodSchema: ZodSchemaAndDescription<ZodTypeAny>
 ): string {
-  console.log("getJsCodeCorrespondingToZodSchemaAndDescription", entityDefinitionEntityDefinitionZodSchema.description);
+  // console.log("getJsCodeCorrespondingToZodSchemaAndDescription", entityDefinitionEntityDefinitionZodSchema.description);
 
-  const bodyJsCode = `export const ${typeName}ZodSchema = z.object(${entityDefinitionEntityDefinitionZodSchema.description});`;
-  console.log("convertedJsonZodSchema", bodyJsCode);
+  const schemaName = typeName.replace(/^(.)(.*)$/,(a,b,c)=>b.toLowerCase()+c)
+  const casedtypeName = typeName.replace(/^(.)(.*)$/,(a,b,c)=>b.toUpperCase()+c)
+  const bodyJsCode = `export const ${schemaName}ZodSchema = z.object(${entityDefinitionEntityDefinitionZodSchema.description});`;
+  // console.log("getJsCodeCorrespondingToZodSchemaAndDescription convertedJsonZodSchema", bodyJsCode);
 
   const header = `import { ZodType, ZodTypeAny, z } from "zod";
 import { jzodElementSchema, jzodObjectSchema } from "@miroir-framework/jzod";
 
 `;
   const footer = `
-export type ${typeName} = z.infer<typeof ${typeName}ZodSchema>
+export type ${casedtypeName} = z.infer<typeof ${schemaName}ZodSchema>
 `;
   return header + bodyJsCode + footer;
 }
@@ -220,10 +222,14 @@ export function jzodElementSchemaToZodSchemaAndDescription(
             // console.log("converting schemaReference absolute path", element.absolutePath,Object.keys(absoluteReferences),element.relativePath,Object.keys(relativeReferences),);
             
             // console.log("parsing schemaReference relativeReferences",Object.keys(relativeReferences));
-            const relativePath:string | undefined = element.relativePath;
+            const relativePath:string | undefined = element.definition.relativePath;
             let targetObject:any
-            if (element.absolutePath) {
-              targetObject = Object.fromEntries(Object.entries((absoluteReferences[element.absolutePath].zodSchema as AnyZodObject).shape as any).map((e:[string,any])=>[e[0],{zodSchema:e[1],description:''}]) as [string,any][])
+            if (element.definition.absolutePath) {
+              targetObject = Object.fromEntries(
+                Object.entries(
+                  (absoluteReferences[element.definition.absolutePath].zodSchema as AnyZodObject).shape as any
+                ).map((e: [string, any]) => [e[0], { zodSchema: e[1], description: "" }]) as [string, any][]
+              );
             } else {
               targetObject = relativeReferences;
             }
@@ -242,7 +248,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
                   "when converting optional " +
                     name +
                     " could not find relative reference " +
-                    element.relativePath +
+                    element.definition.relativePath +
                     " in " +
                     Object.keys(relativeReferences)
                 );
@@ -274,7 +280,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
           }).bind(null, element.optional)
         ),
         // description: `z.lazy(() =>references["${element.definition}"].zodSchema)` + (element.optional?'.optional()':''),
-        description: `z.lazy(() =>${element.relativePath}` + (element.optional ? ".optional()" : "") + ")",
+        description: `z.lazy(() =>${element.definition.relativePath}` + (element.optional ? ".optional()" : "") + ")",
       };
       break;
     }
@@ -314,11 +320,10 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     default:
-      throw new Error("could not convert given json Zod schema, unknown type:" + element["type"]);
+      throw new Error("jzodElementSchemaToZodSchemaAndDescription could not convert given json Zod schema, unknown type:" + element["type"] + ", element: " + JSON.stringify(element));
       break;
   }
 }
-
 
 // ##############################################################################################################
 export function referentialElementRelativeDependencies(element:JzodElement | JzodElement):string[] {
@@ -336,7 +341,7 @@ export function referentialElementRelativeDependencies(element:JzodElement | Jzo
       break;
     }
     case "schemaReference": {
-      result = element.relativePath?[element.relativePath]:[];
+      result = element.definition.relativePath?[element.definition.relativePath]:[];
       break;
     }
     case "lazy":
