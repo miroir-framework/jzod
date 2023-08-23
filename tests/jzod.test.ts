@@ -1,12 +1,16 @@
+import * as fs from "fs";
 import * as path from "path";
 import { ZodTypeAny, z } from "zod";
+// import * as prettier from "prettier";
+// import prettier from "prettier";
+// import { format } from "prettier";
 
-import { jzodSchemaObjectToZodSchemaAndDescription, jzodSchemaSetToZodSchemaSet } from '../src/Jzod';
+import { getTsCodeCorrespondingToZodSchemaAndDescription, jzodElementSchemaToZodSchemaAndDescription, jzodObjectSchemaToZodSchemaAndDescription, jzodSchemaObjectToZodSchemaAndDescriptionRecord, jzodSchemaSetToZodSchemaAndDescriptionRecord } from '../src/Jzod';
 import {
   jzodArraySchema,
   JzodElementSet,
   jzodObjectSchema,
-  JzodToZodResult,
+  ZodSchemaAndDescriptionRecord,
   jzodBootstrapSetSchema,
   jzodElementSetSchema,
   jzodEnumSchema,
@@ -23,8 +27,11 @@ import {
   jzodEnumAttributeTypesSchema,
   ZodSchemaAndDescription,
   jzodEnumElementTypesSchema,
+  JzodObject,
+  JzodElement,
 } from "../src/JzodInterface";
 import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
+import { createTypeAlias, printNode, withGetType, zodToTs } from "zod-to-ts";
 
 
 describe(
@@ -56,7 +63,7 @@ describe(
           a: z.string(),
           b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
         })
-        const referenceZodSchema:JzodToZodResult<typeof x> = {
+        const referenceZodSchema:ZodSchemaAndDescriptionRecord<typeof x> = {
           "test2":{
             zodSchema: z.object({
               a: z.string(),
@@ -78,7 +85,7 @@ describe(
         );
         const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "test2ZodSchema",
-          jzodSchemaSetToZodSchemaSet(testJzodSchema),
+          jzodSchemaSetToZodSchemaAndDescriptionRecord(testJzodSchema),
           testJzodSchema,
           undefined
         );
@@ -164,11 +171,13 @@ describe(
         const referenceSchemaFilePath = path.join(logsPath,'jsonZodBootstrap_reference.json');
         const convertedElementSchemaFilePath = path.join(logsPath,'jsonZodBootstrap_converted.json');
 
-        // const convertedJsonZodSchema:JzodToZodResult<typeof jzodElementSetSchema> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSetSchema);
-        const convertedJsonZodSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSetSchema);
+        // const convertedJsonZodSchema:ZodSchemaAndDescriptionRecord<typeof jzodElementSetSchema> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
+        const convertedJsonZodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
         
-        const test2ZodSchemaTyped:JzodToZodResult<ZodTypeAny> = test2ZodSchema;
+        const test2ZodSchemaTyped:ZodSchemaAndDescriptionRecord<ZodTypeAny> = test2ZodSchema;
 
+        // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(convertedJsonZodSchema));
+        
         const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "jsonZodBootstrap_reference",
           test2ZodSchema,
@@ -192,13 +201,15 @@ describe(
       'jzod schema simple parsing',
       () => {
   
-        const zodBootstrapSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSetSchema);
+        const zodBootstrapSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
 
+        console.log("jzod schema simple parsing ");
+        
+        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodArraySchema).success).toBeTruthy();
         expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodElementSchema).success).toBeTruthy();
         expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodElementSetSchema).success).toBeTruthy();
         expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodEnumSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodArraySchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodEnumSchema).success).toBeTruthy();
+        // expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodEnumSchema).success).toBeTruthy();
         expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodFunctionSchema).success).toBeTruthy();
         expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodLazySchema).success).toBeTruthy();
         expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodLiteralSchema).success).toBeTruthy();
@@ -301,7 +312,7 @@ describe(
     it(
       'jzod bootstrap self parsing',
       () => {
-        const convertedJsonZodSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSetSchema);
+        const convertedJsonZodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
         // ~~~~~~~~~~~~~~~~~ BOOTSTRAP TEST ~~~~~~~~~~~~~~~~~~~~~~~~
         expect(convertedJsonZodSchema.jzodElementSetSchema.zodSchema.safeParse(jzodBootstrapSetSchema).success).toBeTruthy();
         // expect(convertedJsonZodSchema.jzodElementSetSchema.zodSchema.parse(jzodBootstrapSetSchema));
@@ -312,30 +323,8 @@ describe(
     it(
       'jzod simple data parsing',
       () => {
-        // const referenceSchema: { [z: string]: ZodTypeAny } = {
-        //   test0: z.string().optional(),
-        //   test1: z.object({ a: z.string() }),
-        //   test2: z.object({
-        //     // b: z.lazy(() => referenceSchema.test0),
-        //     b: z.lazy(() => referenceSchema.test0),
-        //     // c: z.lazy(() => referenceSchema.test1),
-        //     c: z.lazy(() => referenceSchema.test1),
-        //   }),
-        //   test3: z.enum([
-        //     'boolean',
-        //     'string',
-        //     'number',
-        //   ]),
-        //   test4: z.function().args(z.string(),z.number()).returns(z.number()),
-        //   test5: z.record(z.string(),z.object({"a":z.string()})),
-        //   test6: z.union([z.object({"a":z.string()}),z.object({"b":z.number()})]),
-        //   test7: z.array(z.object({"a":z.string()})),
-        //   test8: z.function().args(z.string()).returns(z.string()),
-        //   test9: z.string().min(5),
-        // };
-
         const absoluteReferences = {
-          "123": jzodSchemaObjectToZodSchemaAndDescription({type: "object", definition: {"x": {type:"simpleType", definition:"string"}}})
+          "123": jzodObjectSchemaToZodSchemaAndDescription({type: "object", definition: {"x": {type:"simpleType", definition:"string"}}})
         }
 
         // console.log("absoluteReferences",absoluteReferences);
@@ -396,12 +385,20 @@ describe(
             }
           },
           test9: { type: "simpleType", definition: "string", optional: true, validations: [{type:"min",parameter:5}] },
-          test10: { type: "schemaReference", definition: { absolutePath: "123", relativePath:"x"} }
+          test10: { type: "schemaReference", definition: { absolutePath: "123", relativePath:"x"} },
+          test11: {
+            "type": "object",
+            "context": {"123": {type: "simpleType", definition:"string"}},
+            "definition": {
+              "a": { type: "schemaReference", definition: { relativePath: "123"} }
+            }
+          }
         };
         expect(jzodElementSetSchema.safeParse(referentialElementSetToBeConverted).success).toBeTruthy();
         expect(jzodElementSetSchema.safeParse(jzodBootstrapSetSchema).success).toBeTruthy();
 
-        const referentialElementSetSchema = jzodSchemaSetToZodSchemaSet(referentialElementSetToBeConverted, {}, absoluteReferences?absoluteReferences:{});
+        const referentialElementSetSchema = jzodSchemaSetToZodSchemaAndDescriptionRecord(referentialElementSetToBeConverted, {}, absoluteReferences?absoluteReferences:{});
+        // const referentialElementSetSchema = jzodSchemaSetToZodSchemaAndDescriptionRecord(referentialElementSetToBeConverted, {}, {});
 
 
         const test0_OK = "toto";
@@ -429,6 +426,8 @@ describe(
         const test9_KO = "1234";
         const test10_OK = "toto";
         const test10_KO = 1;
+        const test11_OK = {a: "toto"};
+        const test11_KO = {a:{x:"toto"}};
         expect(referentialElementSetSchema.test0.zodSchema.safeParse(test0_OK).success).toBeTruthy();
         expect(referentialElementSetSchema.test0.zodSchema.safeParse(test0_KO).success).toBeFalsy();
         // #####
@@ -464,6 +463,9 @@ describe(
         // #####
         expect(referentialElementSetSchema.test10.zodSchema.safeParse(test10_OK).success).toBeTruthy();
         expect(referentialElementSetSchema.test10.zodSchema.safeParse(test10_KO).success).toBeFalsy();
+        // #####
+        expect(referentialElementSetSchema.test11.zodSchema.safeParse(test11_OK).success).toBeTruthy();
+        expect(referentialElementSetSchema.test11.zodSchema.safeParse(test11_KO).success).toBeFalsy();
       }
     )
 
@@ -477,14 +479,14 @@ describe(
           //   test0: { type: "simpleType", definition: "string", optional: true },
           // };
           // expect(jzodElementSetSchema.safeParse(referentialElementSetToBeConverted).success).toBeTruthy();
-          // const convertedJsonZodSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSetSchema);
-        const zodBootstrapSchema:JzodToZodResult<ZodTypeAny> = jzodSchemaSetToZodSchemaSet(jzodBootstrapSetSchema);
+          // const convertedJsonZodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
+        const zodBootstrapSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
           
         console.log("zodBootstrapSchema",zodBootstrapSchema.jzodReferenceSchema.description);
 
         // expect(jzodElementSetSchema.safeParse(jzodBootstrapSetSchema).success).toBeTruthy();
 
-        // const referentialElementSetSchema = jzodSchemaSetToZodSchemaSet(referentialElementSetToBeConverted, {}, absoluteReferences?absoluteReferences:{});
+        // const referentialElementSetSchema = jzodSchemaSetToZodSchemaAndDescriptionRecord(referentialElementSetToBeConverted, {}, absoluteReferences?absoluteReferences:{});
 
         const test0_OK = { type: "simpleType", definition: "string", optional: true };
         const test0_KO = 1;
@@ -494,6 +496,361 @@ describe(
       }
     )
 
+    // ############################################################################################
+    it(
+      "ts Type generation",
+      async() => {
 
+        const writeTsFile = (
+          testJzodSchema: JzodObject,
+          convertedJsonZodSchema: ZodSchemaAndDescription<ZodTypeAny>,
+          typeName: string,
+          testResultSchemaFilePath:string,
+        ) => {
+          const result = getTsCodeCorrespondingToZodSchemaAndDescription(typeName,convertedJsonZodSchema)
+          fs.writeFileSync(testResultSchemaFilePath,result);
+          return result;
+        }
+
+        const testJzodToTs = (
+          testDirectory: string,
+          referenceFileName: string,
+          testFileName: string,
+          testJzodSchema:JzodObject,
+          typeName: string
+        ) => {
+          const testResultSchemaFilePath = path.join(testDirectory,testFileName);
+          const expectedSchemaFilePath = path.join(testDirectory,referenceFileName);
+
+          const convertedJsonZodSchema = jzodElementSchemaToZodSchemaAndDescription(
+            typeName,
+            testJzodSchema,
+            () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
+            () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
+            (innerReference:ZodTypeAny,relativeReference:string|undefined) =>  withGetType(innerReference,(ts) => ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(relativeReference?relativeReference:"RELATIVEPATH_NOT_DEFINED")))
+          );
+
+          // console.log("ts Type generation convertedJsonZodSchema", JSON.stringify(convertedJsonZodSchema));
+
+
+          const resultContents = writeTsFile(
+            testJzodSchema,
+            convertedJsonZodSchema,
+            typeName,
+            testResultSchemaFilePath,
+          ).replace(/(\r\n|\n|\r)/gm, "");
+          console.log("ts Type generation resultContents", resultContents);
+
+          const expectedFileContents = fs.readFileSync(expectedSchemaFilePath).toString().replace(/(\r\n|\n|\r)/gm, "")
+          expect(resultContents).toEqual(expectedFileContents);
+        }
+
+        const logsPath = "C:/Users/nono/Documents/devhome/tmp";
+        // ########################################################################################
+        const testJzodSchema1:JzodObject = {
+          type: "object",
+          context: {
+            a: { type: "simpleType", definition: "string"}
+          },
+          definition: {
+            "optional": { type: "simpleType", definition: "boolean", optional: true },
+            "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+            "type": { type: "literal", definition: "enum" },
+            "definition": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "a"} } },
+          },
+        }
+
+        testJzodToTs(
+          logsPath,
+          "tsTypeGeneration-testJzodSchema1 - reference.ts",
+          "tsTypeGeneration-testJzodSchema1.ts",
+          testJzodSchema1,
+          "testJzodSchema1"
+        );
+
+        // ########################################################################################
+        const testJzodSchema2:JzodObject = 
+        {
+          type: "object", 
+          // context: jzodBootstrapSetSchema,
+          context:{
+            jzodLiteralSchema: {
+              type: "object",
+              definition: {
+                "optional": { type: "simpleType", definition: "boolean", optional: true },
+                "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+                "type": { type: "literal", definition: "literal" },
+                "definition": { type: "simpleType", definition: "string" },
+              },
+            }
+          },
+          definition: {
+            "a": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "jzodLiteralSchema"} } },
+          },
+        }
+
+        testJzodToTs(
+          logsPath,
+          "tsTypeGeneration-testJzodSchema2 - reference.ts",
+          "tsTypeGeneration-testJzodSchema2.ts",
+          testJzodSchema2,
+          "testJzodSchema2"
+        );
+
+        // ########################################################################################
+        const testJzodSchema3:JzodObject = 
+        {
+          type: "object", 
+          // context: jzodBootstrapSetSchema,
+          context:{
+            jzodLiteralSchema: {
+              type: "object",
+              definition: {
+                "optional": { type: "simpleType", definition: "boolean", optional: true },
+                "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+                "type": { type: "literal", definition: "literal" },
+                "definition": { type: "simpleType", definition: "string" },
+              },
+            },
+            jzodElementSchema: {
+              type: "union",
+              "discriminant": "type",
+              definition: [
+                { type: "schemaReference", definition: { relativePath: "jzodLiteralSchema" } },
+              ],
+            },
+          },
+          definition: {
+            "b": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "jzodElementSchema"} } },
+          },
+        }
+
+        testJzodToTs(
+          logsPath,
+          "tsTypeGeneration-testJzodSchema3 - reference.ts",
+          "tsTypeGeneration-testJzodSchema3.ts",
+          testJzodSchema3,
+          "testJzodSchema3"
+        );
+
+        // ########################################################################################
+        const testJzodSchema4:JzodObject = 
+        {
+          type: "object", 
+          context: jzodBootstrapSetSchema,
+          // context: {
+          //   jzodArraySchema: {
+          //     type: "object",
+          //     definition: {
+          //       optional: { type: "simpleType", definition: "boolean", optional: true },
+          //       extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+          //       type: { type: "literal", definition: "array" },
+          //       definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          //     },
+          //   },
+          //   // jzodAttributeSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     optional: { type: "simpleType", definition: "boolean", optional: true },
+          //   //     extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+          //   //     type: { type: "literal", definition: "simpleType" },
+          //   //     definition: { type: "schemaReference", definition: { relativePath: "jzodEnumAttributeTypesSchema" } },
+          //   //   },
+          //   // },
+          //   // jzodAttributeStringWithValidationsSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     optional: { type: "simpleType", definition: "boolean", optional: true },
+          //   //     extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+          //   //     type: { type: "literal", definition: "simpleType" },
+          //   //     definition: { type: "literal", definition: "string" },
+          //   //     validations: {
+          //   //       type: "array",
+          //   //       definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeStringValidationsSchema" } },
+          //   //     },
+          //   //   },
+          //   // },
+          //   // jzodAttributeStringValidationsSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+          //   //     type: {
+          //   //       type: "enum",
+          //   //       definition: [
+          //   //         "max",
+          //   //         "min",
+          //   //         "length",
+          //   //         "email",
+          //   //         "url",
+          //   //         "emoji",
+          //   //         "uuid",
+          //   //         "cuid",
+          //   //         "cuid2",
+          //   //         "ulid",
+          //   //         "regex",
+          //   //         "includes",
+          //   //         "startsWith",
+          //   //         "endsWith",
+          //   //         "datetime",
+          //   //         "ip",
+          //   //       ],
+          //   //     },
+          //   //     parameter: { type: "simpleType", definition: "any" },
+          //   //   },
+          //   // },
+          //   jzodElementSchema: {
+          //     type: "union",
+          //     "discriminant": "type",
+          //     definition: [
+          //       { type: "schemaReference", definition: { relativePath: "jzodArraySchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodAttributeSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodAttributeStringWithValidationsSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodEnumSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodFunctionSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodLazySchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodLiteralSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodObjectSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodRecordSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodReferenceSchema" } },
+          //       // { type: "schemaReference", definition: { relativePath: "jzodUnionSchema" } },
+          //     ],
+          //   },
+          //   // jzodElementSetSchema: {
+          //   //   type: "record",
+          //   //   definition: { 
+          //   //     "type": "schemaReference", 
+          //   //     definition: { "relativePath": "jzodElementSchema" } },
+          //   // },
+          //   // jzodEnumSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     "optional": { type: "simpleType", definition: "boolean", optional: true },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     "type": { type: "literal", definition: "enum" },
+          //   //     "definition": { type: "array", definition: { type: "simpleType", definition: "string" } },
+          //   //   },
+          //   // },
+          //   // jzodEnumAttributeTypesSchema: {
+          //   //   type: "enum",
+          //   //   definition: ["any", "boolean", "number", "string", "uuid"],
+          //   // },
+          //   // jzodEnumElementTypesSchema: {
+          //   //   type: "enum",
+          //   //   definition: [
+          //   //     "array",
+          //   //     "enum",
+          //   //     "function",
+          //   //     "lazy",
+          //   //     "literal",
+          //   //     "object",
+          //   //     "record",
+          //   //     "schemaReference",
+          //   //     "simpleType",
+          //   //     "union",
+          //   //   ],
+          //   // },
+          //   // jzodFunctionSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     "type": { type: "literal", definition: "function" },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     "definition": {
+          //   //       type: "object",
+          //   //       definition: {
+          //   //         "args": {
+          //   //           type: "array",
+          //   //           definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeSchema" } },
+          //   //         },
+          //   //         "returns": { type: "schemaReference", definition: { relativePath: "jzodAttributeSchema" }, optional: true },
+          //   //       }
+          //   //     }
+          //   //   },
+          //   // },
+          //   // jzodLazySchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     type: { type: "literal", definition: "lazy" },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     definition: { type: "schemaReference", definition: { relativePath: "jzodFunctionSchema" } },
+          //   //   },
+          //   // },
+          //   // jzodLiteralSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     "optional": { type: "simpleType", definition: "boolean", optional: true },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     "type": { type: "literal", definition: "literal" },
+          //   //     "definition": { type: "simpleType", definition: "string" },
+          //   //   },
+          //   // },
+          //   // jzodObjectSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     "optional": { type: "simpleType", definition: "boolean", optional: true },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     "type": { type: "literal", definition: "object" },
+          //   //     "context": {
+          //   //       type: "record",
+          //   //       optional: true,
+          //   //       definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          //   //     },
+          //   //     "definition": {
+          //   //       type: "record",
+          //   //       definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          //   //     },
+          //   //   },
+          //   // },
+          //   // jzodRecordSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     "optional": { type: "simpleType", definition: "boolean", optional: true },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     "type": { type: "literal", definition: "record" },
+          //   //     "definition": { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          //   //   },
+          //   // },
+          //   // jzodReferenceSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     "optional": { type: "simpleType", definition: "boolean", optional: true },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     "type": { type: "literal", definition: "schemaReference" },
+          //   //     "definition" : {
+          //   //       type: "object",
+          //   //       definition: {
+          //   //         "relativePath": { "type": "simpleType", "definition": "string", "optional": true },
+          //   //         "absolutePath": { "type": "simpleType", "definition": "string", "optional": true }
+          //   //       }
+          //   //     }
+          //   //   },
+          //   // },
+          //   // jzodUnionSchema: {
+          //   //   type: "object",
+          //   //   definition: {
+          //   //     "optional": { type: "simpleType", definition: "boolean", optional: true },
+          //   //     "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
+          //   //     "type": { type: "literal", definition: "union" },
+          //   //     "discriminant": { type: "simpleType", definition: "string", optional: true },
+          //   //     "definition": {
+          //   //       type: "array",
+          //   //       definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          //   //     },
+          //   //   },
+          //   // },
+          // },
+          definition: {
+            "c": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "jzodArraySchema"} } },
+          },
+        }
+
+        testJzodToTs(
+          logsPath,
+          "tsTypeGeneration-testJzodSchema4 - reference.ts",
+          "tsTypeGeneration-testJzodSchema4.ts",
+          testJzodSchema4,
+          "testJzodSchema4"
+        );
+      }
+    )
   }
 )

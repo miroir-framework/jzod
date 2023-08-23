@@ -2,9 +2,14 @@ import { ZodObject, ZodType, ZodTypeAny, z } from "zod";
 
 
 // export interface ZodSchemaAndDescription {zodSchema:ZodTypeAny, description:string};
-export interface ZodSchemaAndDescription<T extends ZodTypeAny> {zodSchema:T, description:string};
+export interface ZodSchemaAndDescription<T extends ZodTypeAny> {
+  contextZodSchema?:{[k:string]:T}, 
+  contextDescription?:{[k:string]:string}
+  zodSchema:T, 
+  description:string
+};
 
-export type JzodToZodResult<T extends ZodTypeAny> = {[k:string]:ZodSchemaAndDescription<T>};
+export type ZodSchemaAndDescriptionRecord<T extends ZodTypeAny> = {[k:string]:ZodSchemaAndDescription<T>};
 
 const jzodRootSchema = z.object({
   optional: z.boolean().optional(),
@@ -182,6 +187,7 @@ export interface JzodObject extends JzodRoot {
   optional?: boolean,
   extra?: {[k:string]:any},
   type: "object",
+  context?: {[attributeName:string]: JzodElement},
   definition: {[attributeName:string]: JzodElement}
 }
 
@@ -189,6 +195,7 @@ export const jzodObjectSchema: z.ZodType<JzodObject> = z.object({
   optional: z.boolean().optional(),
   extra: z.record(z.string(),z.any()).optional(),
   type: z.literal(jzodEnumElementTypesSchema.enum.object),
+  context: z.lazy(()=>z.record(z.string(),jzodElementSchema)).optional(),
   definition: z.lazy(()=>z.record(z.string(),jzodElementSchema)),
 }).strict();
 
@@ -378,6 +385,11 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       "optional": { type: "simpleType", definition: "boolean", optional: true },
       "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
       "type": { type: "literal", definition: "object" },
+      "context": {
+        type: "record",
+        optional: true,
+        definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+      },
       "definition": {
         type: "record",
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },

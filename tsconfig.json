@@ -22,5 +22,5 @@
     ],
   },
   "exclude": ["./node_modules/**","./src/**/*.spec.js", "./src/**/*.spec.jsx", "./src/**/*.spec.ts", "./src/**/*.spec.tsx"],
-  "include": ["./src/**/*.json", "./src/**/*.js", "./src/**/*.jsx", "./src/**/*.ts", "./src/**/*.tsx", "src/RestTools.ts"]
+  "include": ["./src/**/*.json", "./src/**/*.js", "./src/**/*.jsx", "./src/**/*.ts", "./src/**/*.tsx"]
 }

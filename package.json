@@ -15,7 +15,8 @@
   "bugs": "https://github.com/miroir-framework/jzod/issues",
   "license": "MIT",
   "dependencies": {
-    "zod": "^3.21.4"
+    "zod": "^3.21.4",
+    "zod-to-ts": "^1.2.0"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.20.11",

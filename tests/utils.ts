@@ -2,9 +2,9 @@ import { ZodTypeAny } from "zod";
 import * as fs from "fs";
 
 import { _zodToJsonSchema, referentialElementRelativeDependencies } from "../src/Jzod";
-import { JzodElement, JzodElementSet, JzodToZodResult } from "../src/JzodInterface";
+import { JzodElement, JzodElementSet, ZodSchemaAndDescriptionRecord } from "../src/JzodInterface";
 
-export function convertZodSchemaToJsonSchemaAndWriteToFile(name:string,zodSchema:JzodToZodResult<ZodTypeAny>,jsonZodSchemaSet:JzodElementSet,path:string | undefined):string {
+export function convertZodSchemaToJsonSchemaAndWriteToFile(name:string,zodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny>,jsonZodSchemaSet:JzodElementSet,path:string | undefined):string {
   const setDependencies = Object.fromEntries(
     Object.entries(jsonZodSchemaSet).map((e: [string, JzodElement]) => [
       e[0],
