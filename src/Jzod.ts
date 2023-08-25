@@ -185,6 +185,18 @@ export function jzodObjectSchemaToZodSchemaAndDescription(
   };
 }
 
+function optionalNullableZodSchema(zodElement:ZodTypeAny, optional?: boolean, nullable?: boolean): ZodTypeAny {
+  const optionalElement = optional ? zodElement.optional() : zodElement;
+  const nullableElement = nullable ? optionalElement.nullable() : optionalElement;
+  return nullableElement
+}
+function optionalNullableZodDescription(zodElement:string, optional?: boolean, nullable?: boolean): string {
+  const optionalElement = optional ? zodElement +".optional()" : zodElement;
+  const nullableElement = nullable ? optionalElement+".nullable()" : optionalElement;
+  return nullableElement
+}
+
+
 // ######################################################################################################
 export function jzodElementSchemaToZodSchemaAndDescription(
   name: string,
@@ -207,20 +219,16 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextDescription: sub.contextDescription,
         contextZodSchema: sub.contextZodSchema,
-        zodSchema: element.optional ? z.array(sub.zodSchema).optional() : z.array(sub.zodSchema),
-        description: element.optional ? `z.array(${sub.description}).optional()` : `z.array(${sub.description})`,
+        zodSchema: optionalNullableZodSchema(z.array(sub.zodSchema),element.optional,element.nullable),
+        description: optionalNullableZodDescription(`z.array(${sub.description})`,element.optional,element.nullable),
       };
       break;
     }
     case "enum": {
       if (Array.isArray(element.definition) && element.definition.length > 1) {
         return {
-          zodSchema: element.optional
-            ? z.enum([...element.definition] as any).optional()
-            : z.enum([...element.definition] as any),
-          description: `z.enum(${JSON.stringify([...element.definition])} as any)${
-            element.optional ? ".optional()" : ""
-          }`,
+          zodSchema: optionalNullableZodSchema(z.enum([...element.definition] as any),element.optional,element.nullable),
+          description: optionalNullableZodDescription(`z.enum(${JSON.stringify([...element.definition])} as any)`, element.optional, element.nullable),
         };
       } else {
         return {
@@ -271,12 +279,35 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       }
       break;
     }
+    case "intersection": {
+      const subLeft = jzodElementSchemaToZodSchemaAndDescription(
+        "left",
+        element.definition.left,
+        getSchemaRelativeReferences,
+        getAbsoluteReferences,
+        typeScriptReferenceConverter
+      );
+      const subRight = jzodElementSchemaToZodSchemaAndDescription(
+        "right",
+        element.definition.right,
+        getSchemaRelativeReferences,
+        getAbsoluteReferences,
+        typeScriptReferenceConverter
+      );
+      return {
+        contextDescription: {...subLeft.contextDescription, ...subRight.contextDescription},
+        contextZodSchema: {...subLeft.contextZodSchema, ...subRight.contextZodSchema},
+        zodSchema: optionalNullableZodSchema(z.intersection(subLeft.zodSchema,subRight.zodSchema),element.optional,element.nullable),
+        description: optionalNullableZodDescription(`z.intersection(${subLeft.description},${subRight.description})`,element.optional,element.nullable),
+      };
+      break;
+    }
     case "literal": {
       return {
         // contextDescription: {},
         // contextZodSchema: {},
-        zodSchema: element.optional ? z.literal(element.definition).optional() : z.literal(element.definition),
-        description: `z.literal("${element.definition}")${element.optional ? ".optional()" : ""}`,
+        zodSchema: optionalNullableZodSchema(z.literal(element.definition),element.optional,element.nullable),
+        description: optionalNullableZodDescription(`z.literal("${element.definition}")`,element.optional,element.nullable),
       };
       break;
     }
@@ -293,6 +324,29 @@ export function jzodElementSchemaToZodSchemaAndDescription(
         contextZodSchema: undefined,
         zodSchema: z.lazy(() => sub.zodSchema),
         description: `z.lazy(()=>${sub.description})`,
+      };
+      break;
+    }
+    case "map": {
+      const sub0 = jzodElementSchemaToZodSchemaAndDescription(
+        name,
+        element.definition[0],
+        getSchemaRelativeReferences,
+        getAbsoluteReferences,
+        typeScriptReferenceConverter
+      );
+      const sub1 = jzodElementSchemaToZodSchemaAndDescription(
+        name,
+        element.definition[1],
+        getSchemaRelativeReferences,
+        getAbsoluteReferences,
+        typeScriptReferenceConverter
+      );
+      return {
+        contextDescription: {...sub0.contextDescription, ...sub1.contextDescription},
+        contextZodSchema: {...sub0.contextZodSchema, ...sub1.contextZodSchema},
+        zodSchema: optionalNullableZodSchema(z.map(sub0.zodSchema,sub1.zodSchema),element.optional,element.nullable),
+        description: optionalNullableZodDescription(`z.set(${sub0.description},${sub1.description})`,element.optional,element.nullable),
       };
       break;
     }
@@ -353,11 +407,25 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextZodSchema: contextSchemas,
         contextDescription: contextDescription,
-        zodSchema: element.optional ? z.object(schemas).strict().optional() : z.object(schemas).strict(),
+        zodSchema: optionalNullableZodSchema(z.object(schemas).strict(),element.optional,element.nullable),
         // description: element.optional?`z.object(${JSON.stringify(descriptions)})`:`z.object(${JSON.stringify(descriptions)}).optional()`
-        description: element.optional
-          ? `z.object(${objectToJsStringObject(descriptions)}).strict().optional()`
-          : `z.object(${objectToJsStringObject(descriptions)}).strict()`,
+        description: optionalNullableZodDescription(`z.object(${objectToJsStringObject(descriptions)}).strict()`, element.optional, element.nullable),
+      };
+      break;
+    }
+    case "promise": {
+      const sub = jzodElementSchemaToZodSchemaAndDescription(
+        name,
+        element.definition,
+        getSchemaRelativeReferences,
+        getAbsoluteReferences,
+        typeScriptReferenceConverter
+      );
+      return {
+        contextDescription: sub.contextDescription,
+        contextZodSchema: sub.contextZodSchema,
+        zodSchema: z.promise(sub.zodSchema),
+        description: `z.promise(${sub.description})`,
       };
       break;
     }
@@ -372,18 +440,13 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextDescription: sub.contextDescription,
         contextZodSchema: sub.contextZodSchema,
-        zodSchema: element.optional
-          ? z.record(z.string(), sub.zodSchema).optional()
-          : z.record(z.string(), sub.zodSchema),
-        description: `z.record(z.string(),${sub.description})${element.optional ? ".optional()" : ""}`,
+        zodSchema: optionalNullableZodSchema(z.record(z.string(), sub.zodSchema),element.optional,element.nullable),
+        description: optionalNullableZodDescription(`z.record(z.string(),${sub.description})`, element.optional, element.nullable),
       };
     }
     case "schemaReference": {
-      // console.log("converting element schemaReference to zod schema",JSON.stringify(element));
-      // throw an exception if the element does not respect the required format
       jzodReferenceSchema.parse(element);
       const resolveReference = z.lazy(
-        // ((optional: boolean) => {
         () => {
           /**
            *  issue with zod-to-ts: specifying a TS AST generation function induces a call to the lazy function!! :-(
@@ -421,9 +484,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
             // console.log("converting schemaReference relative path targetObject", targetObject, element.relativePath,Object.keys(targetObject),);
             if (relativePath) {
               if (targetObject[relativePath]) {
-                const result = element.optional
-                  ? targetObject[relativePath].zodSchema.optional()
-                  : targetObject[relativePath].zodSchema;
+                const result = optionalNullableZodSchema(targetObject[relativePath].zodSchema,element.optional,element.nullable);
                 // console.log("converting schemaReference relative path",name,"result",JSON.stringify(result));
 
                 return result;
@@ -446,71 +507,26 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextDescription: undefined, // references do not expose the context of referenced JzodElement
         contextZodSchema: undefined,
-        // zodSchema: z.lazy(
-        //   ((optional: boolean) => {
-        //     const relativeReferences = getSchemaRelativeReferences();
-        //     const absoluteReferences = getAbsoluteReferences();
-        //     console.log(
-        //       "########## jzodElementSchemaToZodSchemaAndDescription converting schemaReference absolute path",
-        //       element.definition.absolutePath,
-        //       Object.keys(absoluteReferences),
-        //       "relativePath",
-        //       element.definition.relativePath,
-        //       Object.keys(relativeReferences)
-        //     );
-
-        //     // console.log("parsing schemaReference relativeReferences",Object.keys(relativeReferences));
-        //     const relativePath:string | undefined = element.definition.relativePath;
-        //     let targetObject:any
-        //     if (element.definition.absolutePath) {
-        //       targetObject = Object.fromEntries(
-        //         Object.entries(
-        //           (absoluteReferences[element.definition.absolutePath].zodSchema as AnyZodObject).shape as any
-        //         ).map((e: [string, any]) => [e[0], { zodSchema: e[1], description: "" }]) as [string, any][]
-        //       );
-        //     } else {
-        //       targetObject = relativeReferences;
-        //     }
-        //     // console.log("converting schemaReference relative path targetObject", targetObject, element.relativePath,Object.keys(targetObject),);
-        //     if (relativePath) {
-        //       if (targetObject[relativePath]) {
-        //         const result = withGetType(
-        //           // z.lazy(() =>
-        //             optional ? targetObject[relativePath].zodSchema.optional() : targetObject[relativePath].zodSchema
-        //           // ),
-        //           ,
-        //           (ts) => ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(relativePath)) // TODO: DO NOT POLLUTE ZOD SCHEMAS WITH ZOD-TO-TS NONSENSE
-        //         );
-        //         // const result = optional
-        //         //   ? targetObject[relativePath].zodSchema.optional()
-        //         //   : targetObject[relativePath].zodSchema
-        //         // ;
-        //         console.log("converting schemaReference relative path",name,"result",JSON.stringify(result));
-
-        //         return result;
-        //       } else {
-        //         throw new Error(
-        //           "when converting optional " +
-        //             name +
-        //             " could not find relative reference " +
-        //             element.definition.relativePath +
-        //             " in " +
-        //             Object.keys(relativeReferences)
-        //         );
-        //       }
-        //     } else {
-        //       return targetObject
-        //     }
-        //   }).bind(null, element.optional)
-        // ),
         zodSchema: typeScriptReferenceConverter
           ? typeScriptReferenceConverter(resolveReference, element.definition.relativePath)
           : resolveReference,
-        // withGetType(,(ts) => ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(element.definition.relativePath?element.definition.relativePath:"RELATIVEPATH_NOT_DEFINED"))
-        // }),(ts) => ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(element.definition.relativePath?element.definition.relativePath:"RELATIVEPATH_NOT_DEFINED"))
-        // }).bind(null, element.optional)),(ts) => ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(element.definition.relativePath?element.definition.relativePath:"RELATIVEPATH_NOT_DEFINED"))
-        // ),
-        description: `z.lazy(() =>${element.definition.relativePath}` + (element.optional ? ".optional()" : "") + ")",
+        description: optionalNullableZodDescription(`z.lazy(() =>${element.definition.relativePath})`,element.optional, element.nullable),
+      };
+      break;
+    }
+    case "set": {
+      const sub = jzodElementSchemaToZodSchemaAndDescription(
+        name,
+        element.definition,
+        getSchemaRelativeReferences,
+        getAbsoluteReferences,
+        typeScriptReferenceConverter
+      );
+      return {
+        contextDescription: sub.contextDescription,
+        contextZodSchema: sub.contextZodSchema,
+        zodSchema: optionalNullableZodSchema(z.set(sub.zodSchema),element.optional,element.nullable),
+        description: optionalNullableZodDescription(`z.set(${sub.description})`,element.optional,element.nullable),
       };
       break;
     }
@@ -537,8 +553,36 @@ export function jzodElementSchemaToZodSchemaAndDescription(
         return {
           contextDescription: undefined,
           contextZodSchema: undefined,
-          zodSchema: element.optional ? (z as any)[element.definition]().optional() : (z as any)[element.definition](),
-          description: element.optional ? `z.${element.definition}().optional()` : `z.${element.definition}()`,
+          zodSchema: optionalNullableZodSchema((z as any)[element.definition](),element.optional,element.nullable),
+          description: optionalNullableZodDescription(`z.${element.definition}()`, element.optional, element.nullable),
+        };
+      }
+      break;
+    }
+    case "tuple": {
+      if (Array.isArray(element.definition) && element.definition.length > 1) {
+        const subs = element.definition.map((d) =>
+          jzodElementSchemaToZodSchemaAndDescription(
+            name,
+            d,
+            getSchemaRelativeReferences,
+            getAbsoluteReferences,
+            typeScriptReferenceConverter
+          )
+        );
+  
+        return {
+          contextZodSchema: subs.reduce((acc,curr)=>({...acc,...curr.contextDescription}),{}),
+          contextDescription: subs.reduce((acc,curr)=>({...acc,...curr.contextZodSchema}),{}),
+          zodSchema: optionalNullableZodSchema(z.tuple([...subs.map(s=>s.zodSchema)] as any),element.optional,element.nullable),
+          description: optionalNullableZodDescription(`z.tuple(${JSON.stringify([...subs.map(s=>s.description)])} as any)`, element.optional, element.nullable),
+        };
+      } else {
+        return {
+          // contextDescription: {},
+          // contextZodSchema: {},
+          zodSchema: z.any(),
+          description: `z.any()`,
         };
       }
       break;
@@ -572,12 +616,14 @@ export function jzodElementSchemaToZodSchemaAndDescription(
             []
           )
         ),
-        zodSchema: element.optional
-          ? z.union(sub.map((s) => s.zodSchema) as any).optional()
-          : z.union(sub.map((s) => s.zodSchema) as any),
-        description: `z.union(${objectToJsStringArray(sub.map((s) => s.description))})${
-          element.optional ? ".optional()" : ""
-        }`,
+        /**
+         * Zod unions are used instead of discriminated unions even if Jzod schema has a discriminant,
+         * because TS types obtained using z.infer lack uniformity, which make them rather unusable in practice:
+         * TODO: DESCRIBE PROBLEM!!!
+         */
+
+        zodSchema: optionalNullableZodSchema(z.union(sub.map((s) => s.zodSchema) as any), element.optional, element.nullable),
+        description: optionalNullableZodDescription(`z.union(${objectToJsStringArray(sub.map((s) => s.description))})`, element.optional, element.nullable),
       };
       break;
     }
