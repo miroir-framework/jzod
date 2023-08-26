@@ -36,13 +36,12 @@ export {
 export {
   getDescriptions,
   getZodSchemas,
-  jzodSchemaObjectToZodSchemaAndDescriptionRecord,
-  jzodObjectSchemaToZodSchemaAndDescription,
   jzodSchemaSetToZodSchemaAndDescriptionRecord,
   jzodElementSchemaToZodSchemaAndDescription,
   getJsResultSetConstDeclarations,
-  getTsCodeCorrespondingToZodSchemaAndDescription,
   objectToJsStringArray,
   objectToJsStringObject,
-
 } from "./Jzod"
+export {
+  getTsCodeCorrespondingToZodSchemaAndDescription
+} from "./JzodToTs"

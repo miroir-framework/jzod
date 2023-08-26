@@ -73,15 +73,94 @@ export const jzodArraySchema: z.ZodType<JzodArray> = z.object({ // issue with Js
 }).strict();
 
 // ##############################################################################################################
-export const jzodAttributeStringValidationsSchema = z.object({
-  extra: z.record(z.string(),z.any()).optional(),
-  type: z.enum([
-    "max", "min", "length", "email", "url", "emoji", "uuid", "cuid", "cuid2", "ulid", "regex", "includes", "startsWith", "endsWith", "datetime", "ip"
-  ]),
-  parameter: z.any()
-}).strict();
+export const jzodAttributeDateValidationsSchema = z
+  .object({
+    extra: z.record(z.string(), z.any()).optional(),
+    type: z.enum([
+      "min",
+      "max",
+    ]),
+    parameter: z.any(),
+  })
+  .strict();
+
+export type JzodAttributeDateValidations = z.infer<typeof jzodAttributeDateValidationsSchema>;
+
+// ##############################################################################################################
+export const jzodAttributeNumberValidationsSchema = z
+  .object({
+    extra: z.record(z.string(), z.any()).optional(),
+    type: z.enum([
+      "gt",
+      "gte",
+      "lt",
+      "lte",
+      "int",
+      "positive",
+      "nonpositive",
+      "negative",
+      "nonnegative",
+      "multipleOf",
+      "finite",
+      "safe",
+    ]),
+    parameter: z.any(),
+  })
+  .strict();
+
+export type JzodAttributeNumberValidations = z.infer<typeof jzodAttributeNumberValidationsSchema>;
+
+// ##############################################################################################################
+export const jzodAttributeStringValidationsSchema = z
+  .object({
+    extra: z.record(z.string(), z.any()).optional(),
+    type: z.enum([
+      "max",
+      "min",
+      "length",
+      "email",
+      "url",
+      "emoji",
+      "uuid",
+      "cuid",
+      "cuid2",
+      "ulid",
+      "regex",
+      "includes",
+      "startsWith",
+      "endsWith",
+      "datetime",
+      "ip",
+    ]),
+    parameter: z.any(),
+  })
+  .strict();
 
 export type JzodAttributeStringValidations = z.infer<typeof jzodAttributeStringValidationsSchema>;
+
+// ##############################################################################################################
+export const jzodAttributeDateWithValidationsSchema = z.object({
+  optional: z.boolean().optional(),
+  nullable: z.boolean().optional(),
+  extra: z.record(z.string(),z.any()).optional(),
+  type: z.literal(jzodEnumElementTypesSchema.enum.simpleType),
+  definition: z.literal(jzodEnumAttributeTypesSchema.enum.date),
+  validations: z.array(jzodAttributeDateValidationsSchema),
+}).strict();
+
+export type JzodAttributeDateWithValidations = z.infer<typeof jzodAttributeDateWithValidationsSchema>;
+
+// ##############################################################################################################
+export const jzodAttributeNumberWithValidationsSchema = z.object({
+  optional: z.boolean().optional(),
+  nullable: z.boolean().optional(),
+  extra: z.record(z.string(),z.any()).optional(),
+  type: z.literal(jzodEnumElementTypesSchema.enum.simpleType),
+  definition: z.literal(jzodEnumAttributeTypesSchema.enum.number),
+  validations: z.array(jzodAttributeNumberValidationsSchema),
+}).strict();
+
+export type JzodAttributeNumberWithValidations = z.infer<typeof jzodAttributeNumberWithValidationsSchema>;
 
 // ##############################################################################################################
 export const jzodAttributeStringWithValidationsSchema = z.object({
@@ -111,6 +190,8 @@ export type JzodAttribute = z.infer<typeof jzodAttributeSchema>;
 export type JzodElement =
 | JzodArray
 | JzodAttribute
+| JzodAttributeDateWithValidations
+| JzodAttributeNumberWithValidations
 | JzodAttributeStringWithValidations
 | JzodEnum
 | JzodFunction
@@ -130,6 +211,8 @@ export type JzodElement =
 export const jzodElementSchema: z.ZodType<JzodElement> = z.union([
   z.lazy(()=>jzodArraySchema),
   z.lazy(()=>jzodAttributeSchema),
+  z.lazy(()=>jzodAttributeDateWithValidationsSchema),
+  z.lazy(()=>jzodAttributeNumberWithValidationsSchema),
   z.lazy(()=>jzodAttributeStringWithValidationsSchema),
   z.lazy(()=>jzodEnumSchema),
   z.lazy(()=>jzodFunctionSchema),
@@ -376,17 +459,69 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       definition: { type: "schemaReference", definition: { relativePath: "jzodEnumAttributeTypesSchema" } },
     },
   },
-  jzodAttributeStringWithValidationsSchema: {
+  jzodAttributeDateValidationsSchema: {
+    type: "object",
+    definition: {
+      extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+      type: {
+        type: "enum",
+        definition: [
+          "min",
+          "max",
+        ],
+      },
+      parameter: { type: "simpleType", definition: "any" },
+    },
+  },
+  jzodAttributeDateWithValidationsSchema: {
     type: "object",
     definition: {
       optional: { type: "simpleType", definition: "boolean", optional: true },
       nullable: { type: "simpleType", definition: "boolean", optional: true },
       extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
       type: { type: "literal", definition: "simpleType" },
-      definition: { type: "literal", definition: "string" },
+      definition: { type: "literal", definition: "date" },
       validations: {
         type: "array",
-        definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeStringValidationsSchema" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeDateValidationsSchema" } },
+      },
+    },
+  },
+  jzodAttributeNumberValidationsSchema: {
+    type: "object",
+    definition: {
+      extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+      type: {
+        type: "enum",
+        definition: [
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "int",
+          "positive",
+          "nonpositive",
+          "negative",
+          "nonnegative",
+          "multipleOf",
+          "finite",
+          "safe",
+        ],
+      },
+      parameter: { type: "simpleType", definition: "any" },
+    },
+  },
+  jzodAttributeNumberWithValidationsSchema: {
+    type: "object",
+    definition: {
+      optional: { type: "simpleType", definition: "boolean", optional: true },
+      nullable: { type: "simpleType", definition: "boolean", optional: true },
+      extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+      type: { type: "literal", definition: "simpleType" },
+      definition: { type: "literal", definition: "number" },
+      validations: {
+        type: "array",
+        definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberValidationsSchema" } },
       },
     },
   },
@@ -418,12 +553,28 @@ export const jzodBootstrapSetSchema: JzodElementSet = {
       parameter: { type: "simpleType", definition: "any" },
     },
   },
+  jzodAttributeStringWithValidationsSchema: {
+    type: "object",
+    definition: {
+      optional: { type: "simpleType", definition: "boolean", optional: true },
+      nullable: { type: "simpleType", definition: "boolean", optional: true },
+      extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+      type: { type: "literal", definition: "simpleType" },
+      definition: { type: "literal", definition: "string" },
+      validations: {
+        type: "array",
+        definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeStringValidationsSchema" } },
+      },
+    },
+  },
   jzodElementSchema: {
     type: "union",
     discriminant: "type",
     definition: [
       { type: "schemaReference", definition: { relativePath: "jzodArraySchema" } },
       { type: "schemaReference", definition: { relativePath: "jzodAttributeSchema" } },
+      { type: "schemaReference", definition: { relativePath: "jzodAttributeDateWithValidationsSchema" } },
+      { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberWithValidationsSchema" } },
       { type: "schemaReference", definition: { relativePath: "jzodAttributeStringWithValidationsSchema" } },
       { type: "schemaReference", definition: { relativePath: "jzodEnumSchema" } },
       { type: "schemaReference", definition: { relativePath: "jzodFunctionSchema" } },

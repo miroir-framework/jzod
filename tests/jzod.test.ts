@@ -1,15 +1,16 @@
 import * as fs from "fs";
 import * as path from "path";
+
 import { ZodTypeAny, z } from "zod";
+import { withGetType } from "zod-to-ts";
+
 
 import { zodToJzod } from "../src/ZodToJzod";
-
-// import * as prettier from "prettier";
-// import prettier from "prettier";
-// import { format } from "prettier";
-
-import { withGetType } from "zod-to-ts";
-import { getTsCodeCorrespondingToZodSchemaAndDescription, jzodElementSchemaToZodSchemaAndDescription, jzodObjectSchemaToZodSchemaAndDescription, jzodSchemaSetToZodSchemaAndDescriptionRecord } from '../src/Jzod';
+import { getTsCodeCorrespondingToZodSchemaAndDescription } from "../src/JzodToTs";
+import {
+  jzodElementSchemaToZodSchemaAndDescription,
+  jzodSchemaSetToZodSchemaAndDescriptionRecord,
+} from "../src/Jzod";
 import {
   JzodElement,
   JzodElementSet,
@@ -17,6 +18,10 @@ import {
   ZodSchemaAndDescription,
   ZodSchemaAndDescriptionRecord,
   jzodArraySchema,
+  jzodAttributeDateValidationsSchema,
+  jzodAttributeDateWithValidationsSchema,
+  jzodAttributeNumberValidationsSchema,
+  jzodAttributeNumberWithValidationsSchema,
   jzodAttributeSchema,
   jzodAttributeStringValidationsSchema,
   jzodAttributeStringWithValidationsSchema,
@@ -117,12 +122,28 @@ describe(
             zodSchema: jzodAttributeSchema,
             description:""
           },
-          "jzodAttributeStringWithValidationsSchema": {
-            zodSchema: jzodAttributeStringWithValidationsSchema,
+          "jzodAttributeDateValidationsSchema": {
+            zodSchema: jzodAttributeDateValidationsSchema,
+            description:""
+          },
+          "jzodAttributeDateWithValidationsSchema": {
+            zodSchema: jzodAttributeDateWithValidationsSchema,
+            description:""
+          },
+          "jzodAttributeNumberValidationsSchema": {
+            zodSchema: jzodAttributeNumberValidationsSchema,
+            description:""
+          },
+          "jzodAttributeNumberWithValidationsSchema": {
+            zodSchema: jzodAttributeNumberWithValidationsSchema,
             description:""
           },
           "jzodAttributeStringValidationsSchema": {
             zodSchema: jzodAttributeStringValidationsSchema,
+            description:""
+          },
+          "jzodAttributeStringWithValidationsSchema": {
+            zodSchema: jzodAttributeStringWithValidationsSchema,
             description:""
           },
           "jzodElementSchema": {
@@ -355,7 +376,7 @@ describe(
       'jzod simple data parsing',
       () => {
         const absoluteReferences = {
-          "123": jzodObjectSchemaToZodSchemaAndDescription({type: "object", definition: {"x": {type:"simpleType", definition:"string"}}})
+          "123": jzodElementSchemaToZodSchemaAndDescription({type: "object", definition: {"x": {type:"simpleType", definition:"string"}}})
         }
 
         // console.log("absoluteReferences",absoluteReferences);
@@ -364,7 +385,19 @@ describe(
           test0: { type: "simpleType", definition: "string", optional: true },
           test1: {
             type: "object",
-            definition: { a: { type: "simpleType", definition: "string", nullable: true } },
+            definition: {
+              a: {
+                type: "simpleType",
+                definition: "number",
+                nullable: true,
+              },
+              b: {
+                type: "simpleType",
+                definition: "number",
+                validations: [{ type: "gt", parameter: 5 }],
+              },
+
+            },
           },
           test2: {
             type: "object",
@@ -406,7 +439,19 @@ describe(
           },
           test7: {
             type: "array",
-            definition: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            definition: {
+              type: "object",
+              definition: {
+                a: {
+                  type: "simpleType",
+                  definition: "string",
+                  validations: [
+                    { type: "min", parameter: 5 },
+                    { type: "includes", parameter: "#" },
+                  ],
+                },
+              },
+            },
           },
           test8: {
             type: "lazy",
@@ -452,7 +497,18 @@ describe(
           },
           test15: {
             type: "map",
-            definition: [ { type: "simpleType", definition: "string" }, { type: "simpleType", definition: "number" }],
+            definition: [
+              { type: "simpleType", definition: "string" },
+              { type: "simpleType", definition: "number" },
+            ],
+          },
+          type16: {
+            type: "simpleType",
+            definition: "string",
+            validations: [
+              { type: "min", parameter: 5 },
+              { type: "includes", parameter: "#" },
+            ],
           },
         };
 
@@ -466,11 +522,12 @@ describe(
         const test0_OK1 = "toto";
         const test0_OK2 = undefined;
         const test0_KO = 1;
-        const test1_OK1 = {a:"toto"};
-        const test1_OK2 = {a:null};
-        const test1_KO = {a:1};
-        const test2_OK1 = {c:{a:'test'}};
-        const test2_OK2 = {c:{a: null}};
+        const test1_OK1 = {a:1, b:6};
+        const test1_OK2 = {a:null, b:6};
+        const test1_KO1 = {a:"toto", b:6};
+        const test1_KO2 = {a:1, b: 5};
+        const test2_OK1 = {c:{a: 1, b: 6}};
+        const test2_OK2 = {c:{a: null, b: 6}};
         const test2_OK3 = {b:"1", c:null};
         const test2_KO1 = {b:1};
         const test2_KO2 = {b:"1"};
@@ -486,9 +543,11 @@ describe(
         const test6_OK = {"a":"test"};
         const test6_OK2 = {b:1};
         const test6_KO = {b:"test"};
-        const test7_OK = [{"a":"test"},{"a":"test2"}];
+        const test7_OK = [{"a":"123#4"},{"a":"#1234"}];
         const test7_OK2 = [] as any[];
-        const test7_KO = [{"e":1}];
+        const test7_KO1 = [{"e":"1"}];
+        const test7_KO2 = [ {"a":"#12345"}, {"a":"12345"} ];
+        const test7_KO3 = [ {"a":"#12345"}, {"a":"#123"} ];
         const test8_OK:(a:string)=>string = (a:string):string => a;
         const test8_KO1:(a:number)=>string = (a:number):string => "a";
         const test8_KO2:string = 'not a function';
@@ -516,7 +575,8 @@ describe(
         // #####
         expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_OK1).success).toBeTruthy();
         expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_OK2).success).toBeTruthy();
-        expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_KO).success).toBeFalsy();
+        expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_KO1).success).toBeFalsy();
+        expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_KO2).success).toBeFalsy();
         // #####
         expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_OK1).success).toBeTruthy();
         expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_OK2).success).toBeTruthy();
@@ -542,7 +602,9 @@ describe(
         // #####
         expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_OK).success).toBeTruthy();
         expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_OK2).success).toBeTruthy();
-        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_KO).success).toBeFalsy();
+        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_KO1).success).toBeFalsy();
+        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_KO2).success).toBeFalsy();
+        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_KO3).success).toBeFalsy();
         // #####
         expect(referentialElementSetSchema.test8.zodSchema.safeParse(test8_OK).success).toBeTruthy();
         // expect(referentialElementSetSchema.test8.zodSchema.safeParse(test8_KO1).success).toBeFalsy(); // Zod does not validate function parameter types?
@@ -561,14 +623,12 @@ describe(
         expect(referentialElementSetSchema.test12.zodSchema.safeParse(test12_KO1).success).toBeFalsy();
         expect(referentialElementSetSchema.test12.zodSchema.safeParse(test12_KO2).success).toBeFalsy();
         // #####
-        console.log("referentialElementSetSchema.test13",referentialElementSetSchema.test13.description,JSON.stringify(referentialElementSetSchema.test13.zodSchema));
+        // console.log("referentialElementSetSchema.test13",referentialElementSetSchema.test13.description,JSON.stringify(referentialElementSetSchema.test13.zodSchema));
         
-        const toto = z.intersection(z.object({name:z.string(),}).strict(),z.object({role:z.string(),}).strict())
-        console.log("compare zod schema",JSON.stringify(toto));
-        type Toto =  z.infer<typeof toto>;
-        const a:Toto = { name: "Test", role: "test"};
-        // const b:Toto = { role: "test"};
-
+        // const toto = z.intersection(z.object({name:z.string(),}).strict(),z.object({role:z.string(),}).strict())
+        // console.log("compare zod schema",JSON.stringify(toto));
+        // type Toto =  z.infer<typeof toto>;
+        // const a:Toto = { name: "Test", role: "test"};
         // expect(referentialElementSetSchema.test13.zodSchema.parse(test13_OK).success).toBeTruthy();
         // expect(referentialElementSetSchema.test13.zodSchema.safeParse(test13_OK).success).toBeTruthy(); // FAILING!!! IS GENERATED ZOD SCHEMA WRONG??
         expect(referentialElementSetSchema.test13.zodSchema.safeParse(test13_KO1).success).toBeFalsy();
@@ -610,11 +670,16 @@ describe(
           const expectedSchemaFilePath = path.join(testDirectory,referenceFileName);
 
           const convertedJsonZodSchema = jzodElementSchemaToZodSchemaAndDescription(
-            typeName,
+            // typeName,
             testJzodSchema,
-            () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
-            () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
-            (innerReference:ZodTypeAny,relativeReference:string|undefined) =>  withGetType(innerReference,(ts) => ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(relativeReference?relativeReference:"RELATIVEPATH_NOT_DEFINED")))
+            () => ({} as ZodSchemaAndDescriptionRecord<ZodTypeAny>),
+            () => ({} as ZodSchemaAndDescriptionRecord<ZodTypeAny>),
+            (innerReference: ZodTypeAny, relativeReference: string | undefined) =>
+              withGetType(innerReference, (ts) =>
+                ts.factory.createTypeReferenceNode(
+                  ts.factory.createIdentifier(relativeReference ? relativeReference : "RELATIVEPATH_NOT_DEFINED")
+                )
+              )
           );
 
           console.log("ts Type generation", typeName);
@@ -751,19 +816,17 @@ describe(
           expectedJzodSchema?: JzodElement,
         ) => {
           const testZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(
-            typeName,
             testJzodSchema,
             () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
             () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
           )
           const testResult = zodToJzod(testZodSchema.zodSchema,typeName);
-          console.log("Zod to Jzod testJzodSchema", typeName, JSON.stringify(testJzodSchema),"result",JSON.stringify(testResult));
+          // console.log("Zod to Jzod testJzodSchema", typeName, JSON.stringify(testJzodSchema),"result",JSON.stringify(testResult));
           
-          // expect(testResult).toEqual(expectedJzodSchema??testResult);
           expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
         }
 
-        const test1JzodSchema:JzodElement = { type: "simpleType", definition: "any"}
+        // const test1JzodSchema:JzodElement = { type: "simpleType", definition: "any"}
         testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"});
         testZodToJzodConversion("test2",{ type: "simpleType", definition: "string"});
         testZodToJzodConversion("test3",{ type: "simpleType", definition: "number"});
@@ -852,3 +915,6 @@ describe(
 
   }
 )
+
+
+
