@@ -1,27 +1,27 @@
-import { ZodTypeAny } from "zod";
 import * as fs from "fs";
+import { ZodTypeAny } from "zod";
 
-import { _zodToJsonSchema, referentialElementRelativeDependencies } from "../src/Jzod";
-import { JzodElement, JzodElementSet, ZodSchemaAndDescriptionRecord } from "../src/JzodInterface";
 
-export function convertZodSchemaToJsonSchemaAndWriteToFile(name:string,zodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny>,jsonZodSchemaSet:JzodElementSet,path:string | undefined):string {
-  const setDependencies = Object.fromEntries(
-    Object.entries(jsonZodSchemaSet).map((e: [string, JzodElement]) => [
-      e[0],
-      referentialElementRelativeDependencies(e[1]),
-    ])
-  );
+import zodToJsonSchema from "zod-to-json-schema";
 
-  const setZodSchemaJsonSchema = _zodToJsonSchema(zodSchema,setDependencies,name);
-  const setZodSchemaJsonSchemaString = JSON.stringify(setZodSchemaJsonSchema,undefined,2)
+// ################################################################################################
+export function convertZodSchemaToJsonSchemaAndWriteToFile(
+  name: string,
+  zodSchema: ZodTypeAny,
+  path: string | undefined
+): string {
+  const zodSchemaJsonSchema = zodToJsonSchema(zodSchema, {
+    $refStrategy: "relative",
+  });;
+  const zodSchemaJsonSchemaString = JSON.stringify(zodSchemaJsonSchema, undefined, 2);
 
   if (path) {
     if (fs.existsSync(path)) {
-      fs.rmSync(path)
+      fs.rmSync(path);
     }
-    fs.writeFileSync(path,setZodSchemaJsonSchemaString);
+    fs.writeFileSync(path, zodSchemaJsonSchemaString);
   }
-  
-  return setZodSchemaJsonSchemaString
+
+  return zodSchemaJsonSchemaString;
 }
 

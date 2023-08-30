@@ -1,47 +1,12 @@
 export {
-  jzodBootstrapSetSchema, // the bootstrapped schema: it defines / parses itself!
-  JzodAttribute,
-  JzodAttributeStringValidations,
-  JzodAttributeStringWithValidations,
   ZodSchemaAndDescriptionRecord,
-  JzodElement,
-  JzodElementSet,
-  JzodEnum,
-  JzodEnumTypes,
-  JzodFunction,
-  JzodLazy,
-  JzodLiteral,
-  JzodArray,
-  JzodObject,
-  JzodRecord,
-  JzodReference,
-  JzodUnion,
   ZodSchemaAndDescription,
-  jzodArraySchema,
-  jzodAttributeSchema,
-  jzodAttributeStringValidationsSchema,
-  jzodAttributeStringWithValidationsSchema,
-  jzodElementSchema,
-  jzodElementSetSchema,
-  jzodEnumSchema,
-  jzodEnumAttributeTypesSchema,
-  jzodFunctionSchema,
-  jzodLazySchema,
-  jzodLiteralSchema,
-  jzodObjectSchema,
-  jzodRecordSchema,
-  jzodReferenceSchema,
-  jzodUnionSchema,
 } from "./JzodInterface"
 export {
   getDescriptions,
   getZodSchemas,
-  jzodSchemaSetToZodSchemaAndDescriptionRecord,
   jzodElementSchemaToZodSchemaAndDescription,
   getJsResultSetConstDeclarations,
   objectToJsStringArray,
   objectToJsStringObject,
 } from "./Jzod"
-export {
-  getTsCodeCorrespondingToZodSchemaAndDescription
-} from "./JzodToTs"

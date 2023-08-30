@@ -1,5 +1,5 @@
+import { JzodElement } from "@miroir-framework/jzod-ts";
 import { ZodTypeAny } from "zod";
-import { JzodElement } from "./JzodInterface";
 
 const a: null = null;
 
@@ -127,7 +127,7 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
         zodToJzod(option, identifier)
       );
       return zod._def.discriminator
-        ? { type: "union", discriminant: zod._def.discriminator, definition: jzodUnionElements }
+        ? { type: "union", discriminator: zod._def.discriminator, definition: jzodUnionElements }
         : { type: "union", definition: jzodUnionElements };
     }
     case "ZodEffects": {

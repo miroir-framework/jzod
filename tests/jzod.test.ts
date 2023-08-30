@@ -1,51 +1,26 @@
-import * as fs from "fs";
 import * as path from "path";
 
 import { ZodTypeAny, z } from "zod";
-import { withGetType } from "zod-to-ts";
 
-
-import { zodToJzod } from "../src/ZodToJzod";
-import { getTsCodeCorrespondingToZodSchemaAndDescription } from "../src/JzodToTs";
-import {
-  jzodElementSchemaToZodSchemaAndDescription,
-  jzodSchemaSetToZodSchemaAndDescriptionRecord,
-} from "../src/Jzod";
 import {
   JzodElement,
-  JzodElementSet,
-  JzodObject,
+  jzodElementSchema
+} from "@miroir-framework/jzod-ts";
+
+import {
+  jzodElementSchemaToZodSchemaAndDescription,
+} from "../src/Jzod";
+import {
   ZodSchemaAndDescription,
   ZodSchemaAndDescriptionRecord,
-  jzodArraySchema,
-  jzodAttributeDateValidationsSchema,
-  jzodAttributeDateWithValidationsSchema,
-  jzodAttributeNumberValidationsSchema,
-  jzodAttributeNumberWithValidationsSchema,
-  jzodAttributeSchema,
-  jzodAttributeStringValidationsSchema,
-  jzodAttributeStringWithValidationsSchema,
-  jzodBootstrapSetSchema,
-  jzodElementSchema,
-  jzodElementSetSchema,
-  jzodEnumAttributeTypesSchema,
-  jzodEnumElementTypesSchema,
-  jzodEnumSchema,
-  jzodFunctionSchema,
-  jzodIntersectionSchema,
-  jzodLazySchema,
-  jzodLiteralSchema,
-  jzodMapSchema,
-  jzodObjectSchema,
-  jzodPromiseSchema,
-  jzodRecordSchema,
-  jzodReferenceSchema,
-  jzodSetSchema,
-  jzodTupleSchema,
-  jzodUnionSchema,
+  jzodBootstrapElementSchema
 } from "../src/JzodInterface";
+import { zodToJzod } from "../src/ZodToJzod";
 import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
 
+
+const tmpPath = "./tests/tmp";
+const referencesPath = "./tests/references";
 
 describe(
   'Jzod',
@@ -55,9 +30,7 @@ describe(
     it(
       'jzod elementary schema conversion',
       () => {
-        const testJzodSchema:JzodElementSet = {
-          "test2": 
-          {
+        const testJzodSchema:JzodElement = {
             type: "object",
             definition: {
               a: { type: "simpleType", definition: "string" },
@@ -70,36 +43,35 @@ describe(
               },
             },
           }
-         };
+        ;
 
         const x = z.object({
           a: z.string(),
           b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
         })
-        const referenceZodSchema:ZodSchemaAndDescriptionRecord<typeof x> = {
-          "test2":{
-            zodSchema: z.object({
-              a: z.string(),
-              b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
-            }),
-            description:""
-          }
+
+        const referenceZodSchema:ZodSchemaAndDescription<typeof x> = {
+          zodSchema: z.object({
+            a: z.string(),
+            b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
+          }),
+          zodText:""
         }
         
-        // const logsPath = "";
-        // const referenceSchemaFilePath = path.join(logsPath,'test2ZodSchemaJsonSchema.json');
-        // const convertedElementSchemaFilePath = path.join(logsPath,'test2JsonZodSchemaJsonSchema.json');
+
+        const testJzodSchemaZodSchemaAndDescription :ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(testJzodSchema);
+
 
         const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-          "test2ZodSchema",
-          referenceZodSchema,
-          testJzodSchema,
+          "testZodSchema",
+          referenceZodSchema.zodSchema,
+          // testJzodSchema,
           undefined
         );
         const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "test2ZodSchema",
-          jzodSchemaSetToZodSchemaAndDescriptionRecord(testJzodSchema),
-          testJzodSchema,
+          testJzodSchemaZodSchemaAndDescription.zodSchema,
+          // testJzodSchema,
           undefined
         );
 
@@ -111,132 +83,23 @@ describe(
 
     // ###########################################################################################
     it(
-      'jzod bootstrap equivalence',
+      'generated Zod schema from jzodBootstrapElementSchema is equivalent to hand-written Zod schema (will have no interest whenever zod schemas for bootstrap will be automatically generated)',
       () => {
-        const test2ZodSchema = {
-          "jzodArraySchema": {
-            zodSchema: jzodArraySchema,
-            description:""
-          },
-          "jzodAttributeSchema": {
-            zodSchema: jzodAttributeSchema,
-            description:""
-          },
-          "jzodAttributeDateValidationsSchema": {
-            zodSchema: jzodAttributeDateValidationsSchema,
-            description:""
-          },
-          "jzodAttributeDateWithValidationsSchema": {
-            zodSchema: jzodAttributeDateWithValidationsSchema,
-            description:""
-          },
-          "jzodAttributeNumberValidationsSchema": {
-            zodSchema: jzodAttributeNumberValidationsSchema,
-            description:""
-          },
-          "jzodAttributeNumberWithValidationsSchema": {
-            zodSchema: jzodAttributeNumberWithValidationsSchema,
-            description:""
-          },
-          "jzodAttributeStringValidationsSchema": {
-            zodSchema: jzodAttributeStringValidationsSchema,
-            description:""
-          },
-          "jzodAttributeStringWithValidationsSchema": {
-            zodSchema: jzodAttributeStringWithValidationsSchema,
-            description:""
-          },
-          "jzodElementSchema": {
-            zodSchema: jzodElementSchema,
-            description:""
-          },
-          "jzodElementSetSchema": {
-            zodSchema: jzodElementSetSchema,
-            description:""
-          },
-          "jzodEnumSchema": {
-            "zodSchema": jzodEnumSchema,
-            description:""
-          },
-          "jzodEnumAttributeTypesSchema": {
-            "zodSchema": jzodEnumAttributeTypesSchema,
-            description:""
-          },
-          "jzodEnumElementTypesSchema": {
-            "zodSchema": jzodEnumElementTypesSchema,
-            description:""
-          },
-          "jzodFunctionSchema": {
-            "zodSchema": jzodFunctionSchema,
-            description:""
-          },
-          "jzodLazySchema": {
-            "zodSchema": jzodLazySchema,
-            description:""
-          },
-          "jzodLiteralSchema": {
-            "zodSchema": jzodLiteralSchema,
-            description:""
-          },
-          "jzodIntersectionSchema": {
-            zodSchema: jzodIntersectionSchema,
-            description:""
-          },
-          "jzodMapSchema": {
-            zodSchema: jzodMapSchema,
-            description:""
-          },
-          "jzodObjectSchema": {
-            zodSchema: jzodObjectSchema,
-            description:""
-          },
-          "jzodPromiseSchema": {
-            zodSchema: jzodPromiseSchema,
-            description:""
-          },
-          "jzodRecordSchema": {
-            zodSchema: jzodRecordSchema,
-            description:""
-          },
-          "jzodReferenceSchema": {
-            zodSchema: jzodReferenceSchema,
-            description:""
-          },
-          "jzodSetSchema": {
-            zodSchema: jzodSetSchema,
-            description:""
-          },
-          "jzodTupleSchema": {
-            zodSchema: jzodTupleSchema,
-            description:""
-          },
-          "jzodUnionSchema": {
-            zodSchema: jzodUnionSchema,
-            description:""
-          },
-        }
-        
-        const logsPath = "C:/Users/nono/Documents/devhome/tmp";
-        const referenceSchemaFilePath = path.join(logsPath,'jsonZodBootstrap_reference.json');
-        const convertedElementSchemaFilePath = path.join(logsPath,'jsonZodBootstrap_converted.json');
+        const referenceSchemaFilePath = path.join(referencesPath,'jsonZodBootstrap_reference.json');
+        const convertedElementSchemaFilePath = path.join(tmpPath,'jsonZodBootstrap_converted.json');
 
-        // const convertedJsonZodSchema:ZodSchemaAndDescriptionRecord<typeof jzodElementSetSchema> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
-        const convertedJsonZodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
-        
-        const test2ZodSchemaTyped:ZodSchemaAndDescriptionRecord<ZodTypeAny> = test2ZodSchema;
+        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
-        // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(convertedJsonZodSchema));
+        // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(jzodBootstrapElementZodSchema));
         
         const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "jsonZodBootstrap_reference",
-          test2ZodSchema,
-          jzodBootstrapSetSchema,
+          jzodElementSchema,
           referenceSchemaFilePath
         );
         const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "jsonZodBootstrap_converted",
-          convertedJsonZodSchema,
-          jzodBootstrapSetSchema,
+          jzodBootstrapElementZodSchema.zodSchema,
           convertedElementSchemaFilePath
         );
 
@@ -250,32 +113,13 @@ describe(
       'jzod schema simple parsing',
       () => {
   
-        const zodBootstrapSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
+        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
-        console.log("jzod schema simple parsing ");
+        // console.log("jzod schema simple parsing ");
         
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodArraySchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodElementSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodElementSetSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodEnumSchema).success).toBeTruthy();
-        // expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodEnumSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodFunctionSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodLazySchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodLiteralSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodIntersectionSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodMapSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodObjectSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodRecordSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodReferenceSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodSetSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodAttributeSchema).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(jzodBootstrapSetSchema.jzodUnionSchema).success).toBeTruthy();
-
         // ########################################################################################
-        // const testSet: JzodElementSet = {
         const testSet: any = {
           test0: { type: "simpleType", definition: "string", optional: true },
-          // test00: { type: "simpleType", definition: "should fail!", optional: true },
           test1: {
             type: "object",
             definition: { a: { type: "simpleType", definition: "string", nullable:true } },
@@ -329,21 +173,21 @@ describe(
           test9: { type: "simpleType", definition: "string", optional: true, validations: [{type:"min",parameter:5}] },
         };
 
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test0).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test1).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test2).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test3).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test4).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test5).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test6).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test7).success).toBeTruthy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse(testSet.test8).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test0).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test1).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test2).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test3).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test4).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test5).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test6).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test7).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test8).success).toBeTruthy();
 
         // ########################################################################################
         // tests to fail
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse({type:"lazys",definition:"toto"}).success).toBeFalsy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse({type:"lazy",type2:"lazy2",definition:"toto"}).success).toBeFalsy();
-        expect(zodBootstrapSchema.jzodElementSchema.zodSchema.safeParse({
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazys",definition:"toto"}).success).toBeFalsy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazy",type2:"lazy2",definition:"toto"}).success).toBeFalsy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({
           type: "record",
           definition: { type: "object", definition: { a: { type: "simpleType", definition: "undefined!!!!!!" } } },
         }).success).toBeFalsy();
@@ -351,12 +195,11 @@ describe(
         const illShapedReference = {
           type: "object",
           definition: {
-            // b: { type: "schemaReference", definitionssssssssss: "test0" },
             b: { type: "schemaReference", relativePathS: "test0" },
             c: { type: "schemaReference", relativePath: "test1" },
           }
         };
-        expect(zodBootstrapSchema.jzodObjectSchema.zodSchema.safeParse(illShapedReference).success).toBeFalsy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(illShapedReference).success).toBeFalsy();
       }
     )
 
@@ -364,10 +207,9 @@ describe(
     it(
       'jzod bootstrap self parsing',
       () => {
-        const convertedJsonZodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
+        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
         // ~~~~~~~~~~~~~~~~~ BOOTSTRAP TEST ~~~~~~~~~~~~~~~~~~~~~~~~
-        expect(convertedJsonZodSchema.jzodElementSetSchema.zodSchema.safeParse(jzodBootstrapSetSchema).success).toBeTruthy();
-        // expect(convertedJsonZodSchema.jzodElementSetSchema.zodSchema.parse(jzodBootstrapSetSchema));
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(jzodBootstrapElementSchema).success).toBeTruthy();
       }
     )
 
@@ -380,143 +222,226 @@ describe(
         }
 
         // console.log("absoluteReferences",absoluteReferences);
-        
-        const referentialElementSetToBeConverted: JzodElementSet = {
-          test0: { type: "simpleType", definition: "string", optional: true },
-          test1: {
-            type: "object",
-            definition: {
-              a: {
-                type: "simpleType",
-                definition: "number",
-                nullable: true,
-              },
-              b: {
-                type: "simpleType",
-                definition: "number",
-                validations: [{ type: "gt", parameter: 5 }],
-              },
+        const test0: JzodElement = { type: "simpleType", definition: "string", optional: true };
+        const test1: JzodElement = {
+          type: "object",
+          definition: {
+            a: {
+              type: "simpleType",
+              definition: "number",
+              nullable: true,
+            },
+            b: {
+              type: "simpleType",
+              definition: "number",
+              validations: [{ type: "gt", parameter: 5 }],
+            },
 
-            },
           },
-          test2: {
-            type: "object",
-            definition: {
-              b: { type: "schemaReference", definition: { relativePath: "test0" } },
-              c: { type: "schemaReference", definition: { relativePath: "test1" }, nullable: true },
-            },
-          },
-          test3: {
-            type: "enum",
-            definition: ["val1", "val2"],
-          },
-          test4: {
-            type: "function",
-            definition: {
-              args: [
-                { type: "simpleType", definition: "string" },
-                { type: "simpleType", definition: "number" },
-              ],
-              returns: { type: "simpleType", definition: "number" },
-            },
-          },
-          test5: {
-            type: "record",
-            definition: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
-          },
-          test6: {
-            type: "union",
-            definition: [
-              {
-                type: "object",
-                definition: { a: { type: "simpleType", definition: "string" } },
-              },
-              {
-                type: "object",
-                definition: { b: { type: "simpleType", definition: "number" } },
-              },
-            ],
-          },
-          test7: {
-            type: "array",
-            definition: {
+        };
+        const test2: JzodElement = {
+          type: "schemaReference",
+          context: {
+            0: { type: "simpleType", definition: "string", optional: true },
+            1: {
               type: "object",
               definition: {
                 a: {
                   type: "simpleType",
-                  definition: "string",
-                  validations: [
-                    { type: "min", parameter: 5 },
-                    { type: "includes", parameter: "#" },
-                  ],
+                  definition: "number",
+                  nullable: true,
                 },
+                b: {
+                  type: "simpleType",
+                  definition: "number",
+                  validations: [{ type: "gt", parameter: 5 }],
+                },
+    
               },
             },
-          },
-          test8: {
-            type: "lazy",
-            definition: {
-              type: "function",
+            resultObject: {
+              type: "object",
               definition: {
-                args: [{ type: "simpleType", definition: "string" }],
-                returns: { type: "simpleType", definition: "string" },
-              },
-            },
+                b: { type: "schemaReference", definition: { relativePath: "0" } },
+                c: { type: "schemaReference", definition: { relativePath: "1" }, nullable: true },
+              }
+            }
           },
-          test9: {
-            type: "simpleType",
-            definition: "string",
-            optional: true,
-            validations: [{ type: "min", parameter: 5 }],
-          },
-          test10: { type: "schemaReference", definition: { absolutePath: "123", relativePath: "x" } },
-          test11: {
-            type: "object",
-            context: { "123": { type: "simpleType", definition: "string" } },
-            definition: {
-              a: { type: "schemaReference", definition: { relativePath: "123" } },
-            },
-          },
-          test12: {
-            type: "tuple",
-            definition: [
-              { type: "simpleType", definition: "number" },
-              { type: "simpleType", definition: "string" },
-            ],
-          },
-          test13: {
-            type: "intersection",
-            definition: {
-              left: { type: "object", definition: { name: { type: "simpleType", definition: "string" } } },
-              right: { type: "object", definition: { role: { type: "simpleType", definition: "string" } } },
-            },
-          },
-          test14: {
-            type: "set",
-            definition: { type: "simpleType", definition: "string" },
-          },
-          test15: {
-            type: "map",
-            definition: [
-              { type: "simpleType", definition: "string" },
-              { type: "simpleType", definition: "number" },
-            ],
-          },
-          type16: {
-            type: "simpleType",
-            definition: "string",
-            validations: [
-              { type: "min", parameter: 5 },
-              { type: "includes", parameter: "#" },
-            ],
+          definition: {
+            relativePath: "resultObject"
           },
         };
+        const test3: JzodElement = {
+          type: "enum",
+          definition: ["val1", "val2"],
+        };
+        const test4: JzodElement = {
+          type: "function",
+          definition: {
+            args: [
+              { type: "simpleType", definition: "string" },
+              { type: "simpleType", definition: "number" },
+            ],
+            returns: { type: "simpleType", definition: "number" },
+          },
+        };
+        const test5: JzodElement = {
+          type: "record",
+          definition: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+        };
+        const test6: JzodElement = {
+          type: "union",
+          definition: [
+            {
+              type: "object",
+              definition: { a: { type: "simpleType", definition: "string" } },
+            },
+            {
+              type: "object",
+              definition: { b: { type: "simpleType", definition: "number" } },
+            },
+          ],
+        };
+        const test7: JzodElement = {
+          type: "array",
+          definition: {
+            type: "object",
+            definition: {
+              a: {
+                type: "simpleType",
+                definition: "string",
+                validations: [
+                  { type: "min", parameter: 5 },
+                  { type: "includes", parameter: "#" },
+                ],
+              },
+            },
+          },
+        };
+        const test8: JzodElement = {
+          type: "lazy",
+          definition: {
+            type: "function",
+            definition: {
+              args: [{ type: "simpleType", definition: "string" }],
+              returns: { type: "simpleType", definition: "string" },
+            },
+          },
+        };
+        const test9: JzodElement = {
+          type: "simpleType",
+          definition: "string",
+          optional: true,
+          validations: [{ type: "min", parameter: 5 }],
+        };
+        const test10: JzodElement = { type: "schemaReference", definition: { absolutePath: "123", relativePath: "x" } };
+        const test11: JzodElement = {
+          type: "schemaReference",
+          context: {
+            myString: {
+              type: "simpleType", definition: "string" 
+            },
+            myObject: {
+              type: "object",
+              definition: {
+                a: { type: "schemaReference", definition: { relativePath: "myString" } }
+              }
+            }
+          },
+          definition: { relativePath: "myObject" },
+        };
+        const test12: JzodElement = {
+          type: "tuple",
+          definition: [
+            { type: "simpleType", definition: "number" },
+            { type: "simpleType", definition: "string" },
+          ],
+        };
+        const test13: JzodElement = {
+          type: "intersection",
+          definition: {
+            left: { type: "object", definition: { name: { type: "simpleType", definition: "string" } } },
+            right: { type: "object", definition: { role: { type: "simpleType", definition: "string" } } },
+          },
+        };
+        const test14: JzodElement = {
+          type: "set",
+          definition: { type: "simpleType", definition: "string" },
+        };
+        const test15: JzodElement = {
+          type: "map",
+          definition: [
+            { type: "simpleType", definition: "string" },
+            { type: "simpleType", definition: "number" },
+          ],
+        };
+        const test16: JzodElement = {
+          type: "schemaReference", 
+          context: {
+            "myObject": {
+              type: "object",
+              definition: {
+                a: {
+                  type: "union",
+                  definition: [
+                    {
+                      type: "simpleType",
+                      definition: "string",
+                    },
+                    {
+                      type: "schemaReference",
+                      definition: { relativePath: "myObject"}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          definition: { relativePath: "myObject" }
+        };
 
-        expect(jzodElementSetSchema.safeParse(referentialElementSetToBeConverted).success).toBeTruthy();
-        expect(jzodElementSetSchema.safeParse(jzodBootstrapSetSchema).success).toBeTruthy();
+        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
-        const referentialElementSetSchema = jzodSchemaSetToZodSchemaAndDescriptionRecord(referentialElementSetToBeConverted, {}, absoluteReferences?absoluteReferences:{});
-        // const referentialElementSetSchema = jzodSchemaSetToZodSchemaAndDescriptionRecord(referentialElementSetToBeConverted, {}, {});
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test0).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test1).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test2).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test3).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test4).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test5).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test6).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test7).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test8).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test9).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test10).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test11).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test12).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test13).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test14).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test15).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test16).success).toBeTruthy();
+
+        const test0ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test0);
+        const test1ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test1);
+        const test2ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test2);
+        const test3ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test3);
+        const test4ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test4);
+        const test5ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test5);
+        const test6ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test6);
+        const test7ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test7);
+        const test8ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test8);
+        const test9ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test9);
+        const test10ZodSchema: ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(
+          test10,
+          undefined,
+          () => absoluteReferences
+        );
+        const test11ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test11);
+        const test12ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test12);
+        const test13ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test13);
+        const test14ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test14);
+        const test15ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test15);
+        const test16ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test16);
+
 
 
         const test0_OK1 = "toto";
@@ -553,10 +478,10 @@ describe(
         const test8_KO2:string = 'not a function';
         const test9_OK = "12345";
         const test9_KO = "1234";
-        const test10_OK = "toto";
+        const test10_OK = "test";
         const test10_KO = 1;
-        const test11_OK = {a: "toto"};
-        const test11_KO = {a:{x:"toto"}};
+        const test11_OK = {a: "test"};
+        const test11_KO = {a:{x:"test"}};
         const test12_OK = [ 1, "a" ];
         const test12_KO1 = [ "a", 1 ];
         const test12_KO2 = [ 1, "a", "b" ];
@@ -567,63 +492,69 @@ describe(
         const test14_KO = new Set<number>([ 1, 2, 3 ]);
         const test15_OK = new Map<string,number>([["a", 1 ], ["b", 2 ], ["c", 3 ] ]);
         const test15_KO = new Map<string,string>([["a", "1" ], ["b", "2" ], ["c", "3" ] ]);
+        const test16_OK1 = { a: "Test"};
+        const test16_OK2 = { a: { a: "Test" } };
+        const test16_OK3 = { a: { a: { a: "Test"} } };
+        const test16_KO1 = { a: 1 };
+        const test16_KO2 = { a: { a: { a: 1 } } };
+        const test16_KO3 = { a: { a: { a: "Test", b: "Test" } } };
 
         // #####
-        expect(referentialElementSetSchema.test0.zodSchema.safeParse(test0_OK1).success).toBeTruthy();
-        expect(referentialElementSetSchema.test0.zodSchema.safeParse(test0_OK2).success).toBeTruthy();
-        expect(referentialElementSetSchema.test0.zodSchema.safeParse(test0_KO).success).toBeFalsy();
+        expect(test0ZodSchema.zodSchema.safeParse(test0_OK1).success).toBeTruthy();
+        expect(test0ZodSchema.zodSchema.safeParse(test0_OK2).success).toBeTruthy();
+        expect(test0ZodSchema.zodSchema.safeParse(test0_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_OK1).success).toBeTruthy();
-        expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_OK2).success).toBeTruthy();
-        expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_KO1).success).toBeFalsy();
-        expect(referentialElementSetSchema.test1.zodSchema.safeParse(test1_KO2).success).toBeFalsy();
+        expect(test1ZodSchema.zodSchema.safeParse(test1_OK1).success).toBeTruthy();
+        expect(test1ZodSchema.zodSchema.safeParse(test1_OK2).success).toBeTruthy();
+        expect(test1ZodSchema.zodSchema.safeParse(test1_KO1).success).toBeFalsy();
+        expect(test1ZodSchema.zodSchema.safeParse(test1_KO2).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_OK1).success).toBeTruthy();
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_OK2).success).toBeTruthy();
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_OK3).success).toBeTruthy();
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_KO1).success).toBeFalsy();
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_KO2).success).toBeFalsy();
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_KO3).success).toBeFalsy();
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_KO4).success).toBeFalsy();
-        expect(referentialElementSetSchema.test2.zodSchema.safeParse(test2_KO5).success).toBeFalsy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_OK1).success).toBeTruthy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_OK2).success).toBeTruthy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_OK3).success).toBeTruthy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_KO1).success).toBeFalsy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_KO2).success).toBeFalsy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_KO3).success).toBeFalsy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_KO4).success).toBeFalsy();
+        expect(test2ZodSchema.zodSchema.safeParse(test2_KO5).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test3.zodSchema.safeParse(test3_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test3.zodSchema.safeParse(test3_KO).success).toBeFalsy();
+        expect(test3ZodSchema.zodSchema.safeParse(test3_OK).success).toBeTruthy();
+        expect(test3ZodSchema.zodSchema.safeParse(test3_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test4.zodSchema.safeParse(test4_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test4.zodSchema.safeParse(test4_KO).success).toBeFalsy();
+        expect(test4ZodSchema.zodSchema.safeParse(test4_OK).success).toBeTruthy();
+        expect(test4ZodSchema.zodSchema.safeParse(test4_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test5.zodSchema.safeParse(test5_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test5.zodSchema.safeParse(test5_KO).success).toBeFalsy();
+        expect(test5ZodSchema.zodSchema.safeParse(test5_OK).success).toBeTruthy();
+        expect(test5ZodSchema.zodSchema.safeParse(test5_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test6.zodSchema.safeParse(test6_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test6.zodSchema.safeParse(test6_OK2).success).toBeTruthy();
-        expect(referentialElementSetSchema.test6.zodSchema.safeParse(test6_KO).success).toBeFalsy();
+        expect(test6ZodSchema.zodSchema.safeParse(test6_OK).success).toBeTruthy();
+        expect(test6ZodSchema.zodSchema.safeParse(test6_OK2).success).toBeTruthy();
+        expect(test6ZodSchema.zodSchema.safeParse(test6_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_OK2).success).toBeTruthy();
-        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_KO1).success).toBeFalsy();
-        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_KO2).success).toBeFalsy();
-        expect(referentialElementSetSchema.test7.zodSchema.safeParse(test7_KO3).success).toBeFalsy();
+        expect(test7ZodSchema.zodSchema.safeParse(test7_OK).success).toBeTruthy();
+        expect(test7ZodSchema.zodSchema.safeParse(test7_OK2).success).toBeTruthy();
+        expect(test7ZodSchema.zodSchema.safeParse(test7_KO1).success).toBeFalsy();
+        expect(test7ZodSchema.zodSchema.safeParse(test7_KO2).success).toBeFalsy();
+        expect(test7ZodSchema.zodSchema.safeParse(test7_KO3).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test8.zodSchema.safeParse(test8_OK).success).toBeTruthy();
         // expect(referentialElementSetSchema.test8.zodSchema.safeParse(test8_KO1).success).toBeFalsy(); // Zod does not validate function parameter types?
-        expect(referentialElementSetSchema.test8.zodSchema.safeParse(test8_KO2).success).toBeFalsy();
+        expect(test8ZodSchema.zodSchema.safeParse(test8_OK).success).toBeTruthy();
+        expect(test8ZodSchema.zodSchema.safeParse(test8_KO2).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test9.zodSchema.safeParse(test9_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test9.zodSchema.safeParse(test9_KO).success).toBeFalsy();
+        expect(test9ZodSchema.zodSchema.safeParse(test9_OK).success).toBeTruthy();
+        expect(test9ZodSchema.zodSchema.safeParse(test9_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test10.zodSchema.safeParse(test10_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test10.zodSchema.safeParse(test10_KO).success).toBeFalsy();
+        expect(test10ZodSchema.zodSchema.safeParse(test10_OK).success).toBeTruthy();
+        expect(test10ZodSchema.zodSchema.safeParse(test10_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test11.zodSchema.safeParse(test11_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test11.zodSchema.safeParse(test11_KO).success).toBeFalsy();
+        expect(test11ZodSchema.zodSchema.safeParse(test11_OK).success).toBeTruthy();
+        expect(test11ZodSchema.zodSchema.safeParse(test11_KO).success).toBeFalsy();
         // #####
-        expect(referentialElementSetSchema.test12.zodSchema.safeParse(test12_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test12.zodSchema.safeParse(test12_KO1).success).toBeFalsy();
-        expect(referentialElementSetSchema.test12.zodSchema.safeParse(test12_KO2).success).toBeFalsy();
+        expect(test12ZodSchema.zodSchema.safeParse(test12_OK).success).toBeTruthy();
+        expect(test12ZodSchema.zodSchema.safeParse(test12_KO1).success).toBeFalsy();
+        expect(test12ZodSchema.zodSchema.safeParse(test12_KO2).success).toBeFalsy();
         // #####
-        // console.log("referentialElementSetSchema.test13",referentialElementSetSchema.test13.description,JSON.stringify(referentialElementSetSchema.test13.zodSchema));
+        // console.log("referentialElementSetSchema.test13",referentialElementSetSchema.test13.zodText,JSON.stringify(referentialElementSetSchema.test13.zodSchema));
         
         // const toto = z.intersection(z.object({name:z.string(),}).strict(),z.object({role:z.string(),}).strict())
         // console.log("compare zod schema",JSON.stringify(toto));
@@ -631,178 +562,23 @@ describe(
         // const a:Toto = { name: "Test", role: "test"};
         // expect(referentialElementSetSchema.test13.zodSchema.parse(test13_OK).success).toBeTruthy();
         // expect(referentialElementSetSchema.test13.zodSchema.safeParse(test13_OK).success).toBeTruthy(); // FAILING!!! IS GENERATED ZOD SCHEMA WRONG??
-        expect(referentialElementSetSchema.test13.zodSchema.safeParse(test13_KO1).success).toBeFalsy();
-        expect(referentialElementSetSchema.test13.zodSchema.safeParse(test13_KO2).success).toBeFalsy();
+        expect(test13ZodSchema.zodSchema.safeParse(test13_KO1).success).toBeFalsy();
+        expect(test13ZodSchema.zodSchema.safeParse(test13_KO2).success).toBeFalsy();
 
-        expect(referentialElementSetSchema.test14.zodSchema.safeParse(test14_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test14.zodSchema.safeParse(test14_KO).success).toBeFalsy();
+        expect(test14ZodSchema.zodSchema.safeParse(test14_OK).success).toBeTruthy();
+        expect(test14ZodSchema.zodSchema.safeParse(test14_KO).success).toBeFalsy();
         // expect(referentialElementSetSchema.test14.zodSchema.safeParse(test14_KO2).success).toBeFalsy();
 
-        expect(referentialElementSetSchema.test15.zodSchema.safeParse(test15_OK).success).toBeTruthy();
-        expect(referentialElementSetSchema.test15.zodSchema.safeParse(test15_KO).success).toBeFalsy();
-      }
-    )
-
-    // ############################################################################################
-    it(
-      "Jzod to TS Type",
-      async() => {
-
-        const writeTsFile = (
-          testJzodSchema: JzodObject,
-          convertedJsonZodSchema: ZodSchemaAndDescription<ZodTypeAny>,
-          typeName: string,
-          testResultSchemaFilePath:string,
-        ) => {
-          const result = getTsCodeCorrespondingToZodSchemaAndDescription(typeName,convertedJsonZodSchema)
-          fs.writeFileSync(testResultSchemaFilePath,result);
-          return result;
-        }
-
-        const testJzodToTs = (
-          testDirectory: string,
-          referenceFileName: string,
-          testFileName: string,
-          testJzodSchema:JzodObject,
-          typeName: string
-        ) => {
-          const testResultSchemaFilePath = path.join(testDirectory,testFileName);
-          const expectedSchemaFilePath = path.join(testDirectory,referenceFileName);
-
-          const convertedJsonZodSchema = jzodElementSchemaToZodSchemaAndDescription(
-            // typeName,
-            testJzodSchema,
-            () => ({} as ZodSchemaAndDescriptionRecord<ZodTypeAny>),
-            () => ({} as ZodSchemaAndDescriptionRecord<ZodTypeAny>),
-            (innerReference: ZodTypeAny, relativeReference: string | undefined) =>
-              withGetType(innerReference, (ts) =>
-                ts.factory.createTypeReferenceNode(
-                  ts.factory.createIdentifier(relativeReference ? relativeReference : "RELATIVEPATH_NOT_DEFINED")
-                )
-              )
-          );
-
-          console.log("ts Type generation", typeName);
-          // console.log("ts Type generation", typeName,JSON.stringify(convertedJsonZodSchema));
-
-
-          const resultContents = writeTsFile(
-            testJzodSchema,
-            convertedJsonZodSchema,
-            typeName,
-            testResultSchemaFilePath,
-          ).replace(/(\r\n|\n|\r)/gm, "");
-          console.log("ts Type generation resultContents", resultContents);
-
-          const expectedFileContents = fs.readFileSync(expectedSchemaFilePath).toString().replace(/(\r\n|\n|\r)/gm, "")
-          expect(resultContents).toEqual(expectedFileContents);
-        }
-
-        const logsPath = "C:/Users/nono/Documents/devhome/tmp";
-        // ########################################################################################
-        const testJzodSchema1:JzodObject = {
-          type: "object",
-          context: {
-            a: { type: "simpleType", definition: "string"}
-          },
-          definition: {
-            "optional": { type: "simpleType", definition: "boolean", optional: true },
-            "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
-            "type": { type: "literal", definition: "enum" },
-            "definition": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "a"} } },
-          },
-        }
-
-        testJzodToTs(
-          logsPath,
-          "tsTypeGeneration-testJzodSchema1 - reference.ts",
-          "tsTypeGeneration-testJzodSchema1.ts",
-          testJzodSchema1,
-          "testJzodSchema1"
-        );
-
-        // ########################################################################################
-        const testJzodSchema2:JzodObject = 
-        {
-          type: "object", 
-          // context: jzodBootstrapSetSchema,
-          context:{
-            jzodLiteralSchema: {
-              type: "object",
-              definition: {
-                "optional": { type: "simpleType", definition: "boolean", optional: true },
-                "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
-                "type": { type: "literal", definition: "literal" },
-                "definition": { type: "simpleType", definition: "string" },
-              },
-            }
-          },
-          definition: {
-            "a": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "jzodLiteralSchema"} } },
-          },
-        }
-
-        testJzodToTs(
-          logsPath,
-          "tsTypeGeneration-testJzodSchema2 - reference.ts",
-          "tsTypeGeneration-testJzodSchema2.ts",
-          testJzodSchema2,
-          "testJzodSchema2"
-        );
-
-        // ########################################################################################
-        const testJzodSchema3:JzodObject = 
-        {
-          type: "object", 
-          // context: jzodBootstrapSetSchema,
-          context:{
-            jzodLiteralSchema: {
-              type: "object",
-              definition: {
-                "optional": { type: "simpleType", definition: "boolean", optional: true },
-                "extra": { type: "record", definition: { type: "simpleType", definition: "any"}, optional: true },
-                "type": { type: "literal", definition: "literal" },
-                "definition": { type: "simpleType", definition: "string" },
-              },
-            },
-            jzodElementSchema: {
-              type: "union",
-              "discriminant": "type",
-              definition: [
-                { type: "schemaReference", definition: { relativePath: "jzodLiteralSchema" } },
-              ],
-            },
-          },
-          definition: {
-            "b": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "jzodElementSchema"} } },
-          },
-        }
-
-        testJzodToTs(
-          logsPath,
-          "tsTypeGeneration-testJzodSchema3 - reference.ts",
-          "tsTypeGeneration-testJzodSchema3.ts",
-          testJzodSchema3,
-          "testJzodSchema3"
-        );
-
-        // ########################################################################################
-        const testJzodSchema4:JzodObject = 
-        {
-          type: "object", 
-          context: jzodBootstrapSetSchema,
-          definition: {
-            "c": { type: "array", definition: { type: "schemaReference", definition: {relativePath: "jzodArraySchema"} } },
-          },
-        }
-
-        testJzodToTs(
-          logsPath,
-          "tsTypeGeneration-testJzodSchema4 - reference.ts",
-          "tsTypeGeneration-testJzodSchema4.ts",
-          testJzodSchema4,
-          "testJzodSchema4"
-        );
+        // #####
+        expect(test15ZodSchema.zodSchema.safeParse(test15_OK).success).toBeTruthy();
+        expect(test15ZodSchema.zodSchema.safeParse(test15_KO).success).toBeFalsy();
+        // #####
+        expect(test16ZodSchema.zodSchema.safeParse(test16_OK1).success).toBeTruthy();
+        expect(test16ZodSchema.zodSchema.safeParse(test16_OK2).success).toBeTruthy();
+        expect(test16ZodSchema.zodSchema.safeParse(test16_OK3).success).toBeTruthy();
+        expect(test16ZodSchema.zodSchema.safeParse(test16_KO1).success).toBeFalsy();
+        expect(test16ZodSchema.zodSchema.safeParse(test16_KO2).success).toBeFalsy();
+        expect(test16ZodSchema.zodSchema.safeParse(test16_KO3).success).toBeFalsy();
       }
     )
 
@@ -826,7 +602,6 @@ describe(
           expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
         }
 
-        // const test1JzodSchema:JzodElement = { type: "simpleType", definition: "any"}
         testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"});
         testZodToJzodConversion("test2",{ type: "simpleType", definition: "string"});
         testZodToJzodConversion("test3",{ type: "simpleType", definition: "number"});
@@ -874,7 +649,7 @@ describe(
           test20
         ).toEqual({
           type: "union",
-          discriminant: "kind",
+          discriminator: "kind",
           definition: [
             {
               type: "object",

@@ -1,0 +1,657 @@
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "array"
+        },
+        "definition": {
+          "$ref": "4"
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "simpleType"
+        },
+        "definition": {
+          "type": "string",
+          "enum": [
+            "any",
+            "bigint",
+            "boolean",
+            "date",
+            "never",
+            "null",
+            "number",
+            "string",
+            "uuid",
+            "undefined",
+            "unknown",
+            "void"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "simpleType"
+        },
+        "definition": {
+          "type": "string",
+          "const": "date"
+        },
+        "validations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "extra": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "min",
+                  "max"
+                ]
+              },
+              "parameter": {}
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "type",
+        "definition",
+        "validations"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "simpleType"
+        },
+        "definition": {
+          "type": "string",
+          "const": "number"
+        },
+        "validations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "extra": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "gt",
+                  "gte",
+                  "lt",
+                  "lte",
+                  "int",
+                  "positive",
+                  "nonpositive",
+                  "negative",
+                  "nonnegative",
+                  "multipleOf",
+                  "finite",
+                  "safe"
+                ]
+              },
+              "parameter": {}
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "type",
+        "definition",
+        "validations"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "simpleType"
+        },
+        "definition": {
+          "type": "string",
+          "const": "string"
+        },
+        "validations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "extra": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "max",
+                  "min",
+                  "length",
+                  "email",
+                  "url",
+                  "emoji",
+                  "uuid",
+                  "cuid",
+                  "cuid2",
+                  "ulid",
+                  "regex",
+                  "includes",
+                  "startsWith",
+                  "endsWith",
+                  "datetime",
+                  "ip"
+                ]
+              },
+              "parameter": {}
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "type",
+        "definition",
+        "validations"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "enum"
+        },
+        "definition": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "function"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "definition": {
+          "type": "object",
+          "properties": {
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "7"
+              }
+            },
+            "returns": {
+              "$ref": "6"
+            }
+          },
+          "required": [
+            "args"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "lazy"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "definition": {
+          "$ref": "3/6"
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "literal"
+        },
+        "definition": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "intersection"
+        },
+        "definition": {
+          "type": "object",
+          "properties": {
+            "left": {
+              "$ref": "6"
+            },
+            "right": {
+              "$ref": "6"
+            }
+          },
+          "required": [
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "map"
+        },
+        "definition": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": [
+            {
+              "$ref": "6"
+            },
+            {
+              "$ref": "6"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "object"
+        },
+        "definition": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "5"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "promise"
+        },
+        "definition": {
+          "$ref": "4"
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "record"
+        },
+        "definition": {
+          "$ref": "4"
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "schemaReference"
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "5"
+          }
+        },
+        "definition": {
+          "type": "object",
+          "properties": {
+            "relativePath": {
+              "type": "string"
+            },
+            "absolutePath": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "set"
+        },
+        "definition": {
+          "$ref": "4"
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "tuple"
+        },
+        "definition": {
+          "type": "array",
+          "items": {
+            "$ref": "5"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "type": "string",
+          "const": "union"
+        },
+        "discriminator": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "array",
+          "items": {
+            "$ref": "5"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "definition"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
