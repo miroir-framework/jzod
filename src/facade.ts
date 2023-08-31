@@ -21,8 +21,8 @@ export function jzodToZod(
 //   const elementZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
 //     // typeName,
 //     element,
-//     () => ({} as ZodSchemaAndDescriptionRecord<ZodTypeAny>),
-//     () => ({} as ZodSchemaAndDescriptionRecord<ZodTypeAny>),
+//     () => ({} as ZodSchemaAndDescriptionRecord),
+//     () => ({} as ZodSchemaAndDescriptionRecord),
 //     (innerReference: ZodTypeAny, relativeReference: string | undefined) =>
 //       withGetType(innerReference, (ts) =>
 //         ts.factory.createTypeReferenceNode(

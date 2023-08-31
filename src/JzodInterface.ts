@@ -4,14 +4,14 @@ import { ZodTypeAny } from "zod";
 import { JzodElement } from "@miroir-framework/jzod-ts";
 
 
-export interface ZodSchemaAndDescription<T extends ZodTypeAny> {
-  contextZodSchema?:{[k:string]:T}, 
-  contextZodText?:{[k:string]:string}
-  zodSchema:T, 
+export interface ZodSchemaAndDescription {
+  contextZodSchema?: { [k:string]: ZodTypeAny }, 
+  contextZodText?: { [k:string]: string }
+  zodSchema: ZodTypeAny, 
   zodText:string
 };
 
-export type ZodSchemaAndDescriptionRecord<T extends ZodTypeAny> = {[k:string]:ZodSchemaAndDescription<T>};
+export type ZodSchemaAndDescriptionRecord = {[k:string]:ZodSchemaAndDescription};
 
 
 // ##############################################################################################################

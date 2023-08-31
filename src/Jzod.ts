@@ -24,15 +24,15 @@ export const objectToJsStringArray = (o: Object): string =>
   Object.entries(o).reduce((acc: string, curr: [string, any]) => acc + curr[1] + ",", "[") + "]";
 
 // ######################################################################################################
-export function getDescriptions(set: ZodSchemaAndDescriptionRecord<ZodTypeAny>) {
+export function getDescriptions(set: ZodSchemaAndDescriptionRecord) {
   return Object.fromEntries(Object.entries(set).map((a) => [a[0], a[1].zodText]));
 }
 
 // ######################################################################################################
-export function getContextDescriptions(set: ZodSchemaAndDescriptionRecord<ZodTypeAny>) {
+export function getContextDescriptions(set: ZodSchemaAndDescriptionRecord) {
   return Object.fromEntries(
     Object.entries(set).reduce(
-      (acc: [string, string][], curr: [string, ZodSchemaAndDescription<ZodTypeAny>]) => [
+      (acc: [string, string][], curr: [string, ZodSchemaAndDescription]) => [
         ...acc,
         ...Object.entries(curr[1].contextZodText ? curr[1].contextZodText : {}),
       ],
@@ -42,20 +42,20 @@ export function getContextDescriptions(set: ZodSchemaAndDescriptionRecord<ZodTyp
 }
 
 // ######################################################################################################
-export function getJsResultSetConstDeclarations(set: ZodSchemaAndDescriptionRecord<ZodTypeAny>) {
+export function getJsResultSetConstDeclarations(set: ZodSchemaAndDescriptionRecord) {
   return Object.entries(set).reduce((acc, curr) => acc + `export const ${curr[0]} = ${curr[1].zodText};`, "");
 }
 
 // ######################################################################################################
-export function getZodSchemas(set: ZodSchemaAndDescriptionRecord<ZodTypeAny>) {
+export function getZodSchemas(set: ZodSchemaAndDescriptionRecord) {
   return Object.fromEntries(Object.entries(set).map((a) => [a[0], a[1].zodSchema]));
 }
 
 // ######################################################################################################
-export function getContextZodSchemas(set: ZodSchemaAndDescriptionRecord<ZodTypeAny>) {
+export function getContextZodSchemas(set: ZodSchemaAndDescriptionRecord) {
   return Object.fromEntries(
     Object.entries(set).reduce(
-      (acc: [string, ZodTypeAny][], curr: [string, ZodSchemaAndDescription<ZodTypeAny>]) => [
+      (acc: [string, ZodTypeAny][], curr: [string, ZodSchemaAndDescription]) => [
         ...acc,
         ...Object.entries(curr[1].contextZodSchema ? curr[1].contextZodSchema : {}),
       ],
@@ -80,10 +80,10 @@ function optionalNullableZodDescription(zodElement:string, optional?: boolean, n
 // ######################################################################################################
 export function jzodElementSchemaToZodSchemaAndDescription(
   element: JzodElement,
-  getSchemaRelativeReferences: () => ZodSchemaAndDescriptionRecord<ZodTypeAny> = () => ({}),
-  getAbsoluteReferences: () => ZodSchemaAndDescriptionRecord<ZodTypeAny> = () => ({}),
+  getSchemaRelativeReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
+  getAbsoluteReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
   typeScriptReferenceConverter?: (innerReference: ZodTypeAny, relativeReference: string | undefined) => ZodTypeAny
-): ZodSchemaAndDescription<ZodTypeAny> {
+): ZodSchemaAndDescription {
   // console.log("jzodElementSchemaToZodSchemaAndDescription called for type",element.type);
 
   switch (element.type) {
@@ -229,7 +229,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "object": {
-      // const contextSubObjectAttributes:[string,ZodSchemaAndDescription<ZodTypeAny>][] = element.context
+      // const contextSubObjectAttributes:[string,ZodSchemaAndDescription][] = element.context
       //   ? Object.entries(element.context).map((a) => [
       //         a[0],
       //         jzodElementSchemaToZodSchemaAndDescription(
@@ -241,7 +241,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       //       ])
       //   : []
       // ;
-      // const contextSubObject:ZodSchemaAndDescriptionRecord<ZodTypeAny> = element.context? Object.fromEntries(contextSubObjectAttributes): {};
+      // const contextSubObject:ZodSchemaAndDescriptionRecord = element.context? Object.fromEntries(contextSubObjectAttributes): {};
 
       // console.log(
       //   "jzodElementSchemaToZodSchemaAndDescription converting object context",
@@ -255,7 +255,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       // );
 
       // const definitionSubObjectContext = () => ({ ...getSchemaRelativeReferences(), ...contextSubObject });
-      const definitionSubObject: ZodSchemaAndDescriptionRecord<ZodTypeAny> = Object.fromEntries(
+      const definitionSubObject: ZodSchemaAndDescriptionRecord = Object.fromEntries(
         Object.entries(element.definition).map((a) => [
           a[0],
           jzodElementSchemaToZodSchemaAndDescription(
@@ -344,7 +344,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       };
     }
     case "schemaReference": {
-      const contextSubObjectSchemaAndDescriptionRecord:ZodSchemaAndDescriptionRecord<ZodTypeAny> = element.context
+      const contextSubObjectSchemaAndDescriptionRecord:ZodSchemaAndDescriptionRecord = element.context
         ? Object.fromEntries(
             Object.entries(element.context).map((a) => [
               a[0],
@@ -521,7 +521,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "union": {
-      const sub: ZodSchemaAndDescription<ZodTypeAny>[] = (element as JzodUnion).definition.map((e) =>
+      const sub: ZodSchemaAndDescription[] = (element as JzodUnion).definition.map((e) =>
         jzodElementSchemaToZodSchemaAndDescription(
           // name,
           e,
@@ -533,7 +533,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextZodText: Object.fromEntries(
           sub.reduce(
-            (acc: [string, string][], curr: ZodSchemaAndDescription<ZodTypeAny>) => [
+            (acc: [string, string][], curr: ZodSchemaAndDescription) => [
               ...acc,
               ...(curr.contextZodText ? Object.entries(curr.contextZodText) : []),
             ],
@@ -542,7 +542,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
         ),
         contextZodSchema: Object.fromEntries(
           sub.reduce(
-            (acc: [string, string][], curr: ZodSchemaAndDescription<ZodTypeAny>) => [
+            (acc: [string, string][], curr: ZodSchemaAndDescription) => [
               ...acc,
               ...(curr.contextZodSchema ? Object.entries(curr.contextZodSchema) : []),
             ],
@@ -622,7 +622,7 @@ export function referentialElementRelativeDependencies(element: JzodElement | Jz
 
 // // ##############################################################################################################
 // export function _zodSchemaToJsonSchema(
-//   referentialSchema: ZodSchemaAndDescription<ZodTypeAny>,
+//   referentialSchema: ZodSchemaAndDescription,
 //   dependencies: { [k: string]: string[] },
 //   name?: string
 // ): { [k: string]: any } {
@@ -647,7 +647,7 @@ export function referentialElementRelativeDependencies(element: JzodElement | Jz
 
 // ##############################################################################################################
 export function _zodToJsonSchema(
-  referentialSet: ZodSchemaAndDescriptionRecord<ZodTypeAny>,
+  referentialSet: ZodSchemaAndDescriptionRecord,
   dependencies: { [k: string]: string[] },
   name?: string
 ): { [k: string]: any } {

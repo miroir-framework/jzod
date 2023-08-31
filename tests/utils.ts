@@ -12,7 +12,7 @@ export function convertZodSchemaToJsonSchemaAndWriteToFile(
 ): string {
   const zodSchemaJsonSchema = zodToJsonSchema(zodSchema, {
     $refStrategy: "relative",
-  });;
+  });
   const zodSchemaJsonSchemaString = JSON.stringify(zodSchemaJsonSchema, undefined, 2);
 
   if (path) {

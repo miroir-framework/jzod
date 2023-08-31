@@ -16,8 +16,9 @@ import {
   jzodBootstrapElementSchema
 } from "../src/JzodInterface";
 import { zodToJzod } from "../src/ZodToJzod";
-import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
+import { jzodToZod } from "../src/facade";
 
+import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
 
 const tmpPath = "./tests/tmp";
 const referencesPath = "./tests/references";
@@ -50,7 +51,7 @@ describe(
           b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
         })
 
-        const referenceZodSchema:ZodSchemaAndDescription<typeof x> = {
+        const referenceZodSchema:ZodSchemaAndDescription = {
           zodSchema: z.object({
             a: z.string(),
             b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
@@ -59,7 +60,7 @@ describe(
         }
         
 
-        const testJzodSchemaZodSchemaAndDescription :ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(testJzodSchema);
+        const testJzodSchemaZodSchemaAndDescription :ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(testJzodSchema);
 
 
         const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
@@ -88,7 +89,7 @@ describe(
         const referenceSchemaFilePath = path.join(referencesPath,'jsonZodBootstrap_reference.json');
         const convertedElementSchemaFilePath = path.join(tmpPath,'jsonZodBootstrap_converted.json');
 
-        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+        const jzodBootstrapElementZodSchema:ZodTypeAny = jzodToZod(jzodBootstrapElementSchema);
 
         // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(jzodBootstrapElementZodSchema));
         
@@ -99,7 +100,7 @@ describe(
         );
         const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
           "jsonZodBootstrap_converted",
-          jzodBootstrapElementZodSchema.zodSchema,
+          jzodBootstrapElementZodSchema,
           convertedElementSchemaFilePath
         );
 
@@ -113,7 +114,7 @@ describe(
       'jzod schema simple parsing',
       () => {
   
-        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
         // console.log("jzod schema simple parsing ");
         
@@ -207,7 +208,7 @@ describe(
     it(
       'jzod bootstrap self parsing',
       () => {
-        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
         // ~~~~~~~~~~~~~~~~~ BOOTSTRAP TEST ~~~~~~~~~~~~~~~~~~~~~~~~
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(jzodBootstrapElementSchema).success).toBeTruthy();
       }
@@ -400,7 +401,7 @@ describe(
           definition: { relativePath: "myObject" }
         };
 
-        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test0).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test1).success).toBeTruthy();
@@ -420,27 +421,27 @@ describe(
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test15).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test16).success).toBeTruthy();
 
-        const test0ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test0);
-        const test1ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test1);
-        const test2ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test2);
-        const test3ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test3);
-        const test4ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test4);
-        const test5ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test5);
-        const test6ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test6);
-        const test7ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test7);
-        const test8ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test8);
-        const test9ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test9);
-        const test10ZodSchema: ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(
+        const test0ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test0);
+        const test1ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test1);
+        const test2ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test2);
+        const test3ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test3);
+        const test4ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test4);
+        const test5ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test5);
+        const test6ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test6);
+        const test7ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test7);
+        const test8ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test8);
+        const test9ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test9);
+        const test10ZodSchema: ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
           test10,
           undefined,
           () => absoluteReferences
         );
-        const test11ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test11);
-        const test12ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test12);
-        const test13ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test13);
-        const test14ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test14);
-        const test15ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test15);
-        const test16ZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(test16);
+        const test11ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test11);
+        const test12ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test12);
+        const test13ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test13);
+        const test14ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test14);
+        const test15ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test15);
+        const test16ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test16);
 
 
 
@@ -591,10 +592,10 @@ describe(
           testJzodSchema:JzodElement,
           expectedJzodSchema?: JzodElement,
         ) => {
-          const testZodSchema:ZodSchemaAndDescription<ZodTypeAny> = jzodElementSchemaToZodSchemaAndDescription(
+          const testZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
             testJzodSchema,
-            () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
-            () => ({}) as ZodSchemaAndDescriptionRecord<ZodTypeAny>,
+            () => ({}) as ZodSchemaAndDescriptionRecord,
+            () => ({}) as ZodSchemaAndDescriptionRecord,
           )
           const testResult = zodToJzod(testZodSchema.zodSchema,typeName);
           // console.log("Zod to Jzod testJzodSchema", typeName, JSON.stringify(testJzodSchema),"result",JSON.stringify(testResult));
