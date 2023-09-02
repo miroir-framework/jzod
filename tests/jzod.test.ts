@@ -127,6 +127,7 @@ describe(
           },
           test2: {
             type: "object",
+            extend: { type: "schemaReference", definition: { relativePath: "test0" } },
             definition: {
               b: { type: "schemaReference", definition: { relativePath: "test0" } },
               c: { type: "schemaReference", definition: { relativePath: "test1" } },
@@ -186,8 +187,8 @@ describe(
 
         // ########################################################################################
         // tests to fail
-        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazys",definition:"toto"}).success).toBeFalsy();
-        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazy",type2:"lazy2",definition:"toto"}).success).toBeFalsy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazys",definition:"test"}).success).toBeFalsy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazy",type2:"lazy2",definition:"test"}).success).toBeFalsy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({
           type: "record",
           definition: { type: "object", definition: { a: { type: "simpleType", definition: "undefined!!!!!!" } } },
@@ -237,14 +238,13 @@ describe(
               definition: "number",
               validations: [{ type: "gt", parameter: 5 }],
             },
-
           },
         };
         const test2: JzodElement = {
           type: "schemaReference",
           context: {
-            0: { type: "simpleType", definition: "string", optional: true },
-            1: {
+            ref0: { type: "simpleType", definition: "string", optional: true },
+            ref1: {
               type: "object",
               definition: {
                 a: {
@@ -260,11 +260,17 @@ describe(
     
               },
             },
-            resultObject: {
+            ref2: {
               type: "object",
               definition: {
-                b: { type: "schemaReference", definition: { relativePath: "0" } },
-                c: { type: "schemaReference", definition: { relativePath: "1" }, nullable: true },
+                b: { type: "schemaReference", definition: { relativePath: "ref0" } },
+              }
+            },
+            resultObject: {
+              type: "object",
+              extend: { type: "schemaReference", definition: { relativePath: "ref2", eager: true } },
+              definition: {
+                c: { type: "schemaReference", definition: { relativePath: "ref1" }, nullable: true },
               }
             }
           },

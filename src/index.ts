@@ -1,6 +1,7 @@
 export {
   ZodSchemaAndDescriptionRecord,
   ZodSchemaAndDescription,
+  jzodBootstrapElementSchema,
 } from "./JzodInterface"
 export {
   getDescriptions,

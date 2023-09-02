@@ -1,4 +1,4 @@
-import { AnyZodObject, ZodTypeAny, z } from "zod";
+import { AnyZodObject, ZodLazy, ZodTypeAny, z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
 import { JzodAttributeStringWithValidations, JzodElement, JzodUnion } from "@miroir-framework/jzod-ts";
@@ -80,9 +80,9 @@ function optionalNullableZodDescription(zodElement:string, optional?: boolean, n
 // ######################################################################################################
 export function jzodElementSchemaToZodSchemaAndDescription(
   element: JzodElement,
-  getSchemaRelativeReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  getAbsoluteReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  typeScriptReferenceConverter?: (innerReference: ZodTypeAny, relativeReference: string | undefined) => ZodTypeAny
+  getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
+  getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
+  typeScriptLazyReferenceConverter?: (lazyZodSchema: ZodLazy<any>, relativeReference: string | undefined) => ZodLazy<any>
 ): ZodSchemaAndDescription {
   // console.log("jzodElementSchemaToZodSchemaAndDescription called for type",element.type);
 
@@ -90,9 +90,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
     case "array": {
       const sub = jzodElementSchemaToZodSchemaAndDescription(
         element.definition,
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       return {
         contextZodText: sub.contextZodText,
@@ -123,18 +123,18 @@ export function jzodElementSchemaToZodSchemaAndDescription(
         jzodElementSchemaToZodSchemaAndDescription(
           // name,
           e[1],
-          getSchemaRelativeReferences,
-          getAbsoluteReferences,
-          typeScriptReferenceConverter
+          getSchemaEagerReferences,
+          getLazyReferences,
+          typeScriptLazyReferenceConverter
         )
       );
       if (element.definition.returns) {
         const returns = jzodElementSchemaToZodSchemaAndDescription(
           // name,
           element.definition.returns,
-          getSchemaRelativeReferences,
-          getAbsoluteReferences,
-          typeScriptReferenceConverter
+          getSchemaEagerReferences,
+          getLazyReferences,
+          typeScriptLazyReferenceConverter
         );
         return {
           contextZodText: undefined, // function definitions obfuscate any context defined within them
@@ -161,16 +161,16 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       const subLeft = jzodElementSchemaToZodSchemaAndDescription(
         // "left",
         element.definition.left,
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       const subRight = jzodElementSchemaToZodSchemaAndDescription(
         // "right",
         element.definition.right,
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       return {
         contextZodText: {...subLeft.contextZodText, ...subRight.contextZodText},
@@ -185,7 +185,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
         // contextZodText: {},
         // contextZodSchema: {},
         zodSchema: optionalNullableZodSchema(z.literal(element.definition),element.optional,element.nullable),
-        zodText: optionalNullableZodDescription(`z.literal("${element.definition}")`,element.optional,element.nullable),
+        zodText: optionalNullableZodDescription(`z.literal("${element.definition}")`,element.optional,element.nullable), // TODO: defines only strings!
       };
       break;
     }
@@ -193,9 +193,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       const sub = jzodElementSchemaToZodSchemaAndDescription(
         // name,
         element.definition,
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       return {
         contextZodText: undefined, // lazy evaluation obfuscates any context defined within it
@@ -209,16 +209,16 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       const sub0 = jzodElementSchemaToZodSchemaAndDescription(
         // name,
         element.definition[0],
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       const sub1 = jzodElementSchemaToZodSchemaAndDescription(
         // name,
         element.definition[1],
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       return {
         contextZodText: {...sub0.contextZodText, ...sub1.contextZodText},
@@ -229,86 +229,51 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "object": {
-      // const contextSubObjectAttributes:[string,ZodSchemaAndDescription][] = element.context
-      //   ? Object.entries(element.context).map((a) => [
-      //         a[0],
-      //         jzodElementSchemaToZodSchemaAndDescription(
-      //           a[1],
-      //           getSchemaRelativeReferences,
-      //           getAbsoluteReferences,
-      //           typeScriptReferenceConverter
-      //         ),
-      //       ])
-      //   : []
-      // ;
-      // const contextSubObject:ZodSchemaAndDescriptionRecord = element.context? Object.fromEntries(contextSubObjectAttributes): {};
+      const extendsSubObject: ZodSchemaAndDescription | undefined = element.extend
+        ? jzodElementSchemaToZodSchemaAndDescription(
+            element.extend,
+            getSchemaEagerReferences,
+            getLazyReferences,
+            typeScriptLazyReferenceConverter
+          )
+        : undefined;
 
-      // console.log(
-      //   "jzodElementSchemaToZodSchemaAndDescription converting object context",
-      //   JSON.stringify(element.context),
-      //   "keys",
-      //   JSON.stringify(element.context?Array.from(Object.keys(element.context)):undefined),
-      //   "contextSubObjectAttributes",
-      //   contextSubObjectAttributes,
-      //   "contextSubObject",
-      //   JSON.stringify(contextSubObject)
-      // );
-
-      // const definitionSubObjectContext = () => ({ ...getSchemaRelativeReferences(), ...contextSubObject });
       const definitionSubObject: ZodSchemaAndDescriptionRecord = Object.fromEntries(
         Object.entries(element.definition).map((a) => [
           a[0],
           jzodElementSchemaToZodSchemaAndDescription(
             a[1],
-            getSchemaRelativeReferences,
-            getAbsoluteReferences,
-            typeScriptReferenceConverter
+            getSchemaEagerReferences,
+            getLazyReferences,
+            typeScriptLazyReferenceConverter
           ),
         ])
       );
-      // const contextSchemas = Object.fromEntries(
-      //   // TODO: detect name clashes!
-      //   [
-      //     ...Object.entries(contextSubObject)
-      //       .filter((a) => a[1].zodSchema)
-      //       .map((a) => [a[0], a[1].zodSchema]),
-      //     ...Object.entries(definitionSubObject)
-      //       .filter((a) => a[1].contextZodSchema)
-      //       .map((a) => a[1].contextZodSchema?Object.entries(a[1].contextZodSchema):[]),
-      //   ]
-      // );
       // console.log(
       //   "jzodElementSchemaToZodSchemaAndDescription converting object definition",
       //   JSON.stringify(element.definition),
+      //   "### extend",
+      //   JSON.stringify(extendsSubObject),
       //   "### definitionSubObject",
       //   JSON.stringify(definitionSubObject),
-      //   "### contextSchemas",
-      //   JSON.stringify(contextSchemas)
+      //   "### schemaEagerReferences",
+      //   JSON.stringify(getSchemaEagerReferences)
       // );
-      // const contextZodText = Object.fromEntries([
-      //   // Object.entries(contextSubObject).filter(a=>a[1].zodText != null).map((a) => [a[0], a[1].zodText]),
-      //   ...Object.entries(contextSubObject)
-      //     .filter((a) => a[1].zodText)
-      //     .map((a) => [a[0], a[1].zodText]),
-      //   ...Object.entries(definitionSubObject)
-      //     .filter((a) => a[1].contextZodText)
-      //     .map((a) => [a[0], a[1].contextZodText]),
-      // ]);
-      // console.log("jzodElementSchemaToZodSchemaAndDescription converting",name,"contextZodText",JSON.stringify(contextZodText),"contextSubObject",JSON.stringify(contextSubObject));
 
       const schemas = Object.fromEntries(Object.entries(definitionSubObject).map((a) => [a[0], a[1].zodSchema]));
-      const descriptions = Object.fromEntries(Object.entries(definitionSubObject).map((a) => [a[0], a[1].zodText]));
+      const zodText = Object.fromEntries(Object.entries(definitionSubObject).map((a) => [a[0], a[1].zodText]));
 
-      const contextZodText = getContextDescriptions(definitionSubObject)
-      const contextZodSchema = getContextZodSchemas(definitionSubObject)
-      // const contextZodText = getDescriptions(definitionSubObject)
-      // const contextZodSchema = getZodSchemas(definitionSubObject)
- 
+      const contextZodText = getContextDescriptions(definitionSubObject);
+      const contextZodSchema = getContextZodSchemas(definitionSubObject);
+
+      const resultZodSchema = extendsSubObject?(extendsSubObject.zodSchema as AnyZodObject).extend(schemas):z.object(schemas);
+      const resultZodText = extendsSubObject?`${extendsSubObject.zodText}.extend(${objectToJsStringObject(zodText)})`:`z.object(${objectToJsStringObject(zodText)})`;
+
       return {
-        contextZodText: Object.keys(contextZodText).length > 0?contextZodText:undefined,
-        contextZodSchema: Object.keys(contextZodSchema).length > 0?contextZodSchema:undefined,
-        zodSchema: optionalNullableZodSchema(z.object(schemas).strict(),element.optional,element.nullable),
-        zodText: optionalNullableZodDescription(`z.object(${objectToJsStringObject(descriptions)}).strict()`, element.optional, element.nullable),
+        contextZodText: Object.keys(contextZodText).length > 0 ? contextZodText : undefined,
+        contextZodSchema: Object.keys(contextZodSchema).length > 0 ? contextZodSchema : undefined,
+        zodSchema: optionalNullableZodSchema(resultZodSchema.strict(), element.optional, element.nullable),
+        zodText: optionalNullableZodDescription(`${resultZodText}.strict()`, element.optional, element.nullable),
       };
       break;
     }
@@ -316,9 +281,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       const sub = jzodElementSchemaToZodSchemaAndDescription(
         // name,
         element.definition,
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       return {
         contextZodText: sub.contextZodText,
@@ -332,9 +297,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       const sub = jzodElementSchemaToZodSchemaAndDescription(
         // name,
         element.definition,
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       return {
         contextZodText: sub.contextZodText,
@@ -344,83 +309,130 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       };
     }
     case "schemaReference": {
-      const contextSubObjectSchemaAndDescriptionRecord:ZodSchemaAndDescriptionRecord = element.context
-        ? Object.fromEntries(
-            Object.entries(element.context).map((a) => [
-              a[0],
-              jzodElementSchemaToZodSchemaAndDescription(
-                // name,
-                a[1],
-                ()=>({...getSchemaRelativeReferences(), ...contextSubObjectSchemaAndDescriptionRecord}),
-                getAbsoluteReferences,
-                typeScriptReferenceConverter
-              ),
-            ])
-          )
-        : {}
+      // const eagerReferences = getSchemaEagerReferences();
+      // eager evaluation of context object
+      const localContextReferences:[string,ZodSchemaAndDescription][] = []
+      for (const curr of Object.entries(element.context??{})) {
+          localContextReferences.push([
+            curr[0],
+            jzodElementSchemaToZodSchemaAndDescription(
+              // name,
+              curr[1],
+              ()=>({...getSchemaEagerReferences(), ...Object.fromEntries(localContextReferences)}),
+              getLazyReferences,
+              typeScriptLazyReferenceConverter
+            ),
+          ]
+        );
+      }
+      const contextSubObjectSchemaAndDescriptionRecord:ZodSchemaAndDescriptionRecord = Object.fromEntries(localContextReferences);
+      // element.context
+      //   ? Object.fromEntries(
+      //       Object.entries(element.context).reduce((acc,curr) => [
+      //         ...acc,
+      //         [
+      //           curr[0],
+      //           jzodElementSchemaToZodSchemaAndDescription(
+      //             // name,
+      //             curr[1],
+      //             ()=>({...eagerReferences, ...contextSubObjectSchemaAndDescriptionRecord}),
+      //             getLazyReferences,
+      //             typeScriptLazyReferenceConverter
+      //           ),
+      //         ]
+      //       ], []
+      //       )
+      //     )
+      //   : {}
       ;
 
+      const resolveEagerReference = (
+        eagerReference: string | undefined,
+        eagerReferenceTargetObject?: any,
+      ) => {
+        if (eagerReference) {
+          if (eagerReferenceTargetObject) {
+            if (eagerReferenceTargetObject[eagerReference]) {
+              const result = optionalNullableZodSchema(eagerReferenceTargetObject[eagerReference].zodSchema,element.optional,element.nullable);
+              // console.log("converting schemaReference relative path",name,"result",JSON.stringify(result));
+  
+              return result;
+            } else {
+              throw new Error(
+                "when converting Jzod to Zod, could not find eager reference " +
+                  element.definition.relativePath +
+                  " in absolute reference object with keys " +
+                  Object.keys(eagerReferenceTargetObject) +
+                  "from element " + JSON.stringify(element)
+              );
+            }
+          } else {
+            const eagerReferences = {...getSchemaEagerReferences(), ...contextSubObjectSchemaAndDescriptionRecord};
+            // console.log("looking up reference", eagerReference, "in", JSON.stringify(eagerReferences));
+            
+            if (eagerReferences[eagerReference]) {
+              const result = optionalNullableZodSchema(eagerReferences[eagerReference].zodSchema,element.optional,element.nullable);
+              return result;
+            } else {
+              throw new Error(
+                "when converting Jzod to Zod, could not find eager reference " +
+                  element.definition.relativePath +
+                  " in passed references " +
+                  Object.keys(eagerReferences) +
+                  "from element " + JSON.stringify(element)
+              );
+            }
+          }
+        } else {
+          return eagerReferenceTargetObject;
+        }
+      }
       
-      const resolveReference = z.lazy(
+      const resolveLazyReference = (
+        // targetObject: any,
+        lazyReference: string,
+      ) => {
+        // const eagerReferences = {...getSchemaEagerReferences(), ...contextSubObjectSchemaAndDescriptionRecord};
+        const lazyReferences = getLazyReferences();
+        // console.log("parsing schemaReference relativeReferences",Object.keys(relativeReferences));
+        // const relativePath: string | undefined = element.definition.relativePath;
+        let targetObject: any;
+        // if (lazyReference) {
+          targetObject = Object.fromEntries(
+            Object.entries(
+              (lazyReferences[lazyReference].zodSchema as AnyZodObject).shape as any
+            ).map((e: [string, any]) => [e[0], { zodSchema: e[1], zodText: "" }]) as [string, any][]
+          );
+        // } else {
+        //   targetObject = eagerReferences;
+        // }
+        // console.log("converting schemaReference relative path targetObject", targetObject, element.definition.relativePath,Object.keys(targetObject),);
+        // return resolveEagerReference(targetObject,relativePath);
+        return targetObject;
+      }
+
+      const lazyResolverZodSchema: ZodLazy<any> = z.lazy(
         () => {
           /**
            *  issue with zod-to-ts: specifying a TS AST generation function induces a call to the lazy function!! :-(
            * this call is avoided in this case, but this means Zod schemas used to generate typescript types must
            * not be used for validation purposes, please perform separate generations to accomodate each case.
            */
-          if (typeScriptReferenceConverter) {
+          if (typeScriptLazyReferenceConverter) {
             //
             return z.any();
           } else {
-            const relativeReferences = {...getSchemaRelativeReferences(), ...contextSubObjectSchemaAndDescriptionRecord};
-            const absoluteReferences = getAbsoluteReferences();
-    
-            // console.log(
-            //   "########## jzodElementSchemaToZodSchemaAndDescription converting schemaReference absolute path",
-            //   element.type,
-            //   JSON.stringify(element.definition),
-            //   element.definition.absolutePath,
-            //   Object.keys(absoluteReferences),
-            //   "relativePath",
-            //   element.definition.relativePath,
-            //   Object.keys(relativeReferences)
-            // );
-
-            // console.log("parsing schemaReference relativeReferences",Object.keys(relativeReferences));
-            const relativePath: string | undefined = element.definition.relativePath;
-            let targetObject: any;
-            if (element.definition.absolutePath) {
-              targetObject = Object.fromEntries(
-                Object.entries(
-                  (absoluteReferences[element.definition.absolutePath].zodSchema as AnyZodObject).shape as any
-                ).map((e: [string, any]) => [e[0], { zodSchema: e[1], zodText: "" }]) as [string, any][]
-              );
-            } else {
-              targetObject = relativeReferences;
-            }
+            // const targetObject = resolveLazyReference(element.definition.absolutePath);
             // console.log("converting schemaReference relative path targetObject", targetObject, element.definition.relativePath,Object.keys(targetObject),);
-            if (relativePath) {
-              if (targetObject[relativePath]) {
-                const result = optionalNullableZodSchema(targetObject[relativePath].zodSchema,element.optional,element.nullable);
-                // console.log("converting schemaReference relative path",name,"result",JSON.stringify(result));
-
-                return result;
-              } else {
-                throw new Error(
-                  "when converting Jzod to Zod, could not find relative reference " +
-                    element.definition.relativePath +
-                    " in " +
-                    Object.keys(relativeReferences) +
-                    "from element " + JSON.stringify(element)
-                );
-              }
-            } else {
-              return targetObject;
-            }
+            return resolveEagerReference(element.definition.relativePath,element.definition.absolutePath?resolveLazyReference(element.definition.absolutePath):undefined);
           }
         }
       );// resolveReference
 
+      const referenceResolvedSchema: ZodTypeAny = typeScriptLazyReferenceConverter
+      ? typeScriptLazyReferenceConverter(lazyResolverZodSchema, element.definition.relativePath)
+      : (element.definition.eager? resolveEagerReference(element.definition.relativePath):lazyResolverZodSchema);
+      // : resolveEagerReference(element.definition.relativePath);
 
       // const contextZodText = getContextDescriptions(contextSubObjectSchemaAndDescriptionRecord)
       // const contextZodSchema = getContextZodSchemas(contextSubObjectSchemaAndDescriptionRecord)
@@ -436,10 +448,11 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextZodText: Object.keys(contextZodText).length > 0?contextZodText:undefined,
         contextZodSchema: Object.keys(contextZodSchema).length > 0?contextZodSchema:undefined,
-        zodSchema: typeScriptReferenceConverter
-          ? typeScriptReferenceConverter(resolveReference, element.definition.relativePath)
-          : resolveReference,
-        zodText: optionalNullableZodDescription(`z.lazy(() =>${element.definition.relativePath})`,element.optional, element.nullable),
+        zodSchema: referenceResolvedSchema,
+        // zodSchema: typeScriptLazyReferenceConverter
+        //   ? typeScriptLazyReferenceConverter(preResolveReference, element.definition.relativePath)
+        //   : preResolveReference,
+        zodText: optionalNullableZodDescription(`z.lazy(() =>${element.definition.relativePath})`,element.optional, element.nullable), // TODO: take lazy / eager resolution into account!
       };
       break;
     }
@@ -447,9 +460,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       const sub = jzodElementSchemaToZodSchemaAndDescription(
         // name,
         element.definition,
-        getSchemaRelativeReferences,
-        getAbsoluteReferences,
-        typeScriptReferenceConverter
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
       );
       return {
         contextZodText: sub.contextZodText,
@@ -498,9 +511,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
           jzodElementSchemaToZodSchemaAndDescription(
             // name,
             d,
-            getSchemaRelativeReferences,
-            getAbsoluteReferences,
-            typeScriptReferenceConverter
+            getSchemaEagerReferences,
+            getLazyReferences,
+            typeScriptLazyReferenceConverter
           )
         );
   
@@ -525,9 +538,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
         jzodElementSchemaToZodSchemaAndDescription(
           // name,
           e,
-          getSchemaRelativeReferences,
-          getAbsoluteReferences,
-          typeScriptReferenceConverter
+          getSchemaEagerReferences,
+          getLazyReferences,
+          typeScriptLazyReferenceConverter
         )
       );
       return {

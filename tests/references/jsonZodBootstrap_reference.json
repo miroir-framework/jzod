@@ -451,6 +451,58 @@
         "nullable": {
           "type": "boolean"
         },
+        "extend": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "optional": {
+                  "type": "boolean"
+                },
+                "nullable": {
+                  "type": "boolean"
+                },
+                "extra": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "type": {
+                  "type": "string",
+                  "const": "schemaReference"
+                },
+                "context": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "9"
+                  }
+                },
+                "definition": {
+                  "type": "object",
+                  "properties": {
+                    "eager": {
+                      "type": "boolean"
+                    },
+                    "relativePath": {
+                      "type": "string"
+                    },
+                    "absolutePath": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "definition"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "$ref": "4"
+            }
+          ]
+        },
         "extra": {
           "type": "object",
           "additionalProperties": {}
@@ -521,46 +573,7 @@
       "additionalProperties": false
     },
     {
-      "type": "object",
-      "properties": {
-        "optional": {
-          "type": "boolean"
-        },
-        "nullable": {
-          "type": "boolean"
-        },
-        "extra": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "type": {
-          "type": "string",
-          "const": "schemaReference"
-        },
-        "context": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "5"
-          }
-        },
-        "definition": {
-          "type": "object",
-          "properties": {
-            "relativePath": {
-              "type": "string"
-            },
-            "absolutePath": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "type",
-        "definition"
-      ],
-      "additionalProperties": false
+      "$ref": "1/11/properties/extend/anyOf/0"
     },
     {
       "type": "object",

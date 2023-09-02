@@ -43,7 +43,7 @@ const myJzodSchema = {
 const myZodSchema = jzodToZod(myJzodSchema);
 ```
 
-Which requires to type more characters, but provides a plain JSON structure that can be serialized, transformed, and reused. Transparency is furthermore gained, as two Jzod schemas can be easily compared with each other, which is not the case of Zod Schemas.
+Which requires to type undeniably more characters, but provides a plain JSON structure that can be serialized, transformed, and reused. Transparency is furthermore gained, as two Jzod schemas can be easily compared with each other, which is not the case of Zod Schemas (up to my knowledge).
 
 ## Usage
 
@@ -81,7 +81,7 @@ const union: JzodElement = {
 
 ## Caveat
 
-Jzod to Zod conversion has not been optimized yet. It should already fit most usages, but it may become a performance bottleneck in case of trigger-happy, fire-and-forget conversions. Kind advice: once a Jzod schema has been converted to Zod, please hang on to that Zod schema!
+Jzod to Zod conversion has not been optimized yet. It should already fit most usages, but it may become a performance bottleneck in case of trigger-happy, fire-and-forget conversions. Kind advice: once a Jzod schema has been converted to Zod, please hang on to that Zod schema for repeated validations (parse)!
 
 ## Features
 
@@ -209,16 +209,18 @@ returns the Typescript Type Abstract Syntax Tree (AST) and the textual form of t
 The `jzodBootstrapSetSchema` constant contains the bootstrapped defintion of Jzod Schemas. It has the property of self-parsing:
 
 ```ts
-const jzodBootstrapZodSchema:ZodSchemaAndDescriptionRecord<ZodTypeAny> = jzodSchemaSetToZodSchemaAndDescriptionRecord(jzodBootstrapSetSchema);
+import { jzodBootstrapElementSchema, jzodToZod } from "@miroir-framework/jzod";
 
-jzodBootstrapZodSchema.jzodElementSetSchema.zodSchema.parse(jzodBootstrapSetSchema); // succeeds!
+jzodToZod(jzodBootstrapElementSchema).parse(jzodBootstrapElementSchema); // succeeds!
 ```
+
+This constant thus constitutes the full definition and reference for Jzod Schemas, and is accessible at any time (including runtime).
 
 ## Advantages compared to plain Zod schemas
 
-When using `z.lazy` in Zod, the Typescript type cannot be inferred from the Zod Schema (normally accomplished using `z.infer<typeof schema>`). In such cases, one has to write both the Typescript type and the Zod Schema.
+When using `z.lazy` in Zod, the Typescript type cannot be inferred from the Zod Schema (which in any other situation can be accomplished using `z.infer<typeof schema>`). In these cases however, one has to write both the Typescript type and the Zod Schema, revealing some burden.
 
-Jzod references allow to generate both the Typescript type and the Zod Schema from the Jzod Schema. However, a notorious drawback then persists: benefiting from the Typescript type requires some sort of pre-processing / type generation phase, to produce source files containing the wanted TS types. This pre-processing shall be triggered before / upon any build or reloading of the project.
+Jzod references allow to generate both the Typescript type and the Zod Schema from the Jzod Schema. However, a notorious drawback then persists: benefiting from the Typescript type requires some sort of pre-processing / type generation phase, to produce source files containing the wanted TS types. This pre-processing shall be triggered before / upon any build or reloading of the project at hand.
 
 ### Extensibility
 
@@ -236,7 +238,7 @@ TBD
 
 Jzod does not currently check for adequate use of validation contraint parameters with the employed Zod schema type; for example, it is allowed to pass a parameter to the number `int` constraint, which does not make sense, since this contraint only checks that the given number is an integer. The type of the parameter is not checked, either. Finally, Jzod does not allow yet to pass a custom error message (second parameter) to validators (TBD).
 
-Native enums are not supported yet.
+_Are not supported yet_: Native enums, effects, most object methods (`pick`, `omit`, `partial`, `deepPartial`, and `merge`, but `extend` is supported), other methods (`readonly`, `brand`, `pipe`) and transforms.
 
 ## Open questions
 Could / should reference definition be available in any JzodElement?
