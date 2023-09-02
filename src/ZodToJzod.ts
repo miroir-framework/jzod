@@ -8,37 +8,38 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
   switch (typeName) {
     // primitive types
     case "ZodString": {
-      return { type: "simpleType", definition: "string" };
+      // console.log("zodToJzod ZodString",JSON.stringify(zod));
+      return zod._def.coerce?{ type: "simpleType", definition: "string", coerce: true }:{ type: "simpleType", definition: "string"};
     }
     case "ZodNumber": {
-      return { type: "simpleType", definition: "number" };
+      return zod._def.coerce? { type: "simpleType", definition: "number", coerce: true }: { type: "simpleType", definition: "number" };
     }
     case "ZodBigInt": {
-      return { type: "simpleType", definition: "bigint" };
+      return zod._def.coerce? { type: "simpleType", definition: "bigint", coerce: true } : { type: "simpleType", definition: "bigint" };
     }
     case "ZodBoolean": {
-      return { type: "simpleType", definition: "boolean" };
+      return zod._def.coerce? { type: "simpleType", definition: "boolean", coerce: true } : { type: "simpleType", definition: "boolean" };
     }
     case "ZodDate": {
-      return { type: "simpleType", definition: "date" };
+      return zod._def.coerce? { type: "simpleType", definition: "date", coerce: true } : { type: "simpleType", definition: "date" };
     }
     case "ZodUndefined": {
-      return { type: "simpleType", definition: "undefined" };
+      return zod._def.coerce? { type: "simpleType", definition: "undefined" } : { type: "simpleType", definition: "undefined" };
     }
     case "ZodNull": {
-      return { type: "simpleType", definition: "null" };
+      return zod._def.coerce? { type: "simpleType", definition: "null" } : { type: "simpleType", definition: "null" };
     }
     case "ZodVoid": {
-      return { type: "simpleType", definition: "void" };
+      return zod._def.coerce? { type: "simpleType", definition: "void" } : { type: "simpleType", definition: "void" };
     }
     case "ZodAny": {
-      return { type: "simpleType", definition: "any" };
+      return zod._def.coerce? { type: "simpleType", definition: "any" } : { type: "simpleType", definition: "any" };
     }
     case "ZodUnknown": {
-      return { type: "simpleType", definition: "unknown" };
+      return zod._def.coerce?{ type: "simpleType", definition: "unknown" } : { type: "simpleType", definition: "unknown" };
     }
     case "ZodNever": {
-      return { type: "simpleType", definition: "never" };
+      return zod._def.coerce?{ type: "simpleType", definition: "never" } : { type: "simpleType", definition: "never" };
     }
     // ############################################################################################
     // other types

@@ -612,7 +612,7 @@ describe(
         }
 
         testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"});
-        testZodToJzodConversion("test2",{ type: "simpleType", definition: "string"});
+        testZodToJzodConversion("test2",{ type: "simpleType", definition: "string", coerce: true });
         testZodToJzodConversion("test3",{ type: "simpleType", definition: "number"});
         testZodToJzodConversion("test4",{ type: "simpleType", definition: "bigint"});
         testZodToJzodConversion("test5",{ type: "simpleType", definition: "boolean"});

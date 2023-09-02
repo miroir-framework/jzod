@@ -42,6 +42,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
         type: { type: "literal", definition: "simpleType" },
+        coerce: { type: "simpleType", definition: "boolean", optional: true },
         definition: { type: "schemaReference", definition: { relativePath: "jzodEnumAttributeTypesSchema" } },
       },
     },

@@ -497,7 +497,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "simpleType": {
-      const castElement = element as JzodAttributeStringWithValidations;
+      const castElement = element as JzodAttributeStringWithValidations; // specious cast, we do not know the exact type there...
       
       if (element && (castElement.validations || element.definition == "uuid")) {
         const elementDefinitionSchema = (d: string) => (d == "uuid" ? z.string().uuid() : (z as any)[d]());
@@ -518,13 +518,16 @@ export function jzodElementSchemaToZodSchemaAndDescription(
             : `z.${element.definition}()`) + (element.optional ? `.optional()` : ``) + (element.nullable ? `.nullable()` : ``);
         return { contextZodText: undefined, contextZodSchema: undefined, zodSchema, zodText };
       } else {
-        const resultZodSchema = optionalNullableZodSchema((z as any)[element.definition](),element.optional,element.nullable);
+        const resultZodSchema = element.coerce
+          ? optionalNullableZodSchema((z.coerce as any)[element.definition](), element.optional, element.nullable)
+          : optionalNullableZodSchema((z as any)[element.definition](), element.optional, element.nullable)
+        ;
         // console.log("jzodElementSchemaToZodSchemaAndDescription simpleType",JSON.stringify(element),JSON.stringify(resultZodSchema));
         return {
           contextZodText: undefined,
           contextZodSchema: undefined,
           zodSchema: resultZodSchema,
-          zodText: optionalNullableZodDescription(`z.${element.definition}()`, element.optional, element.nullable),
+          zodText: element.coerce?optionalNullableZodDescription(`z.coerce.${element.definition}()`, element.optional, element.nullable): optionalNullableZodDescription(`z.${element.definition}()`, element.optional, element.nullable),
         };
       }
       break;
