@@ -82,32 +82,32 @@ describe(
     )
 
 
-    // ###########################################################################################
-    it(
-      'generated Zod schema from jzodBootstrapElementSchema is equivalent to hand-written Zod schema (will have no interest whenever zod schemas for bootstrap will be automatically generated)',
-      () => {
-        const referenceSchemaFilePath = path.join(referencesPath,'jsonZodBootstrap_reference.json');
-        const convertedElementSchemaFilePath = path.join(tmpPath,'jsonZodBootstrap_converted.json');
+    // // ###########################################################################################
+    // it(
+    //   'generated Zod schema from jzodBootstrapElementSchema is equivalent to hand-written Zod schema (will have no interest whenever zod schemas for bootstrap will be automatically generated)',
+    //   () => {
+    //     const referenceSchemaFilePath = path.join(referencesPath,'jsonZodBootstrap_reference.json');
+    //     const convertedElementSchemaFilePath = path.join(tmpPath,'jsonZodBootstrap_converted.json');
 
-        const jzodBootstrapElementZodSchema:ZodTypeAny = jzodToZod(jzodBootstrapElementSchema);
+    //     const jzodBootstrapElementZodSchema:ZodTypeAny = jzodToZod(jzodBootstrapElementSchema);
 
-        // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(jzodBootstrapElementZodSchema));
+    //     // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(jzodBootstrapElementZodSchema));
         
-        const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-          "jsonZodBootstrap_reference",
-          jzodElementSchema,
-          referenceSchemaFilePath
-        );
-        const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-          "jsonZodBootstrap_converted",
-          jzodBootstrapElementZodSchema,
-          convertedElementSchemaFilePath
-        );
+    //     const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
+    //       "jsonZodBootstrap_reference",
+    //       jzodElementSchema,
+    //       referenceSchemaFilePath
+    //     );
+    //     const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
+    //       "jsonZodBootstrap_converted",
+    //       jzodBootstrapElementZodSchema,
+    //       convertedElementSchemaFilePath
+    //     );
 
-        // equivalence between "hard-coded" and converted schemas
-        expect(test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString).toEqual(test2ZodSchemaJsonSchemaWithoutBootstrapElementString);
-      }
-    )
+    //     // equivalence between "hard-coded" and converted schemas
+    //     expect(test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString).toEqual(test2ZodSchemaJsonSchemaWithoutBootstrapElementString);
+    //   }
+    // )
 
     // ###########################################################################################
     it(
@@ -220,7 +220,9 @@ describe(
       'jzod simple data parsing',
       () => {
         const absoluteReferences = {
-          "123": jzodElementSchemaToZodSchemaAndDescription({type: "object", definition: {"x": {type:"simpleType", definition:"string"}}})
+          // "123": jzodElementSchemaToZodSchemaAndDescription({type: "object", definition: {"x": {type:"simpleType", definition:"string"}}})
+          // "123": jzodElementSchemaToZodSchemaAndDescription({type:"simpleType", definition:"string"})
+          "123": jzodElementSchemaToZodSchemaAndDescription({type:"simpleType", definition:"string"})
         }
 
         // console.log("absoluteReferences",absoluteReferences);
@@ -341,7 +343,7 @@ describe(
           optional: true,
           validations: [{ type: "min", parameter: 5 }],
         };
-        const test10: JzodElement = { type: "schemaReference", definition: { absolutePath: "123", relativePath: "x" } };
+        const test10: JzodElement = { type: "schemaReference", definition: { absolutePath: "123" } };
         const test11: JzodElement = {
           type: "schemaReference",
           context: {

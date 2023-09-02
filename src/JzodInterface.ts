@@ -21,22 +21,26 @@ export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodSchemaAndDescripti
 export const jzodBootstrapElementSchema: JzodReference = {
   type: "schemaReference",
   context: {
-    jzodArraySchema: {
+    jzodBaseObjectSchema: {
       type: "object",
       definition: {
         optional: { type: "simpleType", definition: "boolean", optional: true },
         nullable: { type: "simpleType", definition: "boolean", optional: true },
         extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+      },
+    },
+    jzodArraySchema: {
+      type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      definition: {
         type: { type: "literal", definition: "array" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
       },
     },
     jzodAttributeSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodEnumAttributeTypesSchema" } },
       },
@@ -54,10 +58,8 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodAttributeDateWithValidationsSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "date" },
         validations: {
@@ -92,10 +94,8 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodAttributeNumberWithValidationsSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "number" },
         validations: {
@@ -134,10 +134,8 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodAttributeStringWithValidationsSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "string" },
         validations: {
@@ -179,10 +177,8 @@ export const jzodBootstrapElementSchema: JzodReference = {
     // },
     jzodEnumSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "enum" },
         definition: { type: "array", definition: { type: "simpleType", definition: "string" } },
       },
@@ -226,9 +222,9 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodFunctionSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
         type: { type: "literal", definition: "function" },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         definition: {
           type: "object",
           definition: {
@@ -243,28 +239,24 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodLazySchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
         type: { type: "literal", definition: "lazy" },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         definition: { type: "schemaReference", definition: { relativePath: "jzodFunctionSchema" } },
       },
     },
     jzodLiteralSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "literal" },
         definition: { type: "simpleType", definition: "string" },
       },
     },
     jzodIntersectionSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "intersection" },
         definition: {
           type: "object",
@@ -277,10 +269,8 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodMapSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "map" },
         definition: {
           type: "tuple",
@@ -293,9 +283,8 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodObjectSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
         extend: {
           type: "union",
           optional: true,
@@ -304,7 +293,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
             { type: "schemaReference", definition: { relativePath: "jzodObjectSchema" } },
           ],
         },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "object" },
         // context: {
         //   type: "record",
@@ -319,20 +307,22 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodPromiseSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
         // optional: { type: "simpleType", definition: "boolean", optional: true },
         // nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "promise" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
       },
     },
     jzodRecordSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+        // optional: { type: "simpleType", definition: "boolean", optional: true },
+        // nullable: { type: "simpleType", definition: "boolean", optional: true },
+        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "record" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
       },
@@ -361,10 +351,11 @@ export const jzodBootstrapElementSchema: JzodReference = {
     // },
     jzodReferenceSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+        // optional: { type: "simpleType", definition: "boolean", optional: true },
+        // nullable: { type: "simpleType", definition: "boolean", optional: true },
+        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "schemaReference" },
         context: {
           type: "record",
@@ -383,20 +374,22 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodSetSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+        // optional: { type: "simpleType", definition: "boolean", optional: true },
+        // nullable: { type: "simpleType", definition: "boolean", optional: true },
+        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "set" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
       },
     },
     jzodTupleSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+        // optional: { type: "simpleType", definition: "boolean", optional: true },
+        // nullable: { type: "simpleType", definition: "boolean", optional: true },
+        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "tuple" },
         definition: {
           type: "array",
@@ -406,10 +399,11 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodUnionSchema: {
       type: "object",
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        optional: { type: "simpleType", definition: "boolean", optional: true },
-        nullable: { type: "simpleType", definition: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
+        // optional: { type: "simpleType", definition: "boolean", optional: true },
+        // nullable: { type: "simpleType", definition: "boolean", optional: true },
+        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "union" },
         discriminator: { type: "simpleType", definition: "string", optional: true },
         definition: {
