@@ -67,6 +67,10 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
     case "ZodObject": {
       const properties = Object.entries(zod._def.shape());
 
+      const isStrict = zod._def["unknownKeys"] === "strict";
+
+      console.log("isStrict",isStrict, zod._def["unknownKeys"]);
+      
       const propertiesJzodSchema = properties.map(([key, value]) => {
         const nextZodNode = value as ZodTypeAny;
         const propertyJzodSchema = zodToJzod(nextZodNode, identifier);
@@ -92,10 +96,10 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
         //   JSON.stringify(propertyJzodSchema)
         // );
         const propertyJzodSchemaWithOptional = isOptional || (propertyJzodSchema as any)["optional"] != undefined?{ ...propertyJzodSchema, optional: isOptional }:propertyJzodSchema;
-        const propertyJzodSchemaWithNullable = isOptional || (propertyJzodSchema as any)["optional"] != undefined?{ ...propertyJzodSchemaWithOptional, optional: isOptional }:propertyJzodSchemaWithOptional;
+        const propertyJzodSchemaWithNullable = isNullable || (propertyJzodSchema as any)["nullable"] != undefined?{ ...propertyJzodSchemaWithOptional, nullable: isNullable }:propertyJzodSchemaWithOptional;
         return [key, propertyJzodSchemaWithNullable];
       });
-      return { type: "object", definition: Object.fromEntries(propertiesJzodSchema) };
+      return isStrict?{ type: "object", definition: Object.fromEntries(propertiesJzodSchema) }:{ type: "object", nonStrict: true, definition: Object.fromEntries(propertiesJzodSchema) };
       break;
     }
     case "ZodOptional": {

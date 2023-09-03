@@ -169,13 +169,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
         { type: "schemaReference", definition: { relativePath: "jzodUnionSchema" } },
       ],
     },
-    // jzodElementSetSchema: {
-    //   type: "record",
-    //   definition: {
-    //     type: "schemaReference",
-    //     definition: { relativePath: "jzodElementSchema" },
-    //   },
-    // },
     jzodEnumSchema: {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
@@ -295,11 +288,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
           ],
         },
         type: { type: "literal", definition: "object" },
-        // context: {
-        //   type: "record",
-        //   optional: true,
-        //   definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
-        // },
+        nonStrict: { type: "simpleType", definition: "boolean", optional: true },
         definition: {
           type: "record",
           definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
@@ -310,9 +299,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        // optional: { type: "simpleType", definition: "boolean", optional: true },
-        // nullable: { type: "simpleType", definition: "boolean", optional: true },
-        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "promise" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
       },
@@ -321,42 +307,14 @@ export const jzodBootstrapElementSchema: JzodReference = {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        // optional: { type: "simpleType", definition: "boolean", optional: true },
-        // nullable: { type: "simpleType", definition: "boolean", optional: true },
-        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "record" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
       },
     },
-    // jzodEagerReferenceSchema: {
-    //   type: "object",
-    //   definition: {
-    //     optional: { type: "simpleType", definition: "boolean", optional: true },
-    //     nullable: { type: "simpleType", definition: "boolean", optional: true },
-    //     extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
-    //     type: { type: "literal", definition: "schemaReference" },
-    //     context: {
-    //       type: "record",
-    //       optional: true,
-    //       definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
-    //     },
-    //     definition: {
-    //       type: "object",
-    //       definition: {
-    //         eager: { type: "literal", definition: true, optional: true },
-    //         relativePath: { type: "simpleType", definition: "string", optional: true },
-    //         absolutePath: { type: "simpleType", definition: "string", optional: true }, // absolutePath => lazy evaluation
-    //       },
-    //     },
-    //   },
-    // },
     jzodReferenceSchema: {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        // optional: { type: "simpleType", definition: "boolean", optional: true },
-        // nullable: { type: "simpleType", definition: "boolean", optional: true },
-        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "schemaReference" },
         context: {
           type: "record",
@@ -377,9 +335,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        // optional: { type: "simpleType", definition: "boolean", optional: true },
-        // nullable: { type: "simpleType", definition: "boolean", optional: true },
-        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "set" },
         definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
       },
@@ -388,9 +343,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        // optional: { type: "simpleType", definition: "boolean", optional: true },
-        // nullable: { type: "simpleType", definition: "boolean", optional: true },
-        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "tuple" },
         definition: {
           type: "array",
@@ -402,9 +354,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
       definition: {
-        // optional: { type: "simpleType", definition: "boolean", optional: true },
-        // nullable: { type: "simpleType", definition: "boolean", optional: true },
-        // extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
         type: { type: "literal", definition: "union" },
         discriminator: { type: "simpleType", definition: "string", optional: true },
         definition: {

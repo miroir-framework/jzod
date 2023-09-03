@@ -261,7 +261,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       /**
        */
       const preResultZodText = extendsSubObject?extendsSubObject.zodText + ".extend(" + objectToJsStringObject(zodText) +")":`z.object(${objectToJsStringObject(zodText)})`;
-      const resultZodText = optionalNullableZodDescription(preResultZodText + ".strict()", element.optional, element.nullable)
+      const resultZodText = optionalNullableZodDescription(preResultZodText + (element.nonStrict?"":".strict()"), element.optional, element.nullable)
       // console.log(
       //   "jzodElementSchemaToZodSchemaAndDescription converting object definition",
       //   JSON.stringify(element.definition),
@@ -278,7 +278,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextZodText: Object.keys(contextZodText).length > 0 ? contextZodText : undefined,
         contextZodSchema: Object.keys(contextZodSchema).length > 0 ? contextZodSchema : undefined,
-        zodSchema: optionalNullableZodSchema(resultZodSchema.strict(), element.optional, element.nullable),
+        zodSchema: optionalNullableZodSchema(element.nonStrict?resultZodSchema:resultZodSchema.strict(), element.optional, element.nullable),
         zodText: resultZodText,
       };
       break;

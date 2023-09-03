@@ -123,6 +123,7 @@ describe(
           test0: { type: "simpleType", definition: "string", optional: true },
           test1: {
             type: "object",
+            nonStrict: true,
             definition: { a: { type: "simpleType", definition: "string", nullable:true } },
           },
           test2: {
@@ -408,6 +409,16 @@ describe(
           },
           definition: { relativePath: "myObject" }
         };
+        const test17: JzodElement = {
+          type: "object",
+          nonStrict: true,
+          definition: {
+            a: {
+              type: "simpleType",
+              definition: "number",
+            },
+          },
+        };
 
         const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
@@ -428,6 +439,7 @@ describe(
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test14).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test15).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test16).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test17).success).toBeTruthy();
 
         const test0ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test0);
         const test1ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test1);
@@ -450,6 +462,7 @@ describe(
         const test14ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test14);
         const test15ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test15);
         const test16ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test16);
+        const test17ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test17);
 
 
 
@@ -460,6 +473,7 @@ describe(
         const test1_OK2 = {a:null, b:6};
         const test1_KO1 = {a:"toto", b:6};
         const test1_KO2 = {a:1, b: 5};
+        const test1_KO3 = {a:1, b:6, c: "nok"};
         const test2_OK1 = {c:{a: 1, b: 6}};
         const test2_OK2 = {c:{a: null, b: 6}};
         const test2_OK3 = {b:"1", c:null};
@@ -507,7 +521,10 @@ describe(
         const test16_KO1 = { a: 1 };
         const test16_KO2 = { a: { a: { a: 1 } } };
         const test16_KO3 = { a: { a: { a: "Test", b: "Test" } } };
+        const test17_OK1 = { a:1, b:6 };
+        const test17_KO1 = { b:6 };
 
+        
         // #####
         expect(test0ZodSchema.zodSchema.safeParse(test0_OK1).success).toBeTruthy();
         expect(test0ZodSchema.zodSchema.safeParse(test0_OK2).success).toBeTruthy();
@@ -517,6 +534,7 @@ describe(
         expect(test1ZodSchema.zodSchema.safeParse(test1_OK2).success).toBeTruthy();
         expect(test1ZodSchema.zodSchema.safeParse(test1_KO1).success).toBeFalsy();
         expect(test1ZodSchema.zodSchema.safeParse(test1_KO2).success).toBeFalsy();
+        expect(test1ZodSchema.zodSchema.safeParse(test1_KO3).success).toBeFalsy();
         // #####
         expect(test2ZodSchema.zodSchema.safeParse(test2_OK1).success).toBeTruthy();
         expect(test2ZodSchema.zodSchema.safeParse(test2_OK2).success).toBeTruthy();
@@ -588,6 +606,11 @@ describe(
         expect(test16ZodSchema.zodSchema.safeParse(test16_KO1).success).toBeFalsy();
         expect(test16ZodSchema.zodSchema.safeParse(test16_KO2).success).toBeFalsy();
         expect(test16ZodSchema.zodSchema.safeParse(test16_KO3).success).toBeFalsy();
+        // #####
+        expect(test17ZodSchema.zodSchema.safeParse(test17_OK1).success).toBeTruthy();
+        expect(test17ZodSchema.zodSchema.safeParse(test17_KO1).success).toBeFalsy();
+
+
       }
     )
 
@@ -632,6 +655,7 @@ describe(
           "test19",
           {
             type: "object",
+            nonStrict: true,
             definition: {
               a: { type: "simpleType", definition: "string" },
               b: { type: "simpleType", definition: "number", optional: false },
@@ -639,6 +663,7 @@ describe(
           },
           {
             type: "object",
+            nonStrict: true,
             definition: {
               a: { type: "simpleType", definition: "string" },
               b: { type: "simpleType", definition: "number" },
@@ -662,6 +687,7 @@ describe(
           definition: [
             {
               type: "object",
+              nonStrict: true,
               definition: {
                 kind: { type: "literal", definition: "a" },
                 a: { type: "simpleType", definition: "string" },
@@ -669,6 +695,7 @@ describe(
             },
             {
               type: "object",
+              nonStrict: true,
               definition: {
                 kind: { type: "literal", definition: "b" },
                 b: { type: "simpleType", definition: "number" },
