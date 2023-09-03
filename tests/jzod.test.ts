@@ -677,7 +677,7 @@ describe(
           ]),
           "test20"
         );
-        console.log("Zod to Jzod testJzodSchema test20",JSON.stringify(test20));
+        // console.log("Zod to Jzod testJzodSchema test20",JSON.stringify(test20));
           
         expect(
           test20

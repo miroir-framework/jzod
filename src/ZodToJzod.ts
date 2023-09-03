@@ -69,7 +69,7 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
 
       const isStrict = zod._def["unknownKeys"] === "strict";
 
-      console.log("isStrict",isStrict, zod._def["unknownKeys"]);
+      // console.log("isStrict",isStrict, zod._def["unknownKeys"]);
       
       const propertiesJzodSchema = properties.map(([key, value]) => {
         const nextZodNode = value as ZodTypeAny;
@@ -103,7 +103,7 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
       break;
     }
     case "ZodOptional": {
-      console.log("zodToJzod ZodOptional", typeName, JSON.stringify(zod));
+      // console.log("zodToJzod ZodOptional", typeName, JSON.stringify(zod));
 
       const jzodDefinition = { ...zodToJzod(zod._def.innerType, identifier), optional: true };
       return jzodDefinition;
@@ -115,7 +115,7 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
       break;
     }
     case "ZodUnion": {
-      console.log("zodToJzod converting ZodUnion", JSON.stringify(zod));
+      // console.log("zodToJzod converting ZodUnion", JSON.stringify(zod));
 
       const jzodUnionElements: JzodElement[] = zod._def.options.map((option: ZodTypeAny) =>
         zodToJzod(option, identifier)
