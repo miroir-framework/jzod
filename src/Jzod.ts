@@ -396,33 +396,6 @@ export function jzodElementSchemaToZodSchemaAndDescription(
         }
       }
       
-      const resolveLazyReference = (
-        // targetObject: any,
-        lazyReference: string,
-      ) => {
-        // const eagerReferences = {...getSchemaEagerReferences(), ...contextSubObjectSchemaAndDescriptionRecord};
-        const lazyReferences = getLazyReferences();
-        // console.log("parsing schemaReference relativeReferences",Object.keys(relativeReferences));
-        // let targetObject: ZodSchemaAndDescriptionRecord;
-        //   targetObject = Object.fromEntries(
-        //     Object.entries(
-        //       (lazyReferences[lazyReference].zodSchema as AnyZodObject).shape as any
-        //     ).map((e: [string, any]) => [e[0], { zodSchema: e[1], zodText: "" }]) as [string, any][]
-        //   );
-        if (lazyReferences[lazyReference]) {
-          return lazyReferences[lazyReference]
-        } else {
-          throw new Error(
-            "when converting Jzod to Zod, could not find lazy reference " +
-              lazyReference +
-              " in passed references " +
-              Object.keys(lazyReferences) +
-              "from element " + JSON.stringify(element)
-          );
-        }
-        // return targetObject;
-      }
-
       const lazyResolverZodSchema: ZodLazy<any> = z.lazy(
         () => {
           /**
@@ -434,11 +407,28 @@ export function jzodElementSchemaToZodSchemaAndDescription(
             //
             return z.any();
           } else {
-            // const targetObject = resolveLazyReference(element.definition.absolutePath);
+            const lazyReferences = getLazyReferences();
+
+            if (element.definition.absolutePath && lazyReferences[element.definition.absolutePath]) {
+              const absoluteRef = element.definition.absolutePath ? lazyReferences[element.definition.absolutePath].zodSchema : z.any();
+              const relativeRef = element.definition.relativePath ? resolveEagerReference(element.definition.relativePath).zodSchema: absoluteRef
+              return relativeRef;
+            } else {
+              if (element.definition.relativePath) {
+                const relativeRef = resolveEagerReference(element.definition.relativePath).zodSchema
+                return relativeRef;
+              } else {
+                throw new Error(
+                  "when converting Jzod to Zod, could not find lazy reference " +
+                  element.definition.absolutePath +
+                    " in passed references " +
+                    Object.keys(lazyReferences) +
+                    "from element " + JSON.stringify(element)
+                );
+              }
+            }
+    
             // console.log("converting schemaReference relative path targetObject", targetObject, element.definition.relativePath,Object.keys(targetObject),);
-            const absoluteRef = element.definition.absolutePath ? resolveLazyReference(element.definition.absolutePath).zodSchema : z.any();
-            const relativeRef = element.definition.relativePath ? resolveEagerReference(element.definition.relativePath).zodSchema: absoluteRef
-            return relativeRef;
           }
         }
       );// resolveReference
@@ -602,7 +592,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
     }
     default:
       throw new Error(
-        "jzodElementSchemaToZodSchemaAndDescription could not convert given json Zod schema, unknown type:" +
+        "jzodElementSchemaToZodSchemaAndDescription could not convert given Jzod schema, unknown type:" +
           element["type"] +
           ", element: " +
           JSON.stringify(element)
