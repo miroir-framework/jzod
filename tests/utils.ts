@@ -8,10 +8,13 @@ import zodToJsonSchema from "zod-to-json-schema";
 export function convertZodSchemaToJsonSchemaAndWriteToFile(
   name: string,
   zodSchema: ZodTypeAny,
-  path: string | undefined
+  path: string | undefined,
+  definitions?: { [k: string]: ZodTypeAny }
 ): string {
   const zodSchemaJsonSchema = zodToJsonSchema(zodSchema, {
-    $refStrategy: "relative",
+    // $refStrategy: "relative",
+    $refStrategy: "root",
+    definitions: definitions??{}
   });
   const zodSchemaJsonSchemaString = JSON.stringify(zodSchemaJsonSchema, undefined, 2);
 

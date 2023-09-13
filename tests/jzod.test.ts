@@ -1,10 +1,12 @@
 import * as path from "path";
 
-import { ZodTypeAny, z } from "zod";
+import { ZodLazy, ZodObject, ZodTypeAny, object, z } from "zod";
+import { createTypeAlias, printNode, withGetType, zodToTs } from "zod-to-ts";
 
 import {
   JzodElement,
-  jzodElementSchema
+  jzodElementSchema,
+  jzodToTsCode
 } from "@miroir-framework/jzod-ts";
 
 import {
@@ -15,13 +17,46 @@ import {
   ZodSchemaAndDescriptionRecord,
   jzodBootstrapElementSchema
 } from "../src/JzodInterface";
+import { zodCompare } from "../src/compare";
 import { zodToJzod } from "../src/ZodToJzod";
 import { jzodToZod } from "../src/facade";
+import { zodToZodText } from "../src/ZodToZodText";
 
 import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
 
 const tmpPath = "./tests/tmp";
 const referencesPath = "./tests/references";
+
+function compareZodSchemas(
+  testName: string,
+  referenceZodSchema: ZodTypeAny,
+  testJzodSchema: JzodElement,
+  definitions?: { [k: string]: ZodTypeAny }
+) {
+  // console.log("#### starting", testName);
+
+  const testJzodSchemaZodSchemaAndDescription: ZodSchemaAndDescription =
+    jzodElementSchemaToZodSchemaAndDescription(testJzodSchema);
+  // console.log("#### converted", testName);
+
+  const referenceTestJsonSchema = convertZodSchemaToJsonSchemaAndWriteToFile(
+    "testZodSchema",
+    referenceZodSchema,
+    undefined,
+    definitions
+  );
+  const convertedTestJsonSchema = convertZodSchemaToJsonSchemaAndWriteToFile(
+    "test2ZodSchema",
+    testJzodSchemaZodSchemaAndDescription.zodSchema,
+    undefined
+  );
+  // console.log("converted", convertedTest2JzodSchema);
+  // console.log("expected", referenceTest2ZodSchema);
+
+  expect(convertedTestJsonSchema).toEqual(referenceTestJsonSchema);
+  // console.log("#### done", testName);
+}
+
 
 describe(
   'Jzod',
@@ -31,7 +66,7 @@ describe(
     it(
       'jzod elementary schema conversion',
       () => {
-        const testJzodSchema:JzodElement = {
+        const test1JzodSchema:JzodElement = {
             type: "object",
             definition: {
               a: { type: "simpleType", definition: "string" },
@@ -46,38 +81,153 @@ describe(
           }
         ;
 
-        const x = z.object({
-          a: z.string(),
-          b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
-        })
-
-        const referenceZodSchema:ZodSchemaAndDescription = {
+        const reference1ZodSchema:ZodSchemaAndDescription = {
           zodSchema: z.object({
             a: z.string(),
             b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
           }),
           zodText:""
         }
+
+        compareZodSchemas("test1", reference1ZodSchema.zodSchema, test1JzodSchema);
+
+        // ########################################################################################
+        const test2JzodSchema:JzodElement = {
+          type: "schemaReference",
+          context: {
+            a: { type: "simpleType", definition: "string" },
+          },
+          definition: { relativePath: "a" }
+        };
+
+        const reference2ZodSchema:ZodTypeAny = z.string();
+
+        compareZodSchemas("test2", reference2ZodSchema, test2JzodSchema);
+
+        // ########################################################################################
+        const test3JzodSchema:JzodElement = {
+          type: "schemaReference",
+          context: {
+            a: { type: "simpleType", definition: "string" },
+            b: {
+              type: "schemaReference",
+              definition: { absolutePath: "a"}
+            },
+          },
+          definition: { relativePath: "b" }
+        };
+
+        const reference3ZodSchema:ZodTypeAny = z.string();
+
+        compareZodSchemas("test3", reference3ZodSchema, test3JzodSchema);
         
+        // ########################################################################################
+        const test4JzodSchema:JzodElement = {
+          type: "schemaReference",
+          context: {
+            b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
+              type: "schemaReference",
+              definition: { relativePath: "a"}
+            },
+            a: { type: "simpleType", definition: "string" },
+          },
+          definition: { relativePath: "b" }
+        };
 
-        const testJzodSchemaZodSchemaAndDescription :ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(testJzodSchema);
+        const reference4ZodSchema:ZodTypeAny = z.string();
 
+        compareZodSchemas("test4", reference4ZodSchema, test4JzodSchema);
+        
+        // ########################################################################################
+        const test5JzodSchema:JzodElement = {
+          type: "schemaReference",
+          context: {
+            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
+              type: "object",
+              definition: {
+                b: { type: "schemaReference", definition: { relativePath: "a"} }
+              }
+            },
+          },
+          definition: { relativePath: "b" }
+        };
 
-        const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-          "testZodSchema",
-          referenceZodSchema.zodSchema,
-          // testJzodSchema,
-          undefined
-        );
-        const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-          "test2ZodSchema",
-          testJzodSchemaZodSchemaAndDescription.zodSchema,
-          // testJzodSchema,
-          undefined
-        );
+        const reference5ZodSchema:ZodTypeAny = z.object({b: z.object({a:z.string()})});
 
-        expect(test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString).toEqual(test2ZodSchemaJsonSchemaWithoutBootstrapElementString)
+        compareZodSchemas("test5", reference5ZodSchema, test5JzodSchema);
+        
+        // ########################################################################################
+        const test6JzodSchema:JzodElement = {
+          type: "schemaReference",
+          context: {
+            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
+              type: "object",
+              extend: { type: "schemaReference", definition: { eager: true, relativePath: "a"}},
+              definition: {
+                b: { type: "schemaReference", definition: { relativePath: "a"} }
+              }
+            },
+          },
+          definition: { relativePath: "b" }
+        };
 
+        const reference6ZodSchemaA: ZodObject<any> = z.object({ a: z.string() })
+        const reference6ZodSchema: ZodTypeAny = reference6ZodSchemaA.extend({ b: reference6ZodSchemaA });
+        compareZodSchemas("test6", reference6ZodSchema, test6JzodSchema);
+
+        // ########################################################################################
+        const test7JzodSchema:JzodElement = {
+          type: "schemaReference",
+          context: {
+            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            c: { type: "simpleType", definition: "string", optional: true },
+            b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
+              type: "object",
+              extend: { type: "schemaReference", definition: { eager: true, relativePath: "a"}},
+              definition: {
+                b: { type: "schemaReference", definition: { relativePath: "a"} },
+                c: { type: "schemaReference", definition: { relativePath: "c"} },
+              }
+            }
+          },
+          definition: { relativePath: "b" }
+        };
+
+        const reference7ZodSchemaA: ZodObject<any> = z.object({ a: z.string() })
+        const reference7ZodSchemaC: ZodTypeAny = z.string().optional();
+        const reference7ZodSchema: ZodTypeAny = reference7ZodSchemaA.extend({ b: reference7ZodSchemaA, c: reference7ZodSchemaC });
+        compareZodSchemas("test7", reference7ZodSchema, test7JzodSchema);
+        
+        // ########################################################################################
+        const test8JzodSchema:JzodElement = {
+          type: "schemaReference",
+          context: {
+            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
+              type: "object",
+              extend: { type: "schemaReference", definition: { eager: true, relativePath: "a"}},
+              definition: {
+                x: { type: "schemaReference", definition: { relativePath: "a"} },
+                y: { type: "schemaReference", definition: { relativePath: "c"} },
+              }
+            },
+            c: { type: "simpleType", definition: "string", optional: true },
+          },
+          definition: { relativePath: "b" }
+        };
+
+        const reference8ZodSchemaA: ZodObject<any> = z.object({ a: z.string() })
+        const reference8ZodSchemaC: ZodTypeAny = z.string().optional();
+        const reference8ZodSchema: ZodTypeAny = reference8ZodSchemaA.extend({
+          // b: convertReference(z.lazy(() => reference8ZodSchemaA)
+          x: z.lazy(() => reference8ZodSchemaA),
+          y: z.lazy(() => reference8ZodSchemaC),
+        });
+        compareZodSchemas("test8", reference8ZodSchema, test8JzodSchema);
+        
+        
       }
     )
 
@@ -114,9 +264,10 @@ describe(
       'jzod schema simple parsing',
       () => {
   
+        console.log("jzod schema simple parsing converting jzodBootstrapElementSchema");
         const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
-        // console.log("jzod schema simple parsing ");
+        console.log("jzod schema simple parsing starting parsing proper ");
         
         // ########################################################################################
         const testSet: any = {
@@ -211,6 +362,8 @@ describe(
       'jzod bootstrap self parsing',
       () => {
         const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+        // console.log("jzodBootstrapElementSchema",JSON.stringify(jzodBootstrapElementSchema));
+
         // ~~~~~~~~~~~~~~~~~ BOOTSTRAP TEST ~~~~~~~~~~~~~~~~~~~~~~~~
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(jzodBootstrapElementSchema).success).toBeTruthy();
       }
@@ -616,7 +769,7 @@ describe(
 
     // ############################################################################################
     it(
-      "Zod to Jzod",
+      "Jzod to Zod and back",
       async() => {
         const testZodToJzodConversion = (
           typeName: string,
@@ -721,6 +874,19 @@ describe(
         testZodToJzodConversion("test30",{ type: "schemaReference", definition: { relativePath: "test30" }});
         testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "simpleType", definition: "string" }], returns: { type: "simpleType", definition: "number" } }});
         testZodToJzodConversion("test32",{ type: "promise", definition: { type: "simpleType", definition: "string" }});
+        // testZodToJzodConversion("test33", {
+        //   type: "schemaReference",
+        //   context: {
+        //     a: { type: "simpleType", definition: "string" },
+        //     b: {
+        //       type: "object",
+        //       definition: {
+        //         test: { type: "schemaReference", definition: { relativePath: "a" } },
+        //       },
+        //     },
+        //   },
+        //   definition: { relativePath: "b" },
+        // });
       }
     )
 

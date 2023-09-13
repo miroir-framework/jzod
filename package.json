@@ -1,7 +1,7 @@
 {
   "name": "@miroir-framework/jzod",
   "private": false,
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "The Json bootstrapper for Zod.",
   "main": "dist/bundle.js",
   "types": "dist/bundle.d.ts",
@@ -21,7 +21,7 @@
     "@babel/plugin-transform-modules-commonjs": "^7.20.11",
     "@babel/preset-env": "^7.22.5",
     "@jest/globals": "^29.3.1",
-    "@miroir-framework/jzod-ts": "0.5.1",
+    "@miroir-framework/jzod-ts": "0.5.2",
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-json": "^6.0.0",
     "@types/jest": "^29.2.4",
@@ -32,6 +32,7 @@
     "ts-jest": "^29.0.3",
     "tsconfig-paths": "^4.1.2",
     "typescript": "^4.9.4",
-    "zod-to-json-schema": "^3.21.2"
+    "zod-to-json-schema": "^3.21.2",
+    "zod-to-ts": "^1.2.0"
   }
 }

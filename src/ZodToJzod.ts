@@ -24,22 +24,22 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
       return zod._def.coerce? { type: "simpleType", definition: "date", coerce: true } : { type: "simpleType", definition: "date" };
     }
     case "ZodUndefined": {
-      return zod._def.coerce? { type: "simpleType", definition: "undefined" } : { type: "simpleType", definition: "undefined" };
+      return { type: "simpleType", definition: "undefined" };
     }
     case "ZodNull": {
-      return zod._def.coerce? { type: "simpleType", definition: "null" } : { type: "simpleType", definition: "null" };
+      return { type: "simpleType", definition: "null" };
     }
     case "ZodVoid": {
-      return zod._def.coerce? { type: "simpleType", definition: "void" } : { type: "simpleType", definition: "void" };
+      return { type: "simpleType", definition: "void" };
     }
     case "ZodAny": {
-      return zod._def.coerce? { type: "simpleType", definition: "any" } : { type: "simpleType", definition: "any" };
+      return { type: "simpleType", definition: "any" };
     }
     case "ZodUnknown": {
-      return zod._def.coerce?{ type: "simpleType", definition: "unknown" } : { type: "simpleType", definition: "unknown" };
+      return { type: "simpleType", definition: "unknown" };
     }
     case "ZodNever": {
-      return zod._def.coerce?{ type: "simpleType", definition: "never" } : { type: "simpleType", definition: "never" };
+      return { type: "simpleType", definition: "never" };
     }
     // ############################################################################################
     // other types
