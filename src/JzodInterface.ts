@@ -21,7 +21,7 @@ export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodSchemaAndDescripti
 export const jzodBootstrapElementSchema: JzodReference = {
   type: "schemaReference",
   context: {
-    jzodBaseObjectSchema: {
+    jzodBaseObject: {
       type: "object",
       definition: {
         optional: { type: "simpleType", definition: "boolean", optional: true },
@@ -29,24 +29,24 @@ export const jzodBootstrapElementSchema: JzodReference = {
         extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
       },
     },
-    jzodArraySchema: {
+    jzodArray: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "array" },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
       },
     },
-    jzodAttributeSchema: {
+    jzodAttribute: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "simpleType" },
         coerce: { type: "simpleType", definition: "boolean", optional: true },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodEnumAttributeTypesSchema" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodEnumAttributeTypes" } },
       },
     },
-    jzodAttributeDateValidationsSchema: {
+    jzodAttributeDateValidations: {
       type: "object",
       definition: {
         extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
@@ -57,19 +57,19 @@ export const jzodBootstrapElementSchema: JzodReference = {
         parameter: { type: "simpleType", definition: "any" },
       },
     },
-    jzodAttributeDateWithValidationsSchema: {
+    jzodAttributeDateWithValidations: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "date" },
         validations: {
           type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeDateValidationsSchema" } },
+          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeDateValidations" } },
         },
       },
     },
-    jzodAttributeNumberValidationsSchema: {
+    jzodAttributeNumberValidations: {
       type: "object",
       definition: {
         extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
@@ -93,19 +93,19 @@ export const jzodBootstrapElementSchema: JzodReference = {
         parameter: { type: "simpleType", definition: "any" },
       },
     },
-    jzodAttributeNumberWithValidationsSchema: {
+    jzodAttributeNumberWithValidations: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "number" },
         validations: {
           type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberValidationsSchema" } },
+          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberValidations" } },
         },
       },
     },
-    jzodAttributeStringValidationsSchema: {
+    jzodAttributeStringValidations: {
       type: "object",
       definition: {
         extra: { type: "record", definition: { type: "simpleType", definition: "any" }, optional: true },
@@ -133,51 +133,51 @@ export const jzodBootstrapElementSchema: JzodReference = {
         parameter: { type: "simpleType", definition: "any" },
       },
     },
-    jzodAttributeStringWithValidationsSchema: {
+    jzodAttributeStringWithValidations: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "string" },
         validations: {
           type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeStringValidationsSchema" } },
+          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeStringValidations" } },
         },
       },
     },
-    jzodElementSchema: {
+    jzodElement: {
       type: "union",
       discriminator: "type",
       definition: [
-        { type: "schemaReference", definition: { relativePath: "jzodArraySchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttributeSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttributeDateWithValidationsSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberWithValidationsSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttributeStringWithValidationsSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodEnumSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodFunctionSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodLazySchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodLiteralSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodIntersectionSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodMapSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodObjectSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodPromiseSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodRecordSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodReferenceSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodSetSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodTupleSchema" } },
-        { type: "schemaReference", definition: { relativePath: "jzodUnionSchema" } },
+        { type: "schemaReference", definition: { relativePath: "jzodArray" } },
+        { type: "schemaReference", definition: { relativePath: "jzodAttribute" } },
+        { type: "schemaReference", definition: { relativePath: "jzodAttributeDateWithValidations" } },
+        { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberWithValidations" } },
+        { type: "schemaReference", definition: { relativePath: "jzodAttributeStringWithValidations" } },
+        { type: "schemaReference", definition: { relativePath: "jzodEnum" } },
+        { type: "schemaReference", definition: { relativePath: "jzodFunction" } },
+        { type: "schemaReference", definition: { relativePath: "jzodLazy" } },
+        { type: "schemaReference", definition: { relativePath: "jzodLiteral" } },
+        { type: "schemaReference", definition: { relativePath: "jzodIntersection" } },
+        { type: "schemaReference", definition: { relativePath: "jzodMap" } },
+        { type: "schemaReference", definition: { relativePath: "jzodObject" } },
+        { type: "schemaReference", definition: { relativePath: "jzodPromise" } },
+        { type: "schemaReference", definition: { relativePath: "jzodRecord" } },
+        { type: "schemaReference", definition: { relativePath: "jzodReference" } },
+        { type: "schemaReference", definition: { relativePath: "jzodSet" } },
+        { type: "schemaReference", definition: { relativePath: "jzodTuple" } },
+        { type: "schemaReference", definition: { relativePath: "jzodUnion" } },
       ],
     },
-    jzodEnumSchema: {
+    jzodEnum: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "enum" },
         definition: { type: "array", definition: { type: "simpleType", definition: "string" } },
       },
     },
-    jzodEnumAttributeTypesSchema: {
+    jzodEnumAttributeTypes: {
       type: "enum",
       definition: [
         "any",
@@ -194,7 +194,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
         "void",
       ],
     },
-    jzodEnumElementTypesSchema: {
+    jzodEnumElementTypes: {
       type: "enum",
       definition: [
         "array",
@@ -214,9 +214,9 @@ export const jzodBootstrapElementSchema: JzodReference = {
         "union",
       ],
     },
-    jzodFunctionSchema: {
+    jzodFunction: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "function" },
         definition: {
@@ -224,102 +224,102 @@ export const jzodBootstrapElementSchema: JzodReference = {
           definition: {
             args: {
               type: "array",
-              definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+              definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
             },
-            returns: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" }, optional: true },
+            returns: { type: "schemaReference", definition: { relativePath: "jzodElement" }, optional: true },
           },
         },
       },
     },
-    jzodLazySchema: {
+    jzodLazy: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "lazy" },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodFunctionSchema" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodFunction" } },
       },
     },
-    jzodLiteralSchema: {
+    jzodLiteral: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "literal" },
         definition: { type: "simpleType", definition: "string" },
       },
     },
-    jzodIntersectionSchema: {
+    jzodIntersection: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "intersection" },
         definition: {
           type: "object",
           definition: {
-            left: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
-            right: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+            left: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
+            right: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
           },
         },
       },
     },
-    jzodMapSchema: {
+    jzodMap: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "map" },
         definition: {
           type: "tuple",
           definition: [
-            { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
-            { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+            { type: "schemaReference", definition: { relativePath: "jzodElement" } },
+            { type: "schemaReference", definition: { relativePath: "jzodElement" } },
           ],
         },
       },
     },
-    jzodObjectSchema: {
+    jzodObject: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         extend: {
           type: "union",
           optional: true,
           definition: [
-            { type: "schemaReference", definition: { relativePath: "jzodReferenceSchema" } },
-            { type: "schemaReference", definition: { relativePath: "jzodObjectSchema" } },
+            { type: "schemaReference", definition: { relativePath: "jzodReference" } },
+            { type: "schemaReference", definition: { relativePath: "jzodObject" } },
           ],
         },
         type: { type: "literal", definition: "object" },
         nonStrict: { type: "simpleType", definition: "boolean", optional: true },
         definition: {
           type: "record",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
         },
       },
     },
-    jzodPromiseSchema: {
+    jzodPromise: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "promise" },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
       },
     },
-    jzodRecordSchema: {
+    jzodRecord: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "record" },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
       },
     },
-    jzodReferenceSchema: {
+    jzodReference: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "schemaReference" },
         context: {
           type: "record",
           optional: true,
-          definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
         },
         definition: {
           type: "object",
@@ -331,37 +331,37 @@ export const jzodBootstrapElementSchema: JzodReference = {
         },
       },
     },
-    jzodSetSchema: {
+    jzodSet: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "set" },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
       },
     },
-    jzodTupleSchema: {
+    jzodTuple: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "tuple" },
         definition: {
           type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
         },
       },
     },
-    jzodUnionSchema: {
+    jzodUnion: {
       type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObjectSchema" } },
+      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "union" },
         discriminator: { type: "simpleType", definition: "string", optional: true },
         definition: {
           type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodElementSchema" } },
+          definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
         },
       },
     },
   },
-  definition: { relativePath: "jzodElementSchema" },
+  definition: { relativePath: "jzodElement" },
 };

@@ -5,7 +5,7 @@ import { createTypeAlias, printNode, withGetType, zodToTs } from "zod-to-ts";
 
 import {
   JzodElement,
-  jzodElementSchema,
+  jzodElement,
   jzodToTsCode
 } from "@miroir-framework/jzod-ts";
 
@@ -245,7 +245,7 @@ describe(
         
     //     const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
     //       "jsonZodBootstrap_reference",
-    //       jzodElementSchema,
+    //       jzodElement,
     //       referenceSchemaFilePath
     //     );
     //     const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
