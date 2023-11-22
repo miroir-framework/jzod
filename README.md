@@ -47,7 +47,7 @@ Which requires to type undeniably more characters, but provides a plain JSON str
 
 ## Usage
 
-![usage](doc/usage.drawio.png)
+![usage](https://github.com/miroir-framework/jzod/blob/main/doc/usage.drawio.png)
 
 Using the features of Zod, one may obtain, in a single movement:
 
@@ -147,7 +147,7 @@ jzodToZod(recursiveType).parse( { a: { a: { a: "test" } } } ); //success
 
 Jzod provides Typescript Types for Jzod Schemas. One thus benefits from completion when creating Jzod Schemas, at least on modern IDEs:
 
-![Completion](doc/ts-completion.png)
+![Completion](https://github.com/miroir-framework/jzod/blob/main/doc/ts-completion.png)
 
 
 ### Conversion to Zod
@@ -193,6 +193,7 @@ jzodToTsCode({ type: "simpleType", definition: "string" }, true/*export declarat
 The function
 
 ```ts
+import { jzodToTsTypeAliasesAndZodText } from "jzod-ts"
 jzodToTsTypeAliasesAndZodText(
   element: JzodElement,
   typeName?: string,

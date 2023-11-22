@@ -11,6 +11,9 @@ export {
   objectToJsStringArray,
   objectToJsStringObject,
 } from "./Jzod"
-// export {
-//   zodToZodText
-// } from "./ZodToZodText"
+export {
+  zodToJzod
+} from "./ZodToJzod"
+export {
+  jzodToZod
+} from "./facade"
