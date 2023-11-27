@@ -2,7 +2,7 @@ import ts from "typescript";
 
 import { JzodElement } from "@miroir-framework/jzod-ts";
 
-import { jzodElementSchemaToZodSchemaAndDescription } from "./Jzod";
+import { jzodElementSchemaToZodSchemaAndDescription } from "./JzodToZod";
 
 // export type TsTypeAliases =  {
 //   [k: string]: ts.TypeAliasDeclaration;

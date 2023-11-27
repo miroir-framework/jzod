@@ -1,7 +1,7 @@
 import { ZodTypeAny } from "zod";
 
 
-import { JzodElement, JzodReference } from "@miroir-framework/jzod-ts";
+import { JzodReference } from "@miroir-framework/jzod-ts";
 
 
 export interface ZodSchemaAndDescription {

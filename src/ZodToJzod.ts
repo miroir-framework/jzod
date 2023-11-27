@@ -57,7 +57,7 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
       // it is impossible to determine what the lazy value is referring to
       // so we force the user to declare it
       // if (!getTypeType) return createTypeReferenceFromString(identifier)
-      return { type: "schemaReference", definition: { relativePath: identifier } };
+      return { type: "schemaReference", definition: { absolutePath: identifier } }; // TODO: how to restore absolutePath vs. relativePath vs. both?
       break;
     }
     case "ZodLiteral": {

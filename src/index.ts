@@ -10,7 +10,7 @@ export {
   getJsResultSetConstDeclarations,
   objectToJsStringArray,
   objectToJsStringObject,
-} from "./Jzod"
+} from "./JzodToZod"
 export {
   zodToJzod
 } from "./ZodToJzod"
