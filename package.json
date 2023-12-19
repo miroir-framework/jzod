@@ -1,7 +1,7 @@
 {
   "name": "@miroir-framework/jzod",
   "private": false,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "The Json bootstrapper for Zod.",
   "main": "dist/bundle.js",
   "types": "dist/bundle.d.ts",
@@ -10,7 +10,7 @@
     "build": "rollup --config",
     "test": "cross-env NODE_ENV=test jest --verbose --silent=false -t"
   },
-  "author": "Arnaud Bailly <miroir-framework@protonmail.com>",
+  "author": "Miroir Framework <miroir-framework@protonmail.com>",
   "homepage": "https://github.com/miroir-framework/jzod/#readme",
   "bugs": "https://github.com/miroir-framework/jzod/issues",
   "license": "MIT",
@@ -21,7 +21,7 @@
     "@babel/plugin-transform-modules-commonjs": "^7.20.11",
     "@babel/preset-env": "^7.22.5",
     "@jest/globals": "^29.3.1",
-    "@miroir-framework/jzod-ts": "0.6.0",
+    "@miroir-framework/jzod-ts": "0.6.1",
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-json": "^6.0.0",
     "@types/jest": "^29.2.4",

@@ -13,23 +13,3 @@ export function jzodToZod(
 ) {
   return jzodElementSchemaToZodSchemaAndDescription(element).zodSchema
 }
-
-// export function jzodToTsTypeAliases(
-//   typeName: string,
-//   element: JzodElement,
-// ) {
-//   const elementZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
-//     // typeName,
-//     element,
-//     () => ({} as ZodSchemaAndDescriptionRecord),
-//     () => ({} as ZodSchemaAndDescriptionRecord),
-//     (innerReference: ZodTypeAny, relativeReference: string | undefined) =>
-//       withGetType(innerReference, (ts) =>
-//         ts.factory.createTypeReferenceNode(
-//           ts.factory.createIdentifier(relativeReference ? relativeReference : "RELATIVEPATH_NOT_DEFINED")
-//         )
-//       )
-//   );
-
-//   return getTsTypesForZodSchemaAndDescription(typeName, elementZodSchemaAndDescription);
-// }

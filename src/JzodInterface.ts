@@ -63,6 +63,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
       definition: {
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "date" },
+        coerce: { type: "simpleType", definition: "boolean", optional: true },
         validations: {
           type: "array",
           definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeDateValidations" } },
@@ -99,6 +100,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
       definition: {
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "number" },
+        coerce: { type: "simpleType", definition: "boolean", optional: true },
         validations: {
           type: "array",
           definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberValidations" } },
@@ -139,6 +141,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
       definition: {
         type: { type: "literal", definition: "simpleType" },
         definition: { type: "literal", definition: "string" },
+        coerce: { type: "simpleType", definition: "boolean", optional: true },
         validations: {
           type: "array",
           definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeStringValidations" } },
