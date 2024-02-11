@@ -247,7 +247,15 @@ export const jzodBootstrapElementSchema: JzodReference = {
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "literal" },
-        definition: { type: "simpleType", definition: "string" },
+        definition: {
+          "type": "union",
+          "definition": [
+            { type: "simpleType", definition: "string" },
+            { type: "simpleType", definition: "number" },
+            { type: "simpleType", definition: "bigint" },
+            { type: "simpleType", definition: "boolean" },
+          ]
+        }
       },
     },
     jzodIntersection: {
@@ -292,6 +300,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
         },
         type: { type: "literal", definition: "object" },
         nonStrict: { type: "simpleType", definition: "boolean", optional: true },
+        partial: { type: "simpleType", definition: "boolean", optional: true },
         definition: {
           type: "record",
           definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },

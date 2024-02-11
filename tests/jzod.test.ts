@@ -383,6 +383,7 @@ describe(
         const test0: JzodElement = { type: "simpleType", definition: "string", optional: true };
         const test1: JzodElement = {
           type: "object",
+          partial: true,
           definition: {
             a: {
               type: "simpleType",
@@ -624,6 +625,8 @@ describe(
         const test0_KO = 1;
         const test1_OK1 = {a:1, b:6};
         const test1_OK2 = {a:null, b:6};
+        const test1_OK3 = {b:6};
+        const test1_OK4 = {a:1};
         const test1_KO1 = {a:"toto", b:6};
         const test1_KO2 = {a:1, b: 5};
         const test1_KO3 = {a:1, b:6, c: "nok"};
@@ -685,6 +688,8 @@ describe(
         // #####
         expect(test1ZodSchema.zodSchema.safeParse(test1_OK1).success).toBeTruthy();
         expect(test1ZodSchema.zodSchema.safeParse(test1_OK2).success).toBeTruthy();
+        expect(test1ZodSchema.zodSchema.safeParse(test1_OK3).success).toBeTruthy();
+        expect(test1ZodSchema.zodSchema.safeParse(test1_OK4).success).toBeTruthy();
         expect(test1ZodSchema.zodSchema.safeParse(test1_KO1).success).toBeFalsy();
         expect(test1ZodSchema.zodSchema.safeParse(test1_KO2).success).toBeFalsy();
         expect(test1ZodSchema.zodSchema.safeParse(test1_KO3).success).toBeFalsy();
@@ -898,6 +903,26 @@ describe(
         testZodToJzodConversion("test30",{ type: "schemaReference", definition: { absolutePath: "test30" }}, "z.lazy(() =>undefined)"); // schemaReference are not really convertible back to Jzod: the inner structure is lost when converting to Zod
         testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "simpleType", definition: "string" }], returns: { type: "simpleType", definition: "number" } }}, "z.function().args([\"z.string()\"]).returns(z.number())");
         testZodToJzodConversion("test32",{ type: "promise", definition: { type: "simpleType", definition: "string" }}, "z.promise(z.string())");
+        testZodToJzodConversion(
+          "test33",
+          {
+            type: "object",
+            partial: true,
+            definition: {
+              a: { type: "simpleType", definition: "string" },
+              b: { type: "simpleType", definition: "number", optional: true },
+            },
+          },
+          "z.object({a:z.string(), b:z.number().optional()}).strict().partial()",
+          { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
+            type: "object",
+            definition: {
+              a: { type: "simpleType", definition: "string", optional: true },
+              b: { type: "simpleType", definition: "number", optional: true },
+            },
+          },
+        );
+
       }
     )
 

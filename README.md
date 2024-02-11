@@ -143,7 +143,7 @@ const recursiveType: JzodElement = {
 jzodToZod(recursiveType).parse( { a: { a: { a: "test" } } } ); //success
 ```
 
-### Typescipt Use
+### Typescript Use
 
 Jzod provides Typescript Types for Jzod Schemas. One thus benefits from completion when creating Jzod Schemas, at least on modern IDEs:
 
@@ -239,5 +239,5 @@ TBC
 
 Jzod does not currently check for adequate use of validation contraint parameters with the employed Zod schema type; for example, it is allowed to pass a parameter to the number `int` constraint, which does not make sense, since this contraint only checks that the given number is an integer. The type of the parameter is not checked, either. Finally, Jzod does not allow yet to pass a custom error message (second parameter) to validators (TBD).
 
-_Are not supported yet_: Native enums, effects, most object methods (`pick`, `omit`, `partial`, `deepPartial`, and `merge`, but `extend` is supported), other methods (`readonly`, `brand`, `pipe`) and transforms.
+_Are not supported yet_: Native enums, effects, most object methods (`pick`, `omit`, `deepPartial`, and `merge`, but `extend` and `partial` are supported), other methods (`readonly`, `brand`, `pipe`) and transforms.
 

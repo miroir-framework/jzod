@@ -185,7 +185,7 @@ export function jzodElementSchemaToZodSchemaAndDescription(
     case "literal": {
       return {
         zodSchema: optionalNullableZodSchema(z.literal(element.definition),element.optional,element.nullable),
-        zodText: optionalNullableZodDescription(`z.literal("${element.definition}")`,element.optional,element.nullable), // TODO: defines only strings!
+        zodText: optionalNullableZodDescription(typeof element.definition == "string"?`z.literal("${element.definition}")`:`z.literal(${(element as any).definition})`,element.optional,element.nullable), // TODO: defines only strings!
       };
       break;
     }
@@ -254,13 +254,13 @@ export function jzodElementSchemaToZodSchemaAndDescription(
 
       const contextZodText = getContextDescriptions(definitionSubObject);
       const contextZodSchema = getContextZodSchemas(definitionSubObject);
-      const resultZodSchema = extendsSubObject?(extendsSubObject.zodSchema as AnyZodObject).extend(schemas):z.object(schemas);
-
+      const preResultZodSchema = extendsSubObject?(extendsSubObject.zodSchema as AnyZodObject).extend(schemas):z.object(schemas);
+      const resultZodSchema = element.partial?preResultZodSchema.partial():preResultZodSchema;
 
       /**
        */
       const preResultZodText = extendsSubObject?extendsSubObject.zodText + ".extend(" + objectToJsStringObject(zodText) +")":`z.object(${objectToJsStringObject(zodText)})`;
-      const resultZodText = optionalNullableZodDescription(preResultZodText + (element.nonStrict?"":".strict()"), element.optional, element.nullable)
+      const resultZodText = optionalNullableZodDescription(preResultZodText + (element.nonStrict?"":".strict()")  + (element.partial?".partial()":""), element.optional, element.nullable)
       // console.log(
       //   "jzodElementSchemaToZodSchemaAndDescription converting object definition",
       //   JSON.stringify(element.definition),
