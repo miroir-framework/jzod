@@ -1,7 +1,7 @@
 {
   "name": "@miroir-framework/jzod",
   "private": false,
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "The Json bootstrapper for Zod.",
   "main": "dist/bundle.js",
   "types": "dist/bundle.d.ts",
@@ -17,11 +17,17 @@
   "dependencies": {
     "zod": "^3.22.2"
   },
+  "files": [
+    "LICENSE.md",
+    "package.json",
+    "dist/bundle.js",
+    "dist/bundle.d.ts"
+  ],
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.20.11",
     "@babel/preset-env": "^7.22.5",
     "@jest/globals": "^29.3.1",
-    "@miroir-framework/jzod-ts": "0.6.1",
+    "@miroir-framework/jzod-ts": "0.6.3",
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-json": "^6.0.0",
     "@types/jest": "^29.2.4",

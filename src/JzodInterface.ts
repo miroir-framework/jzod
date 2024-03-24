@@ -337,6 +337,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
           type: "object",
           definition: {
             eager: { type: "simpleType", definition: "boolean", optional: true },
+            partial: { type: "simpleType", definition: "boolean", optional: true },
             relativePath: { type: "simpleType", definition: "string", optional: true },
             absolutePath: { type: "simpleType", definition: "string", optional: true }, // absolutePath => lazy evaluation
           },
@@ -377,3 +378,32 @@ export const jzodBootstrapElementSchema: JzodReference = {
   },
   definition: { relativePath: "jzodElement" },
 };
+
+// ################################################################################################
+// ################################################################################################
+export {
+  jzodObject,
+  jzodArray,
+  jzodAttribute,
+  jzodAttributeDateValidations,
+  jzodAttributeDateWithValidations,
+  jzodAttributeNumberValidations,
+  jzodAttributeNumberWithValidations,
+  jzodAttributeStringValidations,
+  jzodAttributeStringWithValidations,
+  jzodElement,
+  jzodEnum,
+  jzodEnumAttributeTypes,
+  jzodEnumElementTypes,
+  jzodFunction,
+  jzodIntersection,
+  jzodLazy,
+  jzodLiteral,
+  jzodMap,
+  jzodPromise,
+  jzodRecord,
+  jzodReference,
+  jzodSet,
+  jzodTuple,
+  jzodUnion,
+} from "@miroir-framework/jzod-ts";

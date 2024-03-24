@@ -799,8 +799,8 @@ describe(
           // console.log("Zod to Jzod testJzodSchema", typeName, "zod text", testZodSchemaAndDescription.zodText);
           // console.log("Zod to Jzod testJzodSchema", typeName, "jzod result schema", JSON.stringify(testResult,undefined,2));
           
-          expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
           expect(testZodSchemaAndDescription.zodText).toEqual(expectedZodSchemaText);
+          expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
         }
 
         testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"}, "z.any()");
@@ -922,6 +922,36 @@ describe(
             },
           },
         );
+
+        // TODO: HOW TO TEST SCHEMA REFERENCE CONVERSION
+        // testZodToJzodConversion(
+        //   "test34",
+        //   {
+        //     type: "schemaReference",
+        //     context: {
+        //       o: {
+        //         type: "object", 
+        //         definition: {
+        //           a: { type: "simpleType", definition: "string" },
+        //           b: { type: "simpleType", definition: "number", optional: true },
+        //         }
+        //       }
+        //     },
+        //     definition: {
+        //       partial: true,
+        //       relativePath: "o"
+        //     },
+        //   },
+        //   // "z.object({a:z.string(), b:z.number().optional()}).strict().partial()",
+        //   "z.lazy(() =>o)",
+        //   { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
+        //     type: "object",
+        //     definition: {
+        //       a: { type: "simpleType", definition: "string", optional: true },
+        //       b: { type: "simpleType", definition: "number", optional: true },
+        //     },
+        //   },
+        // );
 
       }
     )

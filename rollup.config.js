@@ -6,7 +6,7 @@ export default [
     input: ["src/index.ts"],
     external: [
       'zod',
-      'zod-to-json-schema',
+      "@miroir-framework/jzod-ts"
     ],
     output: [
         {
