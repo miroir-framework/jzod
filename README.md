@@ -18,6 +18,27 @@ npm install @miroir-framework/jzod-ts
 
 Package `jzod-ts` provides Typescript types for Jzod schemas, and conversion functions from Jzod Schemas to Typescript types.
 
+## Release / Migration notes
+
+From version `0.7.0` onwards, `"simpleType"` specification is `deprecated`. It means using, instead of:
+
+```js
+{
+  type: "simpleType",
+  definition: "string"
+}
+```
+
+the new, simpler definition:
+
+```js
+{
+  type: "string",
+}
+```
+
+The `"simpleType"` specification format is de-released from version `0.8.0` onwards. The `"subDiscriminator"` for discriminated unions, which was used internally by Jzod but had no impact on the generated Zod schemas, is also de-released from version `0.8.0`.
+
 ## Principle
 
 Instead of writing [Zod](https://github.com/colinhacks/zod) schemas:
@@ -36,8 +57,8 @@ import { jzodToZod } from "@miroir-framework/jzod";
 const myJzodSchema = {
   type: "object",
   definition: { 
-    a: { type: "simpleType", definition: "number", optional: true },
-    b: { type:"array", definition: { type:"simpleType", definition:"boolean" } }
+    a: { type: "number", optional: true },
+    b: { type:"array", definition: { type: "boolean" } }
   }
 }
 const myZodSchema = jzodToZod(myJzodSchema);
@@ -68,12 +89,12 @@ const union: JzodElement = {
   definition: [
     {
       type: "object",
-      definition: { a: { type: "simpleType", definition: "string" } },
-      , validations:[{ type: "min", parameter: 5 }, { type:"includes", parameter:"#"}] // string must be at least 5 characters long and contain '#'
+      definition: { a: { type: "string" } },
+      validations:[{ type: "min", parameter: 5 }, { type:"includes", parameter:"#"}] // string must be at least 5 characters long and contain '#'
     },
     {
       type: "object",
-      definition: { b: { type: "simpleType", definition: "number", validations:[ { type: "gte", parameter: 0 }, { type:"lte", parameter:"100"} ] } }, // comprised between 0 and 100
+      definition: { b: { type: "number", validations:[ { type: "gte", parameter: 0 }, { type:"lte", parameter:"100"} ] } } // comprised between 0 and 100
     },
   ],
 };
@@ -94,12 +115,13 @@ For details about the (yet) unsupported Zod features, see [Limitations and Drawb
 ### References and Recursive types
 
 Jzod enables references
+
 ```ts
 const referencedType: JzodElement = {
   type: "schemaReference",
   context: {
     myString: {
-      type: "simpleType", definition: "string" 
+      type: "string" 
     },
     myObject: {
       type: "object",
@@ -126,8 +148,7 @@ const recursiveType: JzodElement = {
           type: "union",
           definition: [
             {
-              type: "simpleType",
-              definition: "string",
+              type: "string",
             },
             {
               type: "schemaReference",
@@ -149,8 +170,8 @@ Jzod provides Typescript Types for Jzod Schemas. One thus benefits from completi
 
 ![Completion](https://github.com/miroir-framework/jzod/blob/main/doc/ts-completion.png)
 
-
 ### Conversion to Zod
+
 The function
 
 ```ts
@@ -161,12 +182,14 @@ jzodToZod(schema: JzodElement)
 returns a Zod Schema corresponding to a Jzod Schema.
 
 ### Conversion From Zod
+
 The function
 
 ```ts
 import { zodToJzod } from "jzod"
 zodToJzod(schema: ZodTypeAny, identifier:string)
 ```
+
 returns a Jzod Schema corresponding to a Zod Schema. The `identifier` parameter gives the name of the reference to be used in case a `z.lazy()` occurs in the type.
 
 For example:
@@ -174,14 +197,16 @@ For example:
 ```ts
 const JzodSchema = zodToJzod(z.lazy(()=>z.any()),"test")); // equivalent to JzodSchema = {"type":"schemaReference","definition":{"relativePath":"test"}}
 ```
+
 One thus has to ensure that any lazy-referenced Zod schema is available as a context. The most simple solution is to make any internal definition of a `lazy` call available as a js `const`, and use that name as context reference.
 
 ### Conversion to Typescript
 
 In the separate [Jzod-ts](https://www.npmjs.com/package/jzod-ts) package, the function
+
 ```ts
 import { jzodToZod } from "jzod-ts"
-jzodToTsCode({ type: "simpleType", definition: "string" }, true/*export declaration*/, "testJzodSchema1")
+jzodToTsCode({ type: "string" }, true/*export declaration*/, "testJzodSchema1")
 
 // /* returns: */
 // import { ZodType, ZodTypeAny, z } from "zod";
@@ -240,4 +265,3 @@ TBC
 Jzod does not currently check for adequate use of validation contraint parameters with the employed Zod schema type; for example, it is allowed to pass a parameter to the number `int` constraint, which does not make sense, since this contraint only checks that the given number is an integer. The type of the parameter is not checked, either. Finally, Jzod does not allow yet to pass a custom error message (second parameter) to validators (TBD).
 
 _Are not supported yet_: Native enums, effects, most object methods (`pick`, `omit`, `deepPartial`, and `merge`, but `extend` and `partial` are supported), other methods (`readonly`, `brand`, `pipe`) and transforms.
-

@@ -9,37 +9,37 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
     // primitive types
     case "ZodString": {
       // console.log("zodToJzod ZodString",JSON.stringify(zod));
-      return zod._def.coerce?{ type: "simpleType", definition: "string", coerce: true }:{ type: "simpleType", definition: "string"};
+      return zod._def.coerce?{ type: "string", coerce: true }:{ type: "string"};
     }
     case "ZodNumber": {
-      return zod._def.coerce? { type: "simpleType", definition: "number", coerce: true }: { type: "simpleType", definition: "number" };
+      return zod._def.coerce? { type: "number", coerce: true }: { type: "number" };
     }
     case "ZodBigInt": {
-      return zod._def.coerce? { type: "simpleType", definition: "bigint", coerce: true } : { type: "simpleType", definition: "bigint" };
+      return zod._def.coerce? { type: "bigint", coerce: true } : { type: "bigint" };
     }
     case "ZodBoolean": {
-      return zod._def.coerce? { type: "simpleType", definition: "boolean", coerce: true } : { type: "simpleType", definition: "boolean" };
+      return zod._def.coerce? { type: "boolean", coerce: true } : { type: "boolean" };
     }
     case "ZodDate": {
-      return zod._def.coerce? { type: "simpleType", definition: "date", coerce: true } : { type: "simpleType", definition: "date" };
+      return zod._def.coerce? { type: "date", coerce: true } : { type: "date" };
     }
     case "ZodUndefined": {
-      return { type: "simpleType", definition: "undefined" };
+      return { type: "undefined" };
     }
     case "ZodNull": {
-      return { type: "simpleType", definition: "null" };
+      return { type:"null" };
     }
     case "ZodVoid": {
-      return { type: "simpleType", definition: "void" };
+      return { type: "void" };
     }
     case "ZodAny": {
-      return { type: "simpleType", definition: "any" };
+      return { type: "any" };
     }
     case "ZodUnknown": {
-      return { type: "simpleType", definition: "unknown" };
+      return { type: "unknown" };
     }
     case "ZodNever": {
-      return { type: "simpleType", definition: "never" };
+      return { type: "never" };
     }
     // ############################################################################################
     // other types
@@ -140,12 +140,12 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
     }
     case "ZodEffects": {
       console.warn("zodToJzod: Zod effects are ignored.", JSON.stringify(zod));
-      return { type: "simpleType", definition: "any" };
+      return { type: "any" };
       break;
     }
     case "ZodNativeEnum": {
       console.warn("zodToJzod: ZodNativeEnum are ignored.", JSON.stringify(zod));
-      return { type: "simpleType", definition: "any" };
+      return { type: "any" };
       break;
     }
     case "ZodRecord": {
@@ -196,9 +196,9 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
       return { type: "function", definition: { args: argumentTypes, returns: returnType } };
     }
     case "ZodDefault": {
-      return { type: "simpleType", definition: "any" };
+      return { type: "any" };
     }
     default:
-      return { type: "simpleType", definition: "any" };
+      return { type: "any" };
   }
 };

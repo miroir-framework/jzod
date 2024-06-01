@@ -60,8 +60,7 @@ describe(
   () => {
 
     // ###########################################################################################
-    it(
-      'jzod elementary schema conversion',
+    it('jzod elementary schema conversion',
       () => {
         const test1JzodSchema:JzodElement = {
             type: "object",
@@ -92,7 +91,7 @@ describe(
         const test2JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
-            a: { type: "simpleType", definition: "string" },
+            a: { type: "string" },
           },
           definition: { relativePath: "a" }
         };
@@ -105,7 +104,7 @@ describe(
         const test3JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
-            a: { type: "simpleType", definition: "string" },
+            a: { type: "string" },
             b: {
               type: "schemaReference",
               definition: { absolutePath: "a"}
@@ -126,7 +125,7 @@ describe(
               type: "schemaReference",
               definition: { relativePath: "a"}
             },
-            a: { type: "simpleType", definition: "string" },
+            a: { type: "string" },
           },
           definition: { relativePath: "b" }
         };
@@ -139,7 +138,7 @@ describe(
         const test5JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
-            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            a: { type: "object", definition: { a: { type: "string" } } },
             b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
               type: "object",
               definition: {
@@ -158,7 +157,7 @@ describe(
         const test6JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
-            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            a: { type: "object", definition: { a: { type: "string" } } },
             b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
               type: "object",
               extend: { type: "schemaReference", definition: { eager: true, relativePath: "a"}},
@@ -178,8 +177,8 @@ describe(
         const test7JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
-            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
-            c: { type: "simpleType", definition: "string", optional: true },
+            a: { type: "object", definition: { a: { type: "string" } } },
+            c: { type: "string", optional: true },
             b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
               type: "object",
               extend: { type: "schemaReference", definition: { eager: true, relativePath: "a"}},
@@ -201,7 +200,7 @@ describe(
         const test8JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
-            a: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            a: { type: "object", definition: { a: { type: "string" } } },
             b: { // check that reference resolution is indeed lazy, by placing the item calling the reference before the reference itself
               type: "object",
               extend: { type: "schemaReference", definition: { eager: true, relativePath: "a"}},
@@ -210,7 +209,7 @@ describe(
                 y: { type: "schemaReference", definition: { relativePath: "c"} },
               }
             },
-            c: { type: "simpleType", definition: "string", optional: true },
+            c: { type: "string", optional: true },
           },
           definition: { relativePath: "b" }
         };
@@ -224,58 +223,149 @@ describe(
         });
         compareZodSchemas("test8", reference8ZodSchema, test8JzodSchema);
         
+        // ########################################################################################
+        const test20JzodSchema:any = {
+          type: "any",
+        };
+
+        const reference20ZodSchema:ZodTypeAny = z.any();
+
+        compareZodSchemas("test20", reference20ZodSchema, test20JzodSchema);
         
+        // ########################################################################################
+        const test21JzodSchema:any = {
+          type: "string",
+          nullable: true,
+        };
+
+        const reference21ZodSchema:ZodTypeAny = z.string().nullable();
+
+        compareZodSchemas("test21", reference21ZodSchema, test21JzodSchema);
+        
+        // ########################################################################################
+        const test22JzodSchema:any = {
+          type: "uuid",
+          optional: true
+        };
+
+        const reference22ZodSchema:ZodTypeAny = z.string().uuid().optional();
+
+        compareZodSchemas("test22", reference22ZodSchema, test22JzodSchema);
+        
+        // ########################################################################################
+        const test23JzodSchema:any = {
+          type: "never",
+          optional: true
+        };
+
+        const reference23ZodSchema:ZodTypeAny = z.never().optional();
+
+        compareZodSchemas("test23", reference23ZodSchema, test23JzodSchema);
+
+        // ########################################################################################
+        // using deprecated "simpleType" Jzod schema for string declaration
+        const test24JzodSchema:any = {
+          type: "simpleType",
+          definition: "string",
+          validations:[{ type: "min", parameter: 5 }, { type:"includes", parameter:"#"}]
+        };
+
+        const reference24ZodSchema:ZodTypeAny = z.string().min(5).includes("#");
+
+        compareZodSchemas("test24", reference24ZodSchema, test24JzodSchema);
+
+        // ########################################################################################
+        const test25JzodSchema:any = {
+          type: "string",
+          validations:[{ type: "min", parameter: 5 }, { type:"includes", parameter:"#"}]
+        };
+
+        const reference25ZodSchema:ZodTypeAny = z.string().min(5).includes("#");
+
+        compareZodSchemas("test25", reference25ZodSchema, test25JzodSchema);
+
+        // // ########################################################################################
+        // // bigint literals available only from ES2020
+        // const test26JzodSchema:any = {
+        //   type: "bigint",
+        //   validations:[{ type: "gt", parameter: 5n }, { type:"lt", parameter:10n}]
+        // };
+
+        // const reference26ZodSchema:ZodTypeAny = z.bigint().gt(5n).lt(10n);
+
+        // compareZodSchemas("test26", reference26ZodSchema, test26JzodSchema);
+
+        // ########################################################################################
+        const test27JzodSchema:any = {
+          type: "number",
+          validations:[{ type: "gt", parameter: 5 }, { type:"lt", parameter:10}]
+        };
+  
+        const reference27ZodSchema:ZodTypeAny = z.number().gt(5).lt(10);
+  
+        compareZodSchemas("test27", reference27ZodSchema, test27JzodSchema);
+
+        // ########################################################################################
+        const dateMin = new Date()
+        const dateMax = new Date()
+        const test28JzodSchema:any = {
+          type: "date",
+          validations:[{ type: "min", parameter: dateMin }, { type:"max", parameter:dateMax}]
+        };
+  
+        const reference28ZodSchema:ZodTypeAny = z.date().min(dateMin).max(dateMax)
+  
+        compareZodSchemas("test28", reference28ZodSchema, test28JzodSchema);
       }
     )
 
 
-    // // ###########################################################################################
-    // it(
-    //   'generated Zod schema from jzodBootstrapElementSchema is equivalent to hand-written Zod schema (will have no interest whenever zod schemas for bootstrap will be automatically generated)',
-    //   () => {
-    //     const referenceSchemaFilePath = path.join(referencesPath,'jsonZodBootstrap_reference.json');
-    //     const convertedElementSchemaFilePath = path.join(tmpPath,'jsonZodBootstrap_converted.json');
+    // // // ###########################################################################################
+    // // it(
+    // //   'generated Zod schema from jzodBootstrapElementSchema is equivalent to hand-written Zod schema (will have no interest whenever zod schemas for bootstrap will be automatically generated)',
+    // //   () => {
+    // //     const referenceSchemaFilePath = path.join(referencesPath,'jsonZodBootstrap_reference.json');
+    // //     const convertedElementSchemaFilePath = path.join(tmpPath,'jsonZodBootstrap_converted.json');
 
-    //     const jzodBootstrapElementZodSchema:ZodTypeAny = jzodToZod(jzodBootstrapElementSchema);
+    // //     const jzodBootstrapElementZodSchema:ZodTypeAny = jzodToZod(jzodBootstrapElementSchema);
 
-    //     // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(jzodBootstrapElementZodSchema));
+    // //     // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(jzodBootstrapElementZodSchema));
         
-    //     const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-    //       "jsonZodBootstrap_reference",
-    //       jzodElement,
-    //       referenceSchemaFilePath
-    //     );
-    //     const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-    //       "jsonZodBootstrap_converted",
-    //       jzodBootstrapElementZodSchema,
-    //       convertedElementSchemaFilePath
-    //     );
+    // //     const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
+    // //       "jsonZodBootstrap_reference",
+    // //       jzodElement,
+    // //       referenceSchemaFilePath
+    // //     );
+    // //     const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
+    // //       "jsonZodBootstrap_converted",
+    // //       jzodBootstrapElementZodSchema,
+    // //       convertedElementSchemaFilePath
+    // //     );
 
-    //     // equivalence between "hard-coded" and converted schemas
-    //     expect(test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString).toEqual(test2ZodSchemaJsonSchemaWithoutBootstrapElementString);
-    //   }
-    // )
+    // //     // equivalence between "hard-coded" and converted schemas
+    // //     expect(test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString).toEqual(test2ZodSchemaJsonSchemaWithoutBootstrapElementString);
+    // //   }
+    // // )
 
 
 
 
     // ###########################################################################################
-    it(
-      'jzod schema simple parsing',
-      () => {
-  
+    it('jzod schema simple parsing', () => 
+      {
         console.log("jzod schema simple parsing converting jzodBootstrapElementSchema");
         const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
+        // console.log("jzod schema simple parsing starting parsing proper ", jzodBootstrapElementZodSchema.contextZodText);
         console.log("jzod schema simple parsing starting parsing proper ");
         
         // ########################################################################################
         const testSet: any = {
-          test0: { type: "simpleType", definition: "string", optional: true },
+          test0: { type: "string", optional: true },
           test1: {
             type: "object",
             nonStrict: true,
-            definition: { a: { type: "simpleType", definition: "string", nullable:true } },
+            definition: { a: { type: "string", nullable:true } },
           },
           test2: {
             type: "object",
@@ -293,10 +383,10 @@ describe(
             type: "function",
             definition: {
               args: [
-                { type: "simpleType", definition: "string", optional: true, nullable: true },
-                { type: "simpleType", definition: "number" },
+                { type: "string", optional: true, nullable: true },
+                { type: "number" },
               ],
-              returns: { type: "simpleType", definition: "number" },
+              returns: { type: "number" },
             }
           },
           test5: {
@@ -307,24 +397,31 @@ describe(
             type: "union",
             definition: [
               {
-                type: "object", definition: { a: { type: "simpleType", definition: "string" } },
+                type: "object", definition: { a: { type: "string" } },
               },
               {
-                type: "object", definition: { b: { type: "simpleType", definition: "number" } },
+                type: "object", definition: { b: { type: "number" } },
               },
             ],
           },
           test7: {
             type: "array",
-            definition: {type: "object", definition: { a: { type: "simpleType", definition: "string" } }},
+            definition: {type: "object", definition: { a: { type: "string" } }},
           },
           test8: {
             type: "lazy",
             definition: {
-              type: "function", definition: {args:[ { type: "simpleType", definition: "string" } ], returns: { type: "simpleType", definition: "string" }}
+              type: "function", definition: {args:[ { type: "string" } ], returns: { type: "string" }}
             }
           },
-          test9: { type: "simpleType", definition: "string", optional: true, validations: [{type:"min",parameter:5}] },
+          test9: { type: "string", optional: true, validations: [{type:"min",parameter:5}] },
+          // using alternate "PlainAttribute" format
+          test20: { type: "string", optional: true },
+          test21: {
+            type: "object",
+            nonStrict: true,
+            definition: { a: { type: "string", nullable:true } },
+          },
         };
 
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test0).success).toBeTruthy();
@@ -337,13 +434,16 @@ describe(
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test7).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test8).success).toBeTruthy();
 
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test20).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test21).success).toBeTruthy();
+
         // ########################################################################################
         // tests to fail
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazys",definition:"test"}).success).toBeFalsy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({type:"lazy",type2:"lazy2",definition:"test"}).success).toBeFalsy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse({
           type: "record",
-          definition: { type: "object", definition: { a: { type: "simpleType", definition: "undefined!!!!!!" } } },
+          definition: { type: "object", definition: { a: { type: "undefined!!!!!!" } } },
         }).success).toBeFalsy();
 
         const illShapedReference = {
@@ -370,24 +470,21 @@ describe(
     )
 
     // ###########################################################################################
-    it(
-      'jzod simple data parsing',
+    it('jzod simple data parsing',
       () => {
         const absoluteReferences = {
-          // "123": jzodElementSchemaToZodSchemaAndDescription({type: "object", definition: {"x": {type:"simpleType", definition:"string"}}})
-          // "123": jzodElementSchemaToZodSchemaAndDescription({type:"simpleType", definition:"string"})
-          "123": jzodElementSchemaToZodSchemaAndDescription({type:"simpleType", definition:"string"})
+          "123": jzodElementSchemaToZodSchemaAndDescription({type: "string"})
         }
 
         // console.log("absoluteReferences",absoluteReferences);
         const test0: JzodElement = { type: "simpleType", definition: "string", optional: true };
-        const test1: JzodElement = {
+        // const test1: JzodElement = {
+        const test1: any = {
           type: "object",
           partial: true,
           definition: {
             a: {
-              type: "simpleType",
-              definition: "number",
+              type: "number",
               nullable: true,
             },
             b: {
@@ -400,18 +497,16 @@ describe(
         const test2: JzodElement = {
           type: "schemaReference",
           context: {
-            ref0: { type: "simpleType", definition: "string", optional: true },
+            ref0: { type: "string", optional: true },
             ref1: {
               type: "object",
               definition: {
                 a: {
-                  type: "simpleType",
-                  definition: "number",
+                  type: "number",
                   nullable: true,
                 },
                 b: {
-                  type: "simpleType",
-                  definition: "number",
+                  type: "number",
                   validations: [{ type: "gt", parameter: 5 }],
                 },
     
@@ -443,26 +538,26 @@ describe(
           type: "function",
           definition: {
             args: [
-              { type: "simpleType", definition: "string" },
-              { type: "simpleType", definition: "number" },
+              { type: "string" },
+              { type: "number" },
             ],
-            returns: { type: "simpleType", definition: "number" },
+            returns: { type: "number" },
           },
         };
         const test5: JzodElement = {
           type: "record",
-          definition: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+          definition: { type: "object", definition: { a: { type: "string" } } },
         };
         const test6: JzodElement = {
           type: "union",
           definition: [
             {
               type: "object",
-              definition: { a: { type: "simpleType", definition: "string" } },
+              definition: { a: { type: "string" } },
             },
             {
               type: "object",
-              definition: { b: { type: "simpleType", definition: "number" } },
+              definition: { b: { type: "number" } },
             },
           ],
         };
@@ -472,8 +567,7 @@ describe(
             type: "object",
             definition: {
               a: {
-                type: "simpleType",
-                definition: "string",
+                type: "string",
                 validations: [
                   { type: "min", parameter: 5 },
                   { type: "includes", parameter: "#" },
@@ -487,14 +581,13 @@ describe(
           definition: {
             type: "function",
             definition: {
-              args: [{ type: "simpleType", definition: "string" }],
-              returns: { type: "simpleType", definition: "string" },
+              args: [{ type: "string" }],
+              returns: { type: "string" },
             },
           },
         };
         const test9: JzodElement = {
-          type: "simpleType",
-          definition: "string",
+          type: "string",
           optional: true,
           validations: [{ type: "min", parameter: 5 }],
         };
@@ -503,7 +596,7 @@ describe(
           type: "schemaReference",
           context: {
             myString: {
-              type: "simpleType", definition: "string" 
+              type: "string" 
             },
             myObject: {
               type: "object",
@@ -517,29 +610,30 @@ describe(
         const test12: JzodElement = {
           type: "tuple",
           definition: [
-            { type: "simpleType", definition: "number" },
-            { type: "simpleType", definition: "string" },
+            { type: "number" },
+            { type: "string" },
           ],
         };
         const test13: JzodElement = {
           type: "intersection",
           definition: {
-            left: { type: "object", definition: { name: { type: "simpleType", definition: "string" } } },
-            right: { type: "object", definition: { role: { type: "simpleType", definition: "string" } } },
+            left: { type: "object", definition: { name: { type: "string" } } },
+            right: { type: "object", definition: { role: { type: "string" } } },
           },
         };
         const test14: JzodElement = {
           type: "set",
-          definition: { type: "simpleType", definition: "string" },
+          definition: { type: "string" },
         };
         const test15: JzodElement = {
           type: "map",
           definition: [
-            { type: "simpleType", definition: "string" },
-            { type: "simpleType", definition: "number" },
+            { type: "string" },
+            { type: "number" },
           ],
         };
-        const test16: JzodElement = {
+        // const test16: JzodElement = {
+        const test16: any = {
           type: "schemaReference", 
           context: {
             "myObject": {
@@ -549,8 +643,7 @@ describe(
                   type: "union",
                   definition: [
                     {
-                      type: "simpleType",
-                      definition: "string",
+                      type: "string",
                     },
                     {
                       type: "schemaReference",
@@ -568,8 +661,7 @@ describe(
           nonStrict: true,
           definition: {
             a: {
-              type: "simpleType",
-              definition: "number",
+              type: "number",
             },
           },
         };
@@ -767,18 +859,15 @@ describe(
         // #####
         expect(test17ZodSchema.zodSchema.safeParse(test17_OK1).success).toBeTruthy();
         expect(test17ZodSchema.zodSchema.safeParse(test17_KO1).success).toBeFalsy();
-
-
       }
     )
 
     // ############################################################################################
-    it(
-      "Jzod to Zod and back",
+    it("Jzod to Zod and back",
       async() => {
 
         const lazyRef:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
-          {type:"simpleType", definition: "string"},
+          {type:"string"},
           () => ({}) as ZodSchemaAndDescriptionRecord,
           () => ({}) as ZodSchemaAndDescriptionRecord,
         );
@@ -803,31 +892,32 @@ describe(
           expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
         }
 
-        testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"}, "z.any()");
-        testZodToJzodConversion("test2",{ type: "simpleType", definition: "string", coerce: true },"z.coerce.string()");
-        testZodToJzodConversion("test3",{ type: "simpleType", definition: "number"},"z.number()");
-        testZodToJzodConversion("test4",{ type: "simpleType", definition: "bigint"},"z.bigint()");
-        testZodToJzodConversion("test5",{ type: "simpleType", definition: "boolean"},"z.boolean()");
-        testZodToJzodConversion("test6",{ type: "simpleType", definition: "date"},"z.date()");
-        testZodToJzodConversion("test7",{ type: "simpleType", definition: "undefined"},"z.undefined()");
-        testZodToJzodConversion("test8",{ type: "simpleType", definition: "unknown"},"z.unknown()");
-        testZodToJzodConversion("test9",{ type: "simpleType", definition: "never"},"z.never()");
+        // testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"}, "z.any()");
+        testZodToJzodConversion("test1", { type: "any" }, "z.any()");
+        testZodToJzodConversion("test2",{ type: "string", coerce: true }, "z.coerce.string()");
+        testZodToJzodConversion("test3",{ type: "number"},"z.number()");
+        testZodToJzodConversion("test4",{ type: "bigint"},"z.bigint()");
+        testZodToJzodConversion("test5",{ type: "boolean"},"z.boolean()");
+        testZodToJzodConversion("test6",{ type: "date"},"z.date()");
+        testZodToJzodConversion("test7",{ type: "undefined"},"z.undefined()");
+        testZodToJzodConversion("test8",{ type: "unknown"},"z.unknown()");
+        testZodToJzodConversion("test9",{ type: "never"},"z.never()");
         testZodToJzodConversion("test11",{ type: "literal", definition: "test"},"z.literal(\"test\")");
-        testZodToJzodConversion("test12",{ type: "array", definition: { type: "simpleType", definition: "any"}}, "z.array(z.any())");
-        testZodToJzodConversion("test13",{ type: "array", definition: { type: "simpleType", definition: "number"}}, "z.array(z.number())");
+        testZodToJzodConversion("test12",{ type: "array", definition: { type: "any"}}, "z.array(z.any())");
+        testZodToJzodConversion("test13",{ type: "array", definition: { type: "number"}}, "z.array(z.number())");
         testZodToJzodConversion("test14",{ type: "array", definition: { type: "literal", definition: "number"}}, "z.array(z.literal(\"number\"))");
         testZodToJzodConversion("test15",{ type: "enum", definition: [ "a", "b", "c", "d" ] }, "z.enum([\"a\",\"b\",\"c\",\"d\"])");
-        testZodToJzodConversion("test16",{ type: "union", definition: [ { type: "simpleType", definition: "string"}, { type: "simpleType", definition: "number"} ] },"z.union([z.string(), z.number()])")
-        testZodToJzodConversion("test17",{ type: "object", definition: { a: { type: "simpleType", definition: "string"}, b: { type: "simpleType", definition: "number"} } }, "z.object({a:z.string(), b:z.number()}).strict()")
-        testZodToJzodConversion("test18",{ type: "object", definition: { a: { type: "simpleType", definition: "string"}, b: { type: "simpleType", definition: "number", optional:true} } },"z.object({a:z.string(), b:z.number().optional()}).strict()")
+        testZodToJzodConversion("test16",{ type: "union", definition: [ { type: "string"}, { type: "number"} ] },"z.union([z.string(), z.number()])")
+        testZodToJzodConversion("test17",{ type: "object", definition: { a: { type: "string"}, b: { type: "number"} } }, "z.object({a:z.string(), b:z.number()}).strict()")
+        testZodToJzodConversion("test18",{ type: "object", definition: { a: { type: "string"}, b: { type: "number", optional:true} } },"z.object({a:z.string(), b:z.number().optional()}).strict()")
         testZodToJzodConversion(
           "test19",
           {
             type: "object",
             nonStrict: true,
             definition: {
-              a: { type: "simpleType", definition: "string" },
-              b: { type: "simpleType", definition: "number", optional: false },
+              a: { type: "string" },
+              b: { type: "number", optional: false },
             },
           },
           "z.object({a:z.string(), b:z.number()})",
@@ -835,8 +925,8 @@ describe(
             type: "object",
             nonStrict: true,
             definition: {
-              a: { type: "simpleType", definition: "string" },
-              b: { type: "simpleType", definition: "number" },
+              a: { type: "string" },
+              b: { type: "number" },
             },
           },
         );
@@ -862,7 +952,7 @@ describe(
               nonStrict: true,
               definition: {
                 kind: { type: "literal", definition: "a" },
-                a: { type: "simpleType", definition: "string" },
+                a: { type: "string" },
               },
             },
             {
@@ -870,22 +960,22 @@ describe(
               nonStrict: true,
               definition: {
                 kind: { type: "literal", definition: "b" },
-                b: { type: "simpleType", definition: "number" },
+                b: { type: "number" },
               },
             },
           ],
         });
-        testZodToJzodConversion("test21",{ type: "simpleType", definition: "boolean", optional: true}, "z.boolean().optional()");
-        testZodToJzodConversion("test22",{ type: "simpleType", definition: "boolean", optional: false},"z.boolean()", { type: "simpleType", definition: "boolean"});
-        testZodToJzodConversion("test23",{ type: "simpleType", definition: "number", nullable: true}, "z.number().nullable()");
-        testZodToJzodConversion("test24",{ type: "simpleType", definition: "number", nullable: false}, "z.number()", { type: "simpleType", definition: "number"});
-        testZodToJzodConversion("test25",{ type: "record", definition: {type: "simpleType", definition: "number"} }, "z.record(z.string(),z.number())");
+        testZodToJzodConversion("test21",{ type: "boolean", optional: true}, "z.boolean().optional()");
+        testZodToJzodConversion("test22",{ type: "boolean", optional: false},"z.boolean()", { type: "boolean"});
+        testZodToJzodConversion("test23",{ type: "number", nullable: true}, "z.number().nullable()");
+        testZodToJzodConversion("test24",{ type: "number", nullable: false}, "z.number()", { type: "number"});
+        testZodToJzodConversion("test25",{ type: "record", definition: {type: "number"} }, "z.record(z.string(),z.number())");
         testZodToJzodConversion(
           "test26",
           {
             type: "tuple",
             definition: [
-              { type: "simpleType", definition: "number" },
+              { type: "number" },
               { type: "schemaReference", definition: { absolutePath: "test26" } },
             ],
           },
@@ -894,31 +984,31 @@ describe(
         testZodToJzodConversion("test27", {
           type: "intersection",
           definition: {
-            left: { type: "object", definition: { name: { type: "simpleType", definition: "string" } } },
-            right: { type: "object", definition: { role: { type: "simpleType", definition: "string" } } },
+            left: { type: "object", definition: { name: { type: "string" } } },
+            right: { type: "object", definition: { role: { type: "string" } } },
           },
         }, "z.intersection(z.object({name:z.string()}).strict(),z.object({role:z.string()}).strict())");
-        testZodToJzodConversion("test28",{ type: "map", definition: [ { type: "simpleType", definition: "string" }, { type: "simpleType", definition: "number" }]}, "z.map(z.string(),z.number())");
-        testZodToJzodConversion("test29",{ type: "set", definition: { type: "simpleType", definition: "string" }}, "z.set(z.string())");
+        testZodToJzodConversion("test28",{ type: "map", definition: [ { type: "string" }, { type: "number" }]}, "z.map(z.string(),z.number())");
+        testZodToJzodConversion("test29",{ type: "set", definition: { type: "string" }}, "z.set(z.string())");
         testZodToJzodConversion("test30",{ type: "schemaReference", definition: { absolutePath: "test30" }}, "z.lazy(() =>undefined)"); // schemaReference are not really convertible back to Jzod: the inner structure is lost when converting to Zod
-        testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "simpleType", definition: "string" }], returns: { type: "simpleType", definition: "number" } }}, "z.function().args([\"z.string()\"]).returns(z.number())");
-        testZodToJzodConversion("test32",{ type: "promise", definition: { type: "simpleType", definition: "string" }}, "z.promise(z.string())");
+        testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "string" }], returns: { type: "number" } }}, "z.function().args([\"z.string()\"]).returns(z.number())");
+        testZodToJzodConversion("test32",{ type: "promise", definition: { type: "string" }}, "z.promise(z.string())");
         testZodToJzodConversion(
           "test33",
           {
             type: "object",
             partial: true,
             definition: {
-              a: { type: "simpleType", definition: "string" },
-              b: { type: "simpleType", definition: "number", optional: true },
+              a: { type: "string" },
+              b: { type: "number", optional: true },
             },
           },
           "z.object({a:z.string(), b:z.number().optional()}).strict().partial()",
           { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
             type: "object",
             definition: {
-              a: { type: "simpleType", definition: "string", optional: true },
-              b: { type: "simpleType", definition: "number", optional: true },
+              a: { type: "string", optional: true },
+              b: { type: "number", optional: true },
             },
           },
         );
@@ -932,8 +1022,8 @@ describe(
         //       o: {
         //         type: "object", 
         //         definition: {
-        //           a: { type: "simpleType", definition: "string" },
-        //           b: { type: "simpleType", definition: "number", optional: true },
+        //           a: { type: "string" },
+        //           b: { type: "number", optional: true },
         //         }
         //       }
         //     },
@@ -947,8 +1037,8 @@ describe(
         //   { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
         //     type: "object",
         //     definition: {
-        //       a: { type: "simpleType", definition: "string", optional: true },
-        //       b: { type: "simpleType", definition: "number", optional: true },
+        //       a: { type: "string", optional: true },
+        //       b: { type: "number", optional: true },
         //     },
         //   },
         // );
