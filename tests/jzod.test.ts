@@ -402,7 +402,7 @@ describe(
           },
           test5: {
             type: "record",
-            definition: { type: "object", definition: { a: { type: "simpleType", definition: "string" } } },
+            definition: { type: "object", definition: { a: { type: "string" } } },
           },
           test6: {
             type: "union",
@@ -505,7 +505,7 @@ describe(
         }
 
         // console.log("absoluteReferences",absoluteReferences);
-        const test0: JzodElement = { type: "simpleType", definition: "string", optional: true };
+        const test0: JzodElement = { type: "string", optional: true };
         // const test1: JzodElement = {
         const test1: any = {
           type: "object",
@@ -516,8 +516,7 @@ describe(
               nullable: true,
             },
             b: {
-              type: "simpleType",
-              definition: "number",
+              type: "number",
               validations: [{ type: "gt", parameter: 5 }],
             },
           },

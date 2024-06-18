@@ -38,15 +38,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
         definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
       },
     },
-    jzodAttribute: {
-      type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
-      definition: {
-        type: { type: "literal", definition: "simpleType" },
-        coerce: { type: "boolean", optional: true },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodEnumAttributeTypes" } },
-      },
-    },
     jzodPlainAttribute: {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
@@ -64,19 +55,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
           definition: ["min", "max"],
         },
         parameter: { type: "any" },
-      },
-    },
-    jzodAttributeDateWithValidations: {
-      type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
-      definition: {
-        type: { type: "literal", definition: "simpleType" },
-        definition: { type: "literal", definition: "date" },
-        coerce: { type: "boolean", optional: true },
-        validations: {
-          type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeDateValidations" } },
-        },
       },
     },
     jzodAttributePlainDateWithValidations: {
@@ -113,19 +91,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
           ],
         },
         parameter: { type: "any" },
-      },
-    },
-    jzodAttributeNumberWithValidations: {
-      type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
-      definition: {
-        type: { type: "literal", definition: "simpleType" },
-        definition: { type: "literal", definition: "number" },
-        coerce: { type: "boolean", optional: true },
-        validations: {
-          type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberValidations" } },
-        },
       },
     },
     jzodAttributePlainNumberWithValidations: {
@@ -168,19 +133,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
         parameter: { type: "any" },
       },
     },
-    jzodAttributeStringWithValidations: {
-      type: "object",
-      extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
-      definition: {
-        type: { type: "literal", definition: "simpleType" },
-        definition: { type: "literal", definition: "string" },
-        coerce: { type: "boolean", optional: true },
-        validations: {
-          type: "array",
-          definition: { type: "schemaReference", definition: { relativePath: "jzodAttributeStringValidations" } },
-        },
-      },
-    },
     jzodAttributePlainStringWithValidations: {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
@@ -201,13 +153,9 @@ export const jzodBootstrapElementSchema: JzodReference = {
       },
       definition: [
         { type: "schemaReference", definition: { relativePath: "jzodArray" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttribute" } },
         { type: "schemaReference", definition: { relativePath: "jzodPlainAttribute" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttributeDateWithValidations" } },
         { type: "schemaReference", definition: { relativePath: "jzodAttributePlainDateWithValidations" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttributeNumberWithValidations" } },
         { type: "schemaReference", definition: { relativePath: "jzodAttributePlainNumberWithValidations" } },
-        { type: "schemaReference", definition: { relativePath: "jzodAttributeStringWithValidations" } },
         { type: "schemaReference", definition: { relativePath: "jzodAttributePlainStringWithValidations" } },
         { type: "schemaReference", definition: { relativePath: "jzodEnum" } },
         { type: "schemaReference", definition: { relativePath: "jzodFunction" } },
