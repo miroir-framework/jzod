@@ -317,9 +317,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
     }
     case "object": {
       const castElement = element as JzodObject;
-      const extendsSubObject: ZodSchemaAndDescription | undefined = castElement.extend
+      const extendsSubObject: ZodSchemaAndDescription | undefined = castElement?.extend
         ? jzodElementSchemaToZodSchemaAndDescription(
-          castElement.extend,
+            castElement.extend,
             getSchemaEagerReferences,
             getLazyReferences,
             typeScriptLazyReferenceConverter

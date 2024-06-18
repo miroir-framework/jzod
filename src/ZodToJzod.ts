@@ -126,17 +126,22 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
       return { type: "union", definition: jzodUnionElements };
     }
     case "ZodDiscriminatedUnion": {
-      console.warn(
-        "zodToJzod: Zod discriminated unions are converted to unions in Jzod, which are converted back as plain unions in Zod, not discriminated unions as the original Zod Schema.",
-        JSON.stringify(zod)
-      );
+      // console.warn(
+      //   "zodToJzod: Zod discriminated unions are converted to unions in Jzod, which are converted back as plain unions in Zod, not discriminated unions as the original Zod Schema.",
+      //   JSON.stringify(zod)
+      // );
 
       const jzodUnionElements: JzodElement[] = [...zod._def.options.values()].map((option: ZodTypeAny) =>
         zodToJzod(option, identifier)
       );
       return zod._def.discriminator
-        ? { type: "union", discriminator: zod._def.discriminator, definition: jzodUnionElements }
-        : { type: "union", definition: jzodUnionElements };
+        ? {
+            type: "union",
+            discriminator: { discriminatorType: "string", value: zod._def.discriminator },
+            definition: jzodUnionElements,
+          }
+        : { type: "union", definition: jzodUnionElements }
+      ;
     }
     case "ZodEffects": {
       console.warn("zodToJzod: Zod effects are ignored.", JSON.stringify(zod));

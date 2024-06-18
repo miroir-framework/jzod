@@ -1,4 +1,4 @@
-import { ZodTypeAny } from "zod";
+import { ZodTypeAny, union } from "zod";
 
 
 import { JzodReference } from "@miroir-framework/jzod-ts";
@@ -18,6 +18,7 @@ export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodSchemaAndDescripti
 // ##############################################################################################################
 // ##############################################################################################################
 // ##############################################################################################################
+// export const jzodBootstrapElementSchema: any = {
 export const jzodBootstrapElementSchema: JzodReference = {
   type: "schemaReference",
   context: {
@@ -194,7 +195,10 @@ export const jzodBootstrapElementSchema: JzodReference = {
     },
     jzodElement: {
       type: "union",
-      discriminator: "type",
+      discriminator: {
+        discriminatorType: "string",
+        value: "type"
+      },
       definition: [
         { type: "schemaReference", definition: { relativePath: "jzodArray" } },
         { type: "schemaReference", definition: { relativePath: "jzodAttribute" } },
@@ -419,7 +423,37 @@ export const jzodBootstrapElementSchema: JzodReference = {
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "union" },
-        discriminator: { type: "string", optional: true },
+        discriminator: {
+          type: "union",
+          optional: true,
+          definition: [
+            { 
+              type: "object",
+              definition: {
+                discriminatorType: {
+                  type: "literal",
+                  definition: "string"
+                },
+                value: { type: "string" }
+              }
+            },
+            { 
+              type: "object",
+              definition: {
+                discriminatorType: {
+                  type: "literal",
+                  definition: "array"
+                },
+                value: { 
+                  type: "array",
+                  definition: {
+                    type: "string"
+                  }
+                }
+              }
+            },
+          ]
+        },
         definition: {
           type: "array",
           definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
