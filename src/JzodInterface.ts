@@ -149,7 +149,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
       type: "union",
       discriminator: {
         discriminatorType: "string",
-        value: "type"
+        value: "type",
       },
       definition: [
         { type: "schemaReference", definition: { relativePath: "jzodArray" } },
@@ -214,7 +214,6 @@ export const jzodBootstrapElementSchema: JzodReference = {
         "record",
         "schemaReference",
         "set",
-        "simpleType",
         "string",
         "tuple",
         "union",
@@ -242,7 +241,7 @@ export const jzodBootstrapElementSchema: JzodReference = {
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "lazy" },
-        definition: { type: "schemaReference", definition: { relativePath: "jzodFunction" } },
+        definition: { type: "schemaReference", definition: { relativePath: "jzodReference" } },
       },
     },
     jzodLiteral: {
@@ -251,14 +250,9 @@ export const jzodBootstrapElementSchema: JzodReference = {
       definition: {
         type: { type: "literal", definition: "literal" },
         definition: {
-          "type": "union",
-          "definition": [
-            { type: "string" },
-            { type: "number" },
-            { type: "bigint" },
-            { type: "boolean" },
-          ]
-        }
+          type: "union",
+          definition: [{ type: "string" }, { type: "number" }, { type: "bigint" }, { type: "boolean" }],
+        },
       },
     },
     jzodIntersection: {
@@ -301,6 +295,13 @@ export const jzodBootstrapElementSchema: JzodReference = {
             { type: "schemaReference", definition: { relativePath: "jzodObject" } },
           ],
         },
+        // carryOn: {
+        //   type: "lazy",
+        //   optional: true,
+        //   definition: {
+        //     type: ""
+        //   }
+        // },
         type: { type: "literal", definition: "object" },
         nonStrict: { type: "boolean", optional: true },
         partial: { type: "boolean", optional: true },
@@ -375,32 +376,32 @@ export const jzodBootstrapElementSchema: JzodReference = {
           type: "union",
           optional: true,
           definition: [
-            { 
+            {
               type: "object",
               definition: {
                 discriminatorType: {
                   type: "literal",
-                  definition: "string"
+                  definition: "string",
                 },
-                value: { type: "string" }
-              }
+                value: { type: "string" },
+              },
             },
-            { 
+            {
               type: "object",
               definition: {
                 discriminatorType: {
                   type: "literal",
-                  definition: "array"
+                  definition: "array",
                 },
-                value: { 
+                value: {
                   type: "array",
                   definition: {
-                    type: "string"
-                  }
-                }
-              }
+                    type: "string",
+                  },
+                },
+              },
             },
-          ]
+          ],
         },
         definition: {
           type: "array",
@@ -417,13 +418,13 @@ export const jzodBootstrapElementSchema: JzodReference = {
 export {
   jzodObject,
   jzodArray,
-  jzodAttribute,
+  jzodPlainAttribute,
   jzodAttributeDateValidations,
-  jzodAttributeDateWithValidations,
+  jzodAttributePlainDateWithValidations,
   jzodAttributeNumberValidations,
-  jzodAttributeNumberWithValidations,
+  jzodAttributePlainNumberWithValidations,
   jzodAttributeStringValidations,
-  jzodAttributeStringWithValidations,
+  jzodAttributePlainStringWithValidations,
   jzodElement,
   jzodEnum,
   jzodEnumAttributeTypes,

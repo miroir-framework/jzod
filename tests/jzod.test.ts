@@ -65,12 +65,12 @@ describe(
         const test1JzodSchema:JzodElement = {
             type: "object",
             definition: {
-              a: { type: "simpleType", definition: "string" },
+              a: { type: "string" },
               b: {
                 type: "object",
                 definition: { 
-                  b1: { type: "simpleType", definition: "boolean", optional: true },
-                  b2: { type:"array", definition: {type:"simpleType",definition:"boolean"}}
+                  b1: { type: "boolean", optional: true },
+                  b2: { type:"array", definition: { type: "boolean" } }
                 },
               },
             },
@@ -276,8 +276,7 @@ describe(
         // ########################################################################################
         // using deprecated "simpleType" Jzod schema for string declaration
         const test24JzodSchema:any = {
-          type: "simpleType",
-          definition: "string",
+          type: "string",
           validations:[{ type: "min", parameter: 5 }, { type:"includes", parameter:"#"}]
         };
 
@@ -422,7 +421,7 @@ describe(
           test8: {
             type: "lazy",
             definition: {
-              type: "function", definition: {args:[ { type: "string" } ], returns: { type: "string" }}
+              type: "schemaReference", definition: { relativePath: "a" }
             }
           },
           test9: { type: "string", optional: true, validations: [{type:"min",parameter:5}] },
@@ -613,11 +612,7 @@ describe(
         const test8: JzodElement = {
           type: "lazy",
           definition: {
-            type: "function",
-            definition: {
-              args: [{ type: "string" }],
-              returns: { type: "string" },
-            },
+            type: "schemaReference", definition: { absolutePath: "123" }
           },
         };
         // optional
@@ -815,7 +810,11 @@ describe(
         const test5ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test5);
         const test6ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test6);
         const test7ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test7);
-        const test8ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test8);
+        const test8ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+          test8,
+          undefined,
+          () => absoluteReferences
+        );
         const test9ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test9);
         const test10ZodSchema: ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
           test10,
@@ -867,9 +866,8 @@ describe(
         const test7_KO1 = [{"e":"1"}];
         const test7_KO2 = [ {"a":"#12345"}, {"a":"12345"} ];
         const test7_KO3 = [ {"a":"#12345"}, {"a":"#123"} ];
-        const test8_OK:(a:string)=>string = (a:string):string => a;
-        const test8_KO1:(a:number)=>string = (a:number):string => "a";
-        const test8_KO2:string = 'not a function';
+        const test8_OK:string = "test";
+        const test8_KO1:number = 1;
         const test9_OK = "12345";
         const test9_KO = "1234";
         const test10_OK = "test";
@@ -958,9 +956,8 @@ describe(
         expect(test7ZodSchema.zodSchema.safeParse(test7_KO2).success).toBeFalsy();
         expect(test7ZodSchema.zodSchema.safeParse(test7_KO3).success).toBeFalsy();
         // #####
-        // expect(referentialElementSetSchema.test8.zodSchema.safeParse(test8_KO1).success).toBeFalsy(); // Zod does not validate function parameter types?
         expect(test8ZodSchema.zodSchema.safeParse(test8_OK).success).toBeTruthy();
-        expect(test8ZodSchema.zodSchema.safeParse(test8_KO2).success).toBeFalsy();
+        expect(test8ZodSchema.zodSchema.safeParse(test8_KO1).success).toBeFalsy();
         // #####
         expect(test9ZodSchema.zodSchema.safeParse(test9_OK).success).toBeTruthy();
         expect(test9ZodSchema.zodSchema.safeParse(test9_KO).success).toBeFalsy();
@@ -1029,192 +1026,192 @@ describe(
       }
     )
 
-    // // ############################################################################################
-    // it("Jzod to Zod and back",
-    //   async() => {
+    // ############################################################################################
+    it("Jzod to Zod and back",
+      async() => {
 
-    //     const lazyRef:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
-    //       {type:"string"},
-    //       () => ({}) as ZodSchemaAndDescriptionRecord,
-    //       () => ({}) as ZodSchemaAndDescriptionRecord,
-    //     );
+        const lazyRef:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+          {type:"string"},
+          () => ({}) as ZodSchemaAndDescriptionRecord,
+          () => ({}) as ZodSchemaAndDescriptionRecord,
+        );
 
-    //     const testZodToJzodConversion = (
-    //       typeName: string,
-    //       testJzodSchema:JzodElement,
-    //       expectedZodSchemaText: string,
-    //       expectedJzodSchema?: JzodElement,
+        const testZodToJzodConversion = (
+          typeName: string,
+          testJzodSchema:JzodElement,
+          expectedZodSchemaText: string,
+          expectedJzodSchema?: JzodElement,
 
-    //     ) => {
-    //       const testZodSchemaAndDescription:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
-    //         testJzodSchema,
-    //         () => ({}) as ZodSchemaAndDescriptionRecord,
-    //         () => ({lazyRef}) as ZodSchemaAndDescriptionRecord,
-    //       )
-    //       const testResult = zodToJzod(testZodSchemaAndDescription.zodSchema,typeName);
-    //       // console.log("Zod to Jzod testJzodSchema", typeName, "zod text", testZodSchemaAndDescription.zodText);
-    //       // console.log("Zod to Jzod testJzodSchema", typeName, "jzod result schema", JSON.stringify(testResult,undefined,2));
+        ) => {
+          const testZodSchemaAndDescription:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+            testJzodSchema,
+            () => ({}) as ZodSchemaAndDescriptionRecord,
+            () => ({lazyRef}) as ZodSchemaAndDescriptionRecord,
+          )
+          const testResult = zodToJzod(testZodSchemaAndDescription.zodSchema,typeName);
+          // console.log("Zod to Jzod testJzodSchema", typeName, "zod text", testZodSchemaAndDescription.zodText);
+          // console.log("Zod to Jzod testJzodSchema", typeName, "jzod result schema", JSON.stringify(testResult,undefined,2));
           
-    //       expect(testZodSchemaAndDescription.zodText).toEqual(expectedZodSchemaText);
-    //       expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
-    //     }
+          expect(testZodSchemaAndDescription.zodText).toEqual(expectedZodSchemaText);
+          expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
+        }
 
-    //     // testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"}, "z.any()");
-    //     testZodToJzodConversion("test1", { type: "any" }, "z.any()");
-    //     testZodToJzodConversion("test2",{ type: "string", coerce: true }, "z.coerce.string()");
-    //     testZodToJzodConversion("test3",{ type: "number"},"z.number()");
-    //     testZodToJzodConversion("test4",{ type: "bigint"},"z.bigint()");
-    //     testZodToJzodConversion("test5",{ type: "boolean"},"z.boolean()");
-    //     testZodToJzodConversion("test6",{ type: "date"},"z.date()");
-    //     testZodToJzodConversion("test7",{ type: "undefined"},"z.undefined()");
-    //     testZodToJzodConversion("test8",{ type: "unknown"},"z.unknown()");
-    //     testZodToJzodConversion("test9",{ type: "never"},"z.never()");
-    //     testZodToJzodConversion("test11",{ type: "literal", definition: "test"},"z.literal(\"test\")");
-    //     testZodToJzodConversion("test12",{ type: "array", definition: { type: "any"}}, "z.array(z.any())");
-    //     testZodToJzodConversion("test13",{ type: "array", definition: { type: "number"}}, "z.array(z.number())");
-    //     testZodToJzodConversion("test14",{ type: "array", definition: { type: "literal", definition: "number"}}, "z.array(z.literal(\"number\"))");
-    //     testZodToJzodConversion("test15",{ type: "enum", definition: [ "a", "b", "c", "d" ] }, "z.enum([\"a\",\"b\",\"c\",\"d\"])");
-    //     testZodToJzodConversion("test16",{ type: "union", definition: [ { type: "string"}, { type: "number"} ] },"z.union([z.string(), z.number()])")
-    //     testZodToJzodConversion("test17",{ type: "object", definition: { a: { type: "string"}, b: { type: "number"} } }, "z.object({a:z.string(), b:z.number()}).strict()")
-    //     testZodToJzodConversion("test18",{ type: "object", definition: { a: { type: "string"}, b: { type: "number", optional:true} } },"z.object({a:z.string(), b:z.number().optional()}).strict()")
-    //     testZodToJzodConversion(
-    //       "test19",
-    //       {
-    //         type: "object",
-    //         nonStrict: true,
-    //         definition: {
-    //           a: { type: "string" },
-    //           b: { type: "number", optional: false },
-    //         },
-    //       },
-    //       "z.object({a:z.string(), b:z.number()})",
-    //       {
-    //         type: "object",
-    //         nonStrict: true,
-    //         definition: {
-    //           a: { type: "string" },
-    //           b: { type: "number" },
-    //         },
-    //       },
-    //     );
+        // testZodToJzodConversion("test1",{ type: "simpleType", definition: "any"}, "z.any()");
+        testZodToJzodConversion("test1", { type: "any" }, "z.any()");
+        testZodToJzodConversion("test2",{ type: "string", coerce: true }, "z.coerce.string()");
+        testZodToJzodConversion("test3",{ type: "number"},"z.number()");
+        testZodToJzodConversion("test4",{ type: "bigint"},"z.bigint()");
+        testZodToJzodConversion("test5",{ type: "boolean"},"z.boolean()");
+        testZodToJzodConversion("test6",{ type: "date"},"z.date()");
+        testZodToJzodConversion("test7",{ type: "undefined"},"z.undefined()");
+        testZodToJzodConversion("test8",{ type: "unknown"},"z.unknown()");
+        testZodToJzodConversion("test9",{ type: "never"},"z.never()");
+        testZodToJzodConversion("test11",{ type: "literal", definition: "test"},"z.literal(\"test\")");
+        testZodToJzodConversion("test12",{ type: "array", definition: { type: "any"}}, "z.array(z.any())");
+        testZodToJzodConversion("test13",{ type: "array", definition: { type: "number"}}, "z.array(z.number())");
+        testZodToJzodConversion("test14",{ type: "array", definition: { type: "literal", definition: "number"}}, "z.array(z.literal(\"number\"))");
+        testZodToJzodConversion("test15",{ type: "enum", definition: [ "a", "b", "c", "d" ] }, "z.enum([\"a\",\"b\",\"c\",\"d\"])");
+        testZodToJzodConversion("test16",{ type: "union", definition: [ { type: "string"}, { type: "number"} ] },"z.union([z.string(), z.number()])")
+        testZodToJzodConversion("test17",{ type: "object", definition: { a: { type: "string"}, b: { type: "number"} } }, "z.object({a:z.string(), b:z.number()}).strict()")
+        testZodToJzodConversion("test18",{ type: "object", definition: { a: { type: "string"}, b: { type: "number", optional:true} } },"z.object({a:z.string(), b:z.number().optional()}).strict()")
+        testZodToJzodConversion(
+          "test19",
+          {
+            type: "object",
+            nonStrict: true,
+            definition: {
+              a: { type: "string" },
+              b: { type: "number", optional: false },
+            },
+          },
+          "z.object({a:z.string(), b:z.number()})",
+          {
+            type: "object",
+            nonStrict: true,
+            definition: {
+              a: { type: "string" },
+              b: { type: "number" },
+            },
+          },
+        );
 
-    //     // no discriminated unions in Jzod
-    //     const test20 = zodToJzod(
-    //       z.discriminatedUnion("kind", [
-    //         z.object({ kind: z.literal("a"), a: z.string() }),
-    //         z.object({ kind: z.literal("b"), b: z.number() }),
-    //       ]),
-    //       "test20"
-    //     );
-    //     // console.log("Zod to Jzod testJzodSchema test20",JSON.stringify(test20));
+        // no discriminated unions in Jzod
+        const test20 = zodToJzod(
+          z.discriminatedUnion("kind", [
+            z.object({ kind: z.literal("a"), a: z.string() }),
+            z.object({ kind: z.literal("b"), b: z.number() }),
+          ]),
+          "test20"
+        );
+        // console.log("Zod to Jzod testJzodSchema test20",JSON.stringify(test20));
           
-    //     expect(
-    //       test20
-    //     ).toEqual({
-    //       type: "union",
-    //       discriminator: {
-    //         discriminatorType: "string",
-    //         value: "kind"
-    //       },
-    //       definition: [
-    //         {
-    //           type: "object",
-    //           nonStrict: true,
-    //           definition: {
-    //             kind: { type: "literal", definition: "a" },
-    //             a: { type: "string" },
-    //           },
-    //         },
-    //         {
-    //           type: "object",
-    //           nonStrict: true,
-    //           definition: {
-    //             kind: { type: "literal", definition: "b" },
-    //             b: { type: "number" },
-    //           },
-    //         },
-    //       ],
-    //     });
-    //     testZodToJzodConversion("test21",{ type: "boolean", optional: true}, "z.boolean().optional()");
-    //     testZodToJzodConversion("test22",{ type: "boolean", optional: false},"z.boolean()", { type: "boolean"});
-    //     testZodToJzodConversion("test23",{ type: "number", nullable: true}, "z.number().nullable()");
-    //     testZodToJzodConversion("test24",{ type: "number", nullable: false}, "z.number()", { type: "number"});
-    //     testZodToJzodConversion("test25",{ type: "record", definition: {type: "number"} }, "z.record(z.string(),z.number())");
-    //     testZodToJzodConversion(
-    //       "test26",
-    //       {
-    //         type: "tuple",
-    //         definition: [
-    //           { type: "number" },
-    //           { type: "schemaReference", definition: { absolutePath: "test26" } },
-    //         ],
-    //       },
-    //       "z.tuple([z.number(), z.lazy(() =>undefined)])"
-    //     );
-    //     testZodToJzodConversion("test27", {
-    //       type: "intersection",
-    //       definition: {
-    //         left: { type: "object", definition: { name: { type: "string" } } },
-    //         right: { type: "object", definition: { role: { type: "string" } } },
-    //       },
-    //     }, "z.intersection(z.object({name:z.string()}).strict(),z.object({role:z.string()}).strict())");
-    //     testZodToJzodConversion("test28",{ type: "map", definition: [ { type: "string" }, { type: "number" }]}, "z.map(z.string(),z.number())");
-    //     testZodToJzodConversion("test29",{ type: "set", definition: { type: "string" }}, "z.set(z.string())");
-    //     testZodToJzodConversion("test30",{ type: "schemaReference", definition: { absolutePath: "test30" }}, "z.lazy(() =>undefined)"); // schemaReference are not really convertible back to Jzod: the inner structure is lost when converting to Zod
-    //     testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "string" }], returns: { type: "number" } }}, "z.function().args([\"z.string()\"]).returns(z.number())");
-    //     testZodToJzodConversion("test32",{ type: "promise", definition: { type: "string" }}, "z.promise(z.string())");
-    //     testZodToJzodConversion(
-    //       "test33",
-    //       {
-    //         type: "object",
-    //         partial: true,
-    //         definition: {
-    //           a: { type: "string" },
-    //           b: { type: "number", optional: true },
-    //         },
-    //       },
-    //       "z.object({a:z.string(), b:z.number().optional()}).strict().partial()",
-    //       { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
-    //         type: "object",
-    //         definition: {
-    //           a: { type: "string", optional: true },
-    //           b: { type: "number", optional: true },
-    //         },
-    //       },
-    //     );
+        expect(
+          test20
+        ).toEqual({
+          type: "union",
+          discriminator: {
+            discriminatorType: "string",
+            value: "kind"
+          },
+          definition: [
+            {
+              type: "object",
+              nonStrict: true,
+              definition: {
+                kind: { type: "literal", definition: "a" },
+                a: { type: "string" },
+              },
+            },
+            {
+              type: "object",
+              nonStrict: true,
+              definition: {
+                kind: { type: "literal", definition: "b" },
+                b: { type: "number" },
+              },
+            },
+          ],
+        });
+        testZodToJzodConversion("test21",{ type: "boolean", optional: true}, "z.boolean().optional()");
+        testZodToJzodConversion("test22",{ type: "boolean", optional: false},"z.boolean()", { type: "boolean"});
+        testZodToJzodConversion("test23",{ type: "number", nullable: true}, "z.number().nullable()");
+        testZodToJzodConversion("test24",{ type: "number", nullable: false}, "z.number()", { type: "number"});
+        testZodToJzodConversion("test25",{ type: "record", definition: {type: "number"} }, "z.record(z.string(),z.number())");
+        testZodToJzodConversion(
+          "test26",
+          {
+            type: "tuple",
+            definition: [
+              { type: "number" },
+              { type: "schemaReference", definition: { absolutePath: "test26" } },
+            ],
+          },
+          "z.tuple([z.number(), z.lazy(() =>undefined)])"
+        );
+        testZodToJzodConversion("test27", {
+          type: "intersection",
+          definition: {
+            left: { type: "object", definition: { name: { type: "string" } } },
+            right: { type: "object", definition: { role: { type: "string" } } },
+          },
+        }, "z.intersection(z.object({name:z.string()}).strict(),z.object({role:z.string()}).strict())");
+        testZodToJzodConversion("test28",{ type: "map", definition: [ { type: "string" }, { type: "number" }]}, "z.map(z.string(),z.number())");
+        testZodToJzodConversion("test29",{ type: "set", definition: { type: "string" }}, "z.set(z.string())");
+        testZodToJzodConversion("test30",{ type: "schemaReference", definition: { absolutePath: "test30" }}, "z.lazy(() =>undefined)"); // schemaReference are not really convertible back to Jzod: the inner structure is lost when converting to Zod
+        testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "string" }], returns: { type: "number" } }}, "z.function().args([\"z.string()\"]).returns(z.number())");
+        testZodToJzodConversion("test32",{ type: "promise", definition: { type: "string" }}, "z.promise(z.string())");
+        testZodToJzodConversion(
+          "test33",
+          {
+            type: "object",
+            partial: true,
+            definition: {
+              a: { type: "string" },
+              b: { type: "number", optional: true },
+            },
+          },
+          "z.object({a:z.string(), b:z.number().optional()}).strict().partial()",
+          { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
+            type: "object",
+            definition: {
+              a: { type: "string", optional: true },
+              b: { type: "number", optional: true },
+            },
+          },
+        );
 
-    //     // TODO: HOW TO TEST SCHEMA REFERENCE CONVERSION
-    //     // testZodToJzodConversion(
-    //     //   "test34",
-    //     //   {
-    //     //     type: "schemaReference",
-    //     //     context: {
-    //     //       o: {
-    //     //         type: "object", 
-    //     //         definition: {
-    //     //           a: { type: "string" },
-    //     //           b: { type: "number", optional: true },
-    //     //         }
-    //     //       }
-    //     //     },
-    //     //     definition: {
-    //     //       partial: true,
-    //     //       relativePath: "o"
-    //     //     },
-    //     //   },
-    //     //   // "z.object({a:z.string(), b:z.number().optional()}).strict().partial()",
-    //     //   "z.lazy(() =>o)",
-    //     //   { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
-    //     //     type: "object",
-    //     //     definition: {
-    //     //       a: { type: "string", optional: true },
-    //     //       b: { type: "number", optional: true },
-    //     //     },
-    //     //   },
-    //     // );
+        // TODO: HOW TO TEST SCHEMA REFERENCE CONVERSION
+        // testZodToJzodConversion(
+        //   "test34",
+        //   {
+        //     type: "schemaReference",
+        //     context: {
+        //       o: {
+        //         type: "object", 
+        //         definition: {
+        //           a: { type: "string" },
+        //           b: { type: "number", optional: true },
+        //         }
+        //       }
+        //     },
+        //     definition: {
+        //       partial: true,
+        //       relativePath: "o"
+        //     },
+        //   },
+        //   // "z.object({a:z.string(), b:z.number().optional()}).strict().partial()",
+        //   "z.lazy(() =>o)",
+        //   { // optional can not be converted back, it is interpreted in the Zod factory as .optional() for all attributes
+        //     type: "object",
+        //     definition: {
+        //       a: { type: "string", optional: true },
+        //       b: { type: "number", optional: true },
+        //     },
+        //   },
+        // );
 
-    //   }
-    // )
+      }
+    )
 
   }
 )
