@@ -214,13 +214,34 @@ function getLazyResolverZodSchema(
 
 
 // ######################################################################################################
-export function jzodElementSchemaToZodSchemaAndDescription(
+export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
   element: JzodElement,
+  carryOn: ZodSchemaAndDescription | undefined,
   getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
   getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
   typeScriptLazyReferenceConverter?: (lazyZodSchema: ZodLazy<any>, relativeReference: string | undefined) => any /** returns "any" to avoid pollution from zod-to-ts type "GetType", actual return type is ZodType<any, any, any> & GetType */
 ): ZodSchemaAndDescription {
   // console.log("jzodElementSchemaToZodSchemaAndDescription called for type",element.type);
+
+  if (
+    !!carryOn &&
+    !["object"].includes(element.type)
+  ) {
+    const plainZodSchema = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      element,
+      undefined, // carryOn
+      getSchemaEagerReferences,
+      getLazyReferences,
+      typeScriptLazyReferenceConverter
+    );
+
+    return { // TODO: handle discriminators! There should be a list of discriminators for heteronomous object unions!
+      contextZodText: undefined, // lazy evaluation obfuscates any context defined within it
+      contextZodSchema: undefined,
+      zodSchema: z.union([plainZodSchema.zodSchema, carryOn.zodSchema]),
+      zodText: `z.union([${plainZodSchema.zodText}, ${carryOn.zodText}])`,
+    }
+  }
 
   switch (element.type as string) { // TODO; remove cast as string for element.type!
     case "date":
@@ -407,8 +428,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "lazy": {
-      const sub = jzodElementSchemaToZodSchemaAndDescription(
+      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         (element as JzodLazy).definition,
+        carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptLazyReferenceConverter
@@ -423,14 +445,16 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "map": {
-      const sub0 = jzodElementSchemaToZodSchemaAndDescription(
+      const sub0 = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         (element as JzodMap).definition[0],
+        carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptLazyReferenceConverter
       );
-      const sub1 = jzodElementSchemaToZodSchemaAndDescription(
+      const sub1 = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         (element as JzodMap).definition[1],
+        carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptLazyReferenceConverter
@@ -446,19 +470,29 @@ export function jzodElementSchemaToZodSchemaAndDescription(
     case "object": {
       const castElement = element as JzodObject;
       const extendsSubObject: ZodSchemaAndDescription | undefined = castElement?.extend
-        ? jzodElementSchemaToZodSchemaAndDescription(
+        ? jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
             castElement.extend,
+            undefined,
             getSchemaEagerReferences,
             getLazyReferences,
             typeScriptLazyReferenceConverter
           )
         : undefined;
 
+      const carryOnZodSchemaAndDescription = castElement.carryOn?jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+        castElement.carryOn,
+        undefined,
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptLazyReferenceConverter
+      ): carryOn;
+
       const definitionSubObject: ZodSchemaAndDescriptionRecord = Object.fromEntries(
         Object.entries(castElement.definition).map((a) => [
           a[0],
-          jzodElementSchemaToZodSchemaAndDescription(
+          jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
             a[1],
+            carryOnZodSchemaAndDescription,
             getSchemaEagerReferences,
             getLazyReferences,
             typeScriptLazyReferenceConverter
@@ -471,19 +505,30 @@ export function jzodElementSchemaToZodSchemaAndDescription(
 
       const contextZodText = getContextDescriptions(definitionSubObject);
       const contextZodSchema = getContextZodSchemas(definitionSubObject);
-      const preResultZodSchema = extendsSubObject?(extendsSubObject.zodSchema as AnyZodObject).extend(schemas):z.object(schemas);
-      const resultZodSchema = castElement.partial?preResultZodSchema.partial():preResultZodSchema;
+
+      // result
+      const extendedSubObjectZodSchema = extendsSubObject?(extendsSubObject.zodSchema as AnyZodObject).extend(schemas):z.object(schemas);
+      // const partialSubObjectZodSchema = castElement.partial?extendedSubObjectZodSchema.partial():extendedSubObjectZodSchema;
+      const partialSubObjectZodSchema = optionalNullablePartialZodSchema(
+        castElement.nonStrict ? extendedSubObjectZodSchema : extendedSubObjectZodSchema.strict(),
+        undefined, // optional has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+        undefined, // nullable has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+        castElement.partial
+      );
 
       /**
        */
       const preResultZodText = extendsSubObject
         ? extendsSubObject.zodText + ".extend(" + objectToJsStringObject(zodText) + ")"
         : `z.object(${objectToJsStringObject(zodText)})`;
+
       const resultZodText = optionalNullablePartialZodDescription(
-        preResultZodText + (castElement.nonStrict ? "" : ".strict()") + (castElement.partial ? ".partial()" : ""),
-        element.optional,
-        element.nullable
+        preResultZodText + (castElement.nonStrict ? "" : ".strict()"), //+ (castElement.partial ? ".partial()" : ""),
+        undefined, // optional has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+        undefined, // nullable has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+        castElement.partial,
       );
+
       // console.log(
       //   "jzodElementSchemaToZodSchemaAndDescription converting object definition",
       //   JSON.stringify(element.definition),
@@ -502,19 +547,33 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       return {
         contextZodText: Object.keys(contextZodText).length > 0 ? contextZodText : undefined,
         contextZodSchema: Object.keys(contextZodSchema).length > 0 ? contextZodSchema : undefined,
+        // zodSchema: carryOnZodSchemaAndDescription?z.union([partialSubObjectZodSchema, carryOnZodSchemaAndDescription.zodSchema]):partialSubObjectZodSchema,
         zodSchema: optionalNullablePartialZodSchema(
-          castElement.nonStrict ? resultZodSchema : resultZodSchema.strict(),
-          element.optional,
-          element.nullable
+          carryOnZodSchemaAndDescription?z.union([partialSubObjectZodSchema, carryOnZodSchemaAndDescription.zodSchema]):partialSubObjectZodSchema,
+          castElement.optional, // optional has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+          castElement.nullable, // nullable has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+          undefined
         ),
-        zodText: resultZodText,
+        // zodSchema: optionalNullablePartialZodSchema(
+        //   castElement.nonStrict ? partialSubObjectZodSchema : partialSubObjectZodSchema.strict(),
+        //   element.optional,
+        //   element.nullable
+        // ),
+        zodText: optionalNullablePartialZodDescription(
+          carryOnZodSchemaAndDescription?`z.union([${resultZodText},${carryOnZodSchemaAndDescription.zodText}])`:resultZodText,
+          castElement.optional, // optional has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+          castElement.nullable, // nullable has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
+          undefined,
+        )
+        // zodText: carryOnZodSchemaAndDescription?`z.union([${resultZodText},${carryOnZodSchemaAndDescription.zodText}])`:resultZodText,
       };
       break;
     }
     case "promise": {
-      const sub = jzodElementSchemaToZodSchemaAndDescription(
+      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         // name,
         (element as JzodPromise).definition,
+        carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptLazyReferenceConverter
@@ -528,9 +587,10 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "record": {
-      const sub = jzodElementSchemaToZodSchemaAndDescription(
+      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         // name,
         (element as JzodRecord).definition,
+        carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptLazyReferenceConverter
@@ -550,9 +610,10 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       for (const curr of Object.entries((element as JzodReference).context??{})) {
           localContextReferences.push([
             curr[0],
-            jzodElementSchemaToZodSchemaAndDescription(
+            jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
               // name,
               curr[1],
+              carryOn,
               ()=>({...getSchemaEagerReferences(), ...Object.fromEntries(localContextReferences)}),
               ()=>({...getLazyReferences(), ...Object.fromEntries(localContextReferences)}),
               typeScriptLazyReferenceConverter
@@ -622,8 +683,9 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       break;
     }
     case "set": {
-      const sub = jzodElementSchemaToZodSchemaAndDescription(
+      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         (element as JzodSet).definition,
+        carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptLazyReferenceConverter
@@ -639,9 +701,10 @@ export function jzodElementSchemaToZodSchemaAndDescription(
     case "tuple": {
       if (Array.isArray((element as JzodTuple).definition) && (element as JzodTuple).definition.length > 1) {
         const subs = (element as JzodTuple).definition.map((d) =>
-          jzodElementSchemaToZodSchemaAndDescription(
+          jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
             // name,
             d,
+            carryOn,
             getSchemaEagerReferences,
             getLazyReferences,
             typeScriptLazyReferenceConverter
@@ -670,9 +733,10 @@ export function jzodElementSchemaToZodSchemaAndDescription(
     }
     case "union": {
       const sub: ZodSchemaAndDescription[] = (element as JzodUnion).definition.map((e) =>
-        jzodElementSchemaToZodSchemaAndDescription(
+        jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
           // name,
           e,
+          carryOn,
           getSchemaEagerReferences,
           getLazyReferences,
           typeScriptLazyReferenceConverter
@@ -725,6 +789,22 @@ export function jzodElementSchemaToZodSchemaAndDescription(
       );
       break;
   }
+}
+
+// ##############################################################################################################
+export function jzodElementSchemaToZodSchemaAndDescription(
+  element: JzodElement,
+  getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
+  getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
+  typeScriptLazyReferenceConverter?: (lazyZodSchema: ZodLazy<any>, relativeReference: string | undefined) => any /** returns "any" to avoid pollution from zod-to-ts type "GetType", actual return type is ZodType<any, any, any> & GetType */
+): ZodSchemaAndDescription {
+  return jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+    element,
+    undefined, // carryOn
+    getSchemaEagerReferences,
+    getLazyReferences,
+    typeScriptLazyReferenceConverter,
+  );
 }
 
 // ##############################################################################################################

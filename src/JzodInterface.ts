@@ -295,16 +295,16 @@ export const jzodBootstrapElementSchema: JzodReference = {
             { type: "schemaReference", definition: { relativePath: "jzodObject" } },
           ],
         },
-        // carryOn: {
-        //   type: "lazy",
-        //   optional: true,
-        //   definition: {
-        //     type: ""
-        //   }
-        // },
         type: { type: "literal", definition: "object" },
         nonStrict: { type: "boolean", optional: true },
         partial: { type: "boolean", optional: true },
+        carryOn: {
+          optional: true,
+          type: "schemaReference",
+          definition: {
+            relativePath: "jzodObject"
+          }
+        },
         definition: {
           type: "record",
           definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
@@ -402,6 +402,13 @@ export const jzodBootstrapElementSchema: JzodReference = {
               },
             },
           ],
+        },
+        carryOn: {
+          optional: true,
+          type: "schemaReference",
+          definition: {
+            relativePath: "jzodObject"
+          }
         },
         definition: {
           type: "array",

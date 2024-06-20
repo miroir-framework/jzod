@@ -370,7 +370,7 @@ describe(
         console.log("jzod schema simple parsing starting parsing proper ");
         
         // ########################################################################################
-        const testSet: any = {
+        const testSet: Record<string,JzodElement> = {
           test0: { type: "string", optional: true },
           test1: {
             type: "object",
@@ -448,6 +448,19 @@ describe(
             nonStrict: true,
             definition: { a: { type: "string", nullable:true } },
           },
+          test22: {
+            type: "object",
+            nonStrict: true,
+            carryOn: {
+              type: "object",
+              definition: {
+                b: {
+                  type: "string"
+                }
+              }
+            },
+            definition: { a: { type: "string", nullable:true } },
+          },
         };
 
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test0).success).toBeTruthy();
@@ -464,6 +477,7 @@ describe(
 
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test20).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test21).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(testSet.test22).success).toBeTruthy();
 
         // ########################################################################################
         // tests to fail
@@ -777,6 +791,19 @@ describe(
         };
 
         // carry-on type
+        const test21: JzodElement = {
+          type: "object",
+          carryOn: {
+            type: "object",
+            definition: {
+              d: { type: "boolean" }
+            }
+          },
+          definition: {
+            a: { type: "string"},
+            b: { type: "object", optional: true, definition: { c: { type: "number"}}}
+          }
+        }
 
         const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
@@ -801,6 +828,7 @@ describe(
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test18).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test19).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test20).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test21).success).toBeTruthy();
 
         const test0ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test0);
         const test1ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test1);
@@ -831,6 +859,7 @@ describe(
         const test18ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test18);
         const test19ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test19);
         const test20ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test20);
+        const test21ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test21);
 
 
 
@@ -914,7 +943,23 @@ describe(
         const test20_OK6 = 1;
         const test20_KO1 = { a: "test" };
         const test20_KO2 = true;
+        // carry-on type with object
+        const test21_OK1 = { d: true }
+        const test21_OK2 = { a: { d: true } }
+        const test21_OK3 = { a: "test", b: { d: false } }
+        const test21_OK4 = { a: { d: true }, b: { d: false } }
+        const test21_OK5 = { a: { d: true }, b: { c: 1 } }
+        const test21_OK6 = { a: { d: true }, b: { c: { d: false } } }
+        const test21_KO1 = { d: 1 }
+        const test21_KO2 = { a: 1 }
+        const test21_KO3 = { a: { d: "true" } }
+        const test21_KO4 = { a: "test", b: { d: "false" } }
+        const test21_KO5 = { a: "test", b: { c: "test" } }
+        const test21_KO6 = { a: { d: true }, b: { c: { d: "false" } } }
         
+        // carry-on type with union, array, map, record, reference, set, intersection...
+
+
         // #####
         expect(test0ZodSchema.zodSchema.safeParse(test0_OK1).success).toBeTruthy();
         expect(test0ZodSchema.zodSchema.safeParse(test0_OK2).success).toBeTruthy();
@@ -1023,6 +1068,23 @@ describe(
         expect(test20ZodSchema.zodSchema.safeParse(test20_KO1).success).toBeFalsy();
         expect(test20ZodSchema.zodSchema.safeParse(test20_KO2).success).toBeFalsy();
         // expect(test19ZodSchema.zodSchema.safeParse(test19_KO3).success).toBeFalsy();
+
+        // carry-on type
+        console.log("test21ZodSchema", test21ZodSchema.zodText)
+        expect(test21ZodSchema.zodSchema.safeParse(test21_OK1).success).toBeTruthy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_OK2).success).toBeTruthy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_OK3).success).toBeTruthy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_OK4).success).toBeTruthy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_OK5).success).toBeTruthy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_OK6).success).toBeTruthy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_KO1).success).toBeFalsy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_KO2).success).toBeFalsy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_KO3).success).toBeFalsy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_KO4).success).toBeFalsy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_KO5).success).toBeFalsy();
+        expect(test21ZodSchema.zodSchema.safeParse(test21_KO6).success).toBeFalsy();
+
+
       }
     )
 
