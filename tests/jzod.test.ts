@@ -790,7 +790,7 @@ describe(
           ],
         };
 
-        // carry-on type
+        // carry-on type on object
         const test21: JzodElement = {
           type: "object",
           carryOn: {
@@ -804,6 +804,30 @@ describe(
             b: { type: "object", optional: true, definition: { c: { type: "number"}}}
           }
         }
+
+        // carry-on type on union
+        const test22: JzodElement = {
+          type: "object",
+          carryOn: {
+            type: "object",
+            definition: {
+              d: { type: "boolean" },
+            },
+          },
+          definition: {
+            a: {
+              type: "union",
+              definition: [
+                { type: "string" },
+                { type: "number" },
+                {
+                  type: "object",
+                  definition: { b: { type: "number", optional: true }, c: { type: "string", optional: true } },
+                },
+              ],
+            },
+          },
+        };
 
         const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
@@ -860,6 +884,7 @@ describe(
         const test19ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test19);
         const test20ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test20);
         const test21ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test21);
+        const test22ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test22);
 
 
 
@@ -958,6 +983,17 @@ describe(
         const test21_KO6 = { a: { d: true }, b: { c: { d: "false" } } }
         
         // carry-on type with union, array, map, record, reference, set, intersection...
+        const test22_OK1 = { d: true }
+        const test22_OK2 = { a: 1 }
+        const test22_OK3 = { a: { d: true} }
+        const test22_OK4 = { a: { b: 1 } }
+        const test22_OK5 = { a: { b: { d: false } } }
+        const test22_OK6 = { a: { b: 1, c: "test" } }
+        const test22_OK7 = { a: { b: 1, c: { d: false } } }
+        const test22_OK8 = { a: { c: { d: false } } }
+        const test22_OK9 = { a: { b: { d: false }, c: { d: false } } }
+        const test22_KO1 = { a: { b: 1, c: { d: "false" } } }
+        const test22_KO2 = { a: { d: "false" } }
 
 
         // #####
@@ -1084,6 +1120,19 @@ describe(
         expect(test21ZodSchema.zodSchema.safeParse(test21_KO5).success).toBeFalsy();
         expect(test21ZodSchema.zodSchema.safeParse(test21_KO6).success).toBeFalsy();
 
+        // carry-on type with union
+        // console.log("test22ZodSchema", test22ZodSchema.zodText)
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK1).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK2).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK3).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK4).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK5).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK6).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK7).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK8).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_OK9).success).toBeTruthy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_KO1).success).toBeFalsy();
+        expect(test22ZodSchema.zodSchema.safeParse(test22_KO2).success).toBeFalsy();
 
       }
     )
