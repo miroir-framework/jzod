@@ -1,12 +1,13 @@
 import { ZodTypeAny, union } from "zod";
 
 
-import { JzodReference } from "@miroir-framework/jzod-ts";
+import { JzodElement, JzodReference } from "@miroir-framework/jzod-ts";
 
 
 export interface ZodSchemaAndDescription {
   contextZodSchema?: { [k: string]: ZodTypeAny }, 
   contextZodText?: { [k: string]: string }
+  jzodSchema?: JzodElement, 
   zodSchema: ZodTypeAny, 
   zodText:string
 };
@@ -299,11 +300,22 @@ export const jzodBootstrapElementSchema: JzodReference = {
         nonStrict: { type: "boolean", optional: true },
         partial: { type: "boolean", optional: true },
         carryOn: {
+          type: "union",
           optional: true,
-          type: "schemaReference",
-          definition: {
-            relativePath: "jzodObject"
-          }
+          definition: [
+            {
+              type: "schemaReference",
+              definition: {
+                relativePath: "jzodObject"
+              }
+            },
+            {
+              type: "schemaReference",
+              definition: {
+                relativePath: "jzodUnion"
+              }
+            },
+          ]
         },
         definition: {
           type: "record",
@@ -336,6 +348,24 @@ export const jzodBootstrapElementSchema: JzodReference = {
           type: "record",
           optional: true,
           definition: { type: "schemaReference", definition: { relativePath: "jzodElement" } },
+        },
+        carryOn: {
+          type: "union",
+          optional: true,
+          definition: [
+            {
+              type: "schemaReference",
+              definition: {
+                relativePath: "jzodObject"
+              }
+            },
+            {
+              type: "schemaReference",
+              definition: {
+                relativePath: "jzodUnion"
+              }
+            },
+          ]
         },
         definition: {
           type: "object",

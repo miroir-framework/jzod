@@ -1,7 +1,8 @@
 import { ZodObject, ZodTypeAny, z } from "zod";
 
 import {
-  JzodElement
+  JzodElement,
+  jzodToTsCode
 } from "@miroir-framework/jzod-ts";
 
 import {
@@ -829,6 +830,64 @@ describe(
           },
         };
 
+        // carry-on type on union
+        const test23: JzodElement = {
+          type: "object",
+          carryOn: {
+            type: "union",
+            definition: [
+              {
+                type: "object",
+                definition: {
+                  d: { type: "boolean" },
+                },
+              },
+              {
+                type: "object",
+                definition: {
+                  e: { type: "string" },
+                },
+              }
+            ]
+          },
+          definition: {
+            a: {
+              type: "union",
+              definition: [
+                { type: "string" },
+                { type: "number" },
+                {
+                  type: "object",
+                  definition: { b: { type: "number", optional: true }, c: { type: "string", optional: true } },
+                },
+              ],
+            },
+          },
+        };
+        
+        // carry-on type with recursive object reference
+        const test24: JzodElement = {
+          type: "schemaReference",
+          context: {
+            myObject: {
+              type: "object", 
+              definition: {
+                a: { type: "string"},
+                b: { type: "schemaReference", optional: true, definition: { relativePath: "myObject" } }
+              }
+            }
+          },
+          carryOn: {
+            type: "object",
+            definition: {
+              c: { type: "number" },
+            },
+          },
+          definition: {
+            relativePath: "myObject"
+          },
+        };
+        
         const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test0).success).toBeTruthy();
@@ -853,6 +912,9 @@ describe(
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test19).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test20).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test21).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test22).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test23).success).toBeTruthy();
+        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test24).success).toBeTruthy();
 
         const test0ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test0);
         const test1ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test1);
@@ -885,6 +947,8 @@ describe(
         const test20ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test20);
         const test21ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test21);
         const test22ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test22);
+        const test23ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test23);
+        const test24ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test24);
 
 
 
@@ -995,6 +1059,26 @@ describe(
         const test22_KO1 = { a: { b: 1, c: { d: "false" } } }
         const test22_KO2 = { a: { d: "false" } }
 
+        // carry-on type with union, array, map, record, reference, set, intersection...
+        const test23_OK1 = { e: "test" }
+        const test23_OK2 = { a: 1 }
+        const test23_OK3 = { a: { d: true} }
+        const test23_OK4 = { a: { b: 1 } }
+        const test23_OK5 = { a: { b: { e: "test" } } }
+        const test23_OK6 = { a: { b: 1, c: "test" } }
+        const test23_OK7 = { a: { b: 1, c: { e: "test" } } }
+        const test23_OK8 = { a: { c: { d: false } } }
+        const test23_OK9 = { a: { b: { e: "test" }, c: { d: false } } }
+        const test23_KO1 = { a: { b: 1, c: { e: false } } }
+        const test23_KO2 = { a: { e: false } }
+
+        // carry-on type with union, array, map, record, reference, set, intersection...
+        // carry-on type with recursive object reference
+        const test24_OK1 = { a: "test" }
+        const test24_OK2 = { c: 1 }
+        const test24_OK3 = { a: "test", b: { c: 1 }}
+        const test24_KO1 = { a: "test", b: { c: "test" }}
+        
 
         // #####
         expect(test0ZodSchema.zodSchema.safeParse(test0_OK1).success).toBeTruthy();
@@ -1106,7 +1190,7 @@ describe(
         // expect(test19ZodSchema.zodSchema.safeParse(test19_KO3).success).toBeFalsy();
 
         // carry-on type
-        console.log("test21ZodSchema", test21ZodSchema.zodText)
+        // console.log("test21ZodSchema", test21ZodSchema.zodText)
         expect(test21ZodSchema.zodSchema.safeParse(test21_OK1).success).toBeTruthy();
         expect(test21ZodSchema.zodSchema.safeParse(test21_OK2).success).toBeTruthy();
         expect(test21ZodSchema.zodSchema.safeParse(test21_OK3).success).toBeTruthy();
@@ -1120,7 +1204,7 @@ describe(
         expect(test21ZodSchema.zodSchema.safeParse(test21_KO5).success).toBeFalsy();
         expect(test21ZodSchema.zodSchema.safeParse(test21_KO6).success).toBeFalsy();
 
-        // carry-on type with union
+        // carry-on carrying on union
         // console.log("test22ZodSchema", test22ZodSchema.zodText)
         expect(test22ZodSchema.zodSchema.safeParse(test22_OK1).success).toBeTruthy();
         expect(test22ZodSchema.zodSchema.safeParse(test22_OK2).success).toBeTruthy();
@@ -1133,6 +1217,32 @@ describe(
         expect(test22ZodSchema.zodSchema.safeParse(test22_OK9).success).toBeTruthy();
         expect(test22ZodSchema.zodSchema.safeParse(test22_KO1).success).toBeFalsy();
         expect(test22ZodSchema.zodSchema.safeParse(test22_KO2).success).toBeFalsy();
+
+        // carry-on union carrying on union
+        // console.log("test22ZodSchema", test22ZodSchema.zodText)
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK1).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK2).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK3).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK4).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK5).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK6).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK7).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK8).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_OK9).success).toBeTruthy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_KO1).success).toBeFalsy();
+        expect(test23ZodSchema.zodSchema.safeParse(test23_KO2).success).toBeFalsy();
+
+        // carry-on union carrying on union
+        // console.log("test24ZodSchema", test24ZodSchema.zodText)
+        console.log("test24ZodSchema", jzodToTsCode (
+          test24,
+          true,// exportPrefix: boolean = true,
+          "test24"// typeName?: string,
+        ))
+        expect(test24ZodSchema.zodSchema.safeParse(test24_OK1).success).toBeTruthy();
+        expect(test24ZodSchema.zodSchema.safeParse(test24_OK2).success).toBeTruthy();
+        expect(test24ZodSchema.zodSchema.safeParse(test24_OK3).success).toBeTruthy();
+        expect(test24ZodSchema.zodSchema.safeParse(test24_KO1).success).toBeFalsy();
 
       }
     )
