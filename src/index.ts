@@ -15,5 +15,10 @@ export {
   zodToJzod
 } from "./ZodToJzod"
 export {
+  applyCarryOnSchema,
+  applyCarryOnSchemaOnLevel,
+  forgeCarryOnReferenceName
+} from "./JzodToJzod"
+export {
   jzodToZod
 } from "./facade"

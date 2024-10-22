@@ -1,4 +1,4 @@
-import { ZodTypeAny, union } from "zod";
+import { ZodTypeAny, nullable, optional, union } from "zod";
 
 
 import { JzodElement, JzodReference } from "@miroir-framework/jzod-ts";
@@ -19,16 +19,43 @@ export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodSchemaAndDescripti
 // ##############################################################################################################
 // ##############################################################################################################
 // ##############################################################################################################
-// export const jzodBootstrapElementSchema: any = {
-export const jzodBootstrapElementSchema: JzodReference = {
+export const jzodBootstrapElementSchema: any = {
+// export const jzodBootstrapElementSchema: JzodReference = {
   type: "schemaReference",
   context: {
     jzodBaseObject: {
       type: "object",
+      tag: {
+        optional: true,
+        schema: {
+          optional: true,
+          metaSchema: {
+            type: "object",
+            optional: true,
+            definition: {
+              optional: { type: "boolean", optional: true },
+              metaSchema: {
+                type: "schemaReference",
+                optional: true,
+                definition: {
+                  relativePath: "jzodElement"
+                }
+              },
+              valueSchema: {
+                type: "schemaReference",
+                optional: true,
+                definition: {
+                  relativePath: "jzodElement"
+                }
+              }
+            }
+          }
+        },
+      },
       definition: {
         optional: { type: "boolean", optional: true },
         nullable: { type: "boolean", optional: true },
-        extra: { type: "record", definition: { type: "any" }, optional: true },
+        extra: { type: "any" , optional: true },
       },
     },
     jzodArray: {
@@ -287,6 +314,43 @@ export const jzodBootstrapElementSchema: JzodReference = {
     jzodObject: {
       type: "object",
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
+      // tag: { // duplicated in JzodBaseObject!
+      //   optional: true,
+      //   metaTagSchema: {
+      //     type: "union",
+      //     optional: true,
+      //     definition: [
+      //       {
+      //         type: "object",
+      //         definition: {
+      //           optional: { type: "boolean", optional: true },
+      //           metaTagSchema: {
+      //             type: "schemaReference",
+      //             optional: true,
+      //             definition: {
+      //               relativePath: "jzodElement"
+      //             }
+      //           },
+      //           value: { type: "any", optional: true }
+      //         }
+      //       },
+      //       {
+      //         type: "object",
+      //         definition: {
+      //           optional: { type: "boolean", optional: true },
+      //           valueTagSchema: {
+      //             type: "schemaReference",
+      //             optional: true,
+      //             definition: {
+      //               relativePath: "jzodElement"
+      //             }
+      //           },
+      //           value: { type: "any", optional: true }
+      //         }
+      //       }
+      //     ]
+      //   }
+      // },
       definition: {
         extend: {
           type: "union",
@@ -435,10 +499,21 @@ export const jzodBootstrapElementSchema: JzodReference = {
         },
         carryOn: {
           optional: true,
-          type: "schemaReference",
-          definition: {
-            relativePath: "jzodObject"
-          }
+          type: "union",
+          definition: [
+            {
+              type: "schemaReference",
+              definition: {
+                relativePath: "jzodObject",
+              },
+            },
+            {
+              type: "schemaReference",
+              definition: {
+                relativePath: "jzodUnion",
+              },
+            },
+          ],
         },
         definition: {
           type: "array",

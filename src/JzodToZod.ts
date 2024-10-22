@@ -237,8 +237,9 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
   typeScriptLazyReferenceConverter?: (lazyZodSchema: ZodLazy<any>, relativeReference: string | undefined) => ZodTypeAny
 ): ZodSchemaAndDescription {
   // console.log("jzodElementSchemaToZodSchemaAndDescription called for type",element.type);
+  // console.log("jzodElementSchemaToZodSchemaAndDescription called for element",JSON.stringify(element, null, 2));
 
-  if ((element as any).carryOn && !! carryOn) {
+  if ((element as any)?.carryOn && !! carryOn) {
     throw new Error("jzodElementSchemaToZodSchemaAndDecritpionWithCarryOn carryOn override is not allowed, at most 1 carryOn clause can be specified in any jzod schema tree.");
   }
 
@@ -335,7 +336,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       };
     }
     case "array": {
-      const sub = jzodElementSchemaToZodSchemaAndDescription(
+      const sub = jzodElementSchemaToZodSchemaAndDescription( // TODO: bug? shouldn't it be jzodElementSchemaToZodSchemaAndDescriptionWithCarrryOn?
         (element as JzodArray).definition,
         getSchemaEagerReferences,
         getLazyReferences,
@@ -504,6 +505,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       };
       break;
     }
+    // case "objectWithTag":
     case "object": {
       // const castElement = element as JzodObject;
       const extendsSubObject: ZodSchemaAndDescription | undefined = element?.extend
@@ -524,8 +526,54 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         typeScriptLazyReferenceConverter
       ): carryOn;
 
+      // const objectDefinitionWithTag =
+      //   element.tag && (element.tag as any).metaTagSchema
+      //     ? {
+      //         ...element.definition,
+      //         tag: (element.tag as any).metaTagSchema,
+      //       }
+      //     : element.tag && (element.tag as any).valueTagSchema
+      //     ? {
+      //         ...element.definition,
+      //         tag: (element.tag as any).valueTagSchema
+      //       }
+      //     : element.definition;
+      const objectDefinitionWithTag =
+        element.tag &&
+        (element.tag as any).schema &&
+        ((element.tag as any).schema.metaSchema || (element.tag as any).schema.valueSchema)
+          ? {
+              ...element.definition,
+              tag: Object.assign(
+                {
+                  type: "object",
+                  // optional: element.tag.optional,
+                  definition: Object.assign({
+                    // optional: (element.tag as any).optional,
+                    optional: { type: "boolean", optional: true },
+                    value: (element.tag as any).schema.valueSchema ?? { type: "any" },
+                  },(element.tag as any).schema.metaSchema?{
+                      schema: (element.tag as any).schema.metaSchema ?? { type: "any" },
+                    }: {},
+                    // (element.tag as any).schema.valueSchema?{
+                    // {
+                    // }
+                    // }:{}
+                  )
+                },
+                { optional: element.tag.optional }
+              ),
+            }
+          : // : element.tag && (element.tag as any).schema && (element.tag as any).schema.valueSchema
+            // ? {
+            //     ...element.definition,
+            //     tag: (element.tag as any).schema.valueSchema
+            //   }
+            element.definition;
+      // console.log("objectDefinitionWithTag", JSON.stringify(objectDefinitionWithTag));
+      
       const definitionSubObject: ZodSchemaAndDescriptionRecord = Object.fromEntries(
-        Object.entries(element.definition).map((a) => [
+        Object.entries(objectDefinitionWithTag).map((a) => [
           a[0],
           jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
             a[1],
@@ -537,6 +585,21 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         ])
       );
 
+      /**
+       * take tag into account
+       * if tag has a schema generate a "tag" attribute on the object with a "value" attribute having the given schema as type
+       * if the tag has a value only or no value do nothing.
+       * if object has a "tag" attribute, then the jzod schema of the attribute and of the "tag" must be identical
+       */
+
+      // const tagSchemaAndDescription = element.tag && element.tag.valueSchema?jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      //   element.tag.valueSchema,
+      //   undefined,
+      //   getSchemaEagerReferences,
+      //   getLazyReferences,
+      //   typeScriptLazyReferenceConverter
+      // ): undefined;
+
       const schemas = Object.fromEntries(Object.entries(definitionSubObject).map((a) => [a[0], a[1].zodSchema]));
       const zodText = Object.fromEntries(Object.entries(definitionSubObject).map((a) => [a[0], a[1].zodText]));
 
@@ -544,7 +607,12 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       const contextZodSchema = getContextZodSchemas(definitionSubObject);
 
       // result
-      const extendedSubObjectZodSchema = extendsSubObject?(extendsSubObject.zodSchema as AnyZodObject).extend(schemas):z.object(schemas);
+      // if (extendsSubObject) {
+      //   console.log("extendsSubObject", extendsSubObject);
+      // }
+      const extendedSubObjectZodSchema = extendsSubObject
+        ? (extendsSubObject.zodSchema as AnyZodObject).extend(schemas)
+        : z.object(schemas);
       // const partialSubObjectZodSchema = castElement.partial?extendedSubObjectZodSchema.partial():extendedSubObjectZodSchema;
       const partialSubObjectZodSchema = optionalNullablePartialZodSchema(
         element.nonStrict ? extendedSubObjectZodSchema : extendedSubObjectZodSchema.strict(),

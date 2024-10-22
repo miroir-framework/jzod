@@ -1,4 +1,4 @@
-import { ZodObject, ZodTypeAny, z } from "zod";
+import { ZodObject, ZodTypeAny, boolean, z } from "zod";
 
 import {
   JzodElement,
@@ -20,34 +20,39 @@ import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
 const tmpPath = "./tests/tmp";
 const referencesPath = "./tests/references";
 
+const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+
 function compareZodSchemas(
   testName: string,
   referenceZodSchema: ZodTypeAny,
   testJzodSchema: JzodElement,
-  definitions?: { [k: string]: ZodTypeAny }
+  // definitions?: { [k: string]: ZodTypeAny }
+  definitions?: ZodSchemaAndDescriptionRecord
 ) {
-  // console.log("#### starting", testName);
+  console.log("######################## starting", testName);
 
-  const testJzodSchemaZodSchemaAndDescription: ZodSchemaAndDescription =
-    jzodElementSchemaToZodSchemaAndDescription(testJzodSchema);
+  const testJzodSchemaZodSchemaAndDescription: ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+    testJzodSchema,
+    definitions ? () => definitions : undefined
+  );
   // console.log("#### converted", testName);
 
   const referenceTestJsonSchema = convertZodSchemaToJsonSchemaAndWriteToFile(
     "testZodSchema",
     referenceZodSchema,
     undefined,
-    definitions
+    // definitions
   );
   const convertedTestJsonSchema = convertZodSchemaToJsonSchemaAndWriteToFile(
     "test2ZodSchema",
     testJzodSchemaZodSchemaAndDescription.zodSchema,
     undefined
   );
-  // console.log("converted", convertedTestJsonSchema);
   // console.log("expected", referenceTestJsonSchema);
+  // console.log("converted", convertedTestJsonSchema);
 
   expect(convertedTestJsonSchema).toEqual(referenceTestJsonSchema);
-  // console.log("#### done", testName);
+  console.log("######################## done", testName);
 }
 
 
@@ -57,9 +62,8 @@ function compareZodSchemas(
 // ################################################################################################
 // ################################################################################################
 describe(
-  'Jzod',
+  'JzodToZod',
   () => {
-
     // ###########################################################################################
     it('jzod elementary schema conversion',
       () => {
@@ -69,7 +73,7 @@ describe(
               a: { type: "string" },
               b: {
                 type: "object",
-                definition: { 
+                definition: {
                   b1: { type: "boolean", optional: true },
                   b2: { type:"array", definition: { type: "boolean" } }
                 },
@@ -89,6 +93,7 @@ describe(
         compareZodSchemas("test1", reference1ZodSchema.zodSchema, test1JzodSchema);
 
         // ########################################################################################
+        // schemaReference: simple schemaReference
         const test2JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
@@ -102,6 +107,9 @@ describe(
         compareZodSchemas("test2", reference2ZodSchema, test2JzodSchema);
 
         // ########################################################################################
+        // TODO: is this right? the inner reference has absolutePath, which should be relativePath!!
+        // Why such a difference absolutePath/relativePath, which does not seem justified here?
+        // schemaReference: context with object that has innner schemaReference
         const test3JzodSchema:JzodElement = {
           type: "schemaReference",
           context: {
@@ -117,7 +125,7 @@ describe(
         const reference3ZodSchema:ZodTypeAny = z.string();
 
         compareZodSchemas("test3", reference3ZodSchema, test3JzodSchema);
-        
+
         // ########################################################################################
         const test4JzodSchema:JzodElement = {
           type: "schemaReference",
@@ -134,7 +142,7 @@ describe(
         const reference4ZodSchema:ZodTypeAny = z.string();
 
         compareZodSchemas("test4", reference4ZodSchema, test4JzodSchema);
-        
+
         // ########################################################################################
         const test5JzodSchema:JzodElement = {
           type: "schemaReference",
@@ -153,7 +161,7 @@ describe(
         const reference5ZodSchema:ZodTypeAny = z.object({b: z.object({a:z.string()})});
 
         compareZodSchemas("test5", reference5ZodSchema, test5JzodSchema);
-        
+
         // ########################################################################################
         const test6JzodSchema:JzodElement = {
           type: "schemaReference",
@@ -196,7 +204,7 @@ describe(
         const reference7ZodSchemaC: ZodTypeAny = z.string().optional();
         const reference7ZodSchema: ZodTypeAny = reference7ZodSchemaA.extend({ b: reference7ZodSchemaA, c: reference7ZodSchemaC });
         compareZodSchemas("test7", reference7ZodSchema, test7JzodSchema);
-        
+
         // ########################################################################################
         const test8JzodSchema:JzodElement = {
           type: "schemaReference",
@@ -223,7 +231,7 @@ describe(
           y: z.lazy(() => reference8ZodSchemaC),
         });
         compareZodSchemas("test8", reference8ZodSchema, test8JzodSchema);
-        
+
         // ########################################################################################
         const test20JzodSchema:any = {
           type: "any",
@@ -232,7 +240,7 @@ describe(
         const reference20ZodSchema:ZodTypeAny = z.any();
 
         compareZodSchemas("test20", reference20ZodSchema, test20JzodSchema);
-        
+
         // ########################################################################################
         const test21JzodSchema:any = {
           type: "string",
@@ -242,7 +250,7 @@ describe(
         const reference21ZodSchema:ZodTypeAny = z.string().nullable();
 
         compareZodSchemas("test21", reference21ZodSchema, test21JzodSchema);
-        
+
         // ########################################################################################
         const test22JzodSchema:any = {
           type: "uuid",
@@ -252,7 +260,7 @@ describe(
         const reference22ZodSchema:ZodTypeAny = z.string().uuid().optional();
 
         compareZodSchemas("test22", reference22ZodSchema, test22JzodSchema);
-        
+
         // ########################################################################################
         const test22bJzodSchema:any = {
           type: "string",
@@ -263,7 +271,7 @@ describe(
         const reference22bZodSchema:ZodTypeAny = z.string().uuid().optional();
 
         compareZodSchemas("test22b", reference22bZodSchema, test22bJzodSchema);
-        
+
         // ########################################################################################
         const test23JzodSchema:any = {
           type: "never",
@@ -311,9 +319,9 @@ describe(
           type: "number",
           validations:[{ type: "gt", parameter: 5 }, { type:"lt", parameter:10}]
         };
-  
+
         const reference27ZodSchema:ZodTypeAny = z.number().gt(5).lt(10);
-  
+
         compareZodSchemas("test27", reference27ZodSchema, test27JzodSchema);
 
         // ########################################################################################
@@ -323,53 +331,126 @@ describe(
           type: "date",
           validations:[{ type: "min", parameter: dateMin }, { type:"max", parameter:dateMax}]
         };
-  
+
         const reference28ZodSchema:ZodTypeAny = z.date().min(dateMin).max(dateMax)
-  
+
         compareZodSchemas("test28", reference28ZodSchema, test28JzodSchema);
+
+        // ########################################################################################
+        // TAGS: plain value tags are ignored during Zod schema generation
+        const test50JzodSchema:JzodElement = {
+          type: "object",
+          tag: {
+            value: "this is a test tag!"
+          },
+          definition: {
+            a: { type: "string" },
+          },
+        };
+
+        const reference50ZodSchema:ZodTypeAny = z.object({a: z.string()});
+
+        compareZodSchemas("test50", reference50ZodSchema, test50JzodSchema);
+        
+        // ########################################################################################
+        // TAGS: valueTagSchema is converted to typed value tag during schema generation of meta-schema
+        const test51JzodSchema:JzodElement = {
+          type: "object",
+          tag: {
+            value: "this defines the type of a tag!",
+            optional: true,
+            schema: {
+              valueSchema: {
+                type: "number",
+                optional: true,
+                // definition: {
+                //   value: { type: "number" }
+                // }
+              }
+            }
+          },
+          definition: {
+            a: { type: "string" },
+          },
+        };
+
+        const reference51ZodSchema: ZodTypeAny = z.object({
+          a: z.string(),
+          tag: z.object({ optional: z.boolean().optional(), value: z.number().optional() }).optional(),
+        });
+
+        compareZodSchemas("test51", reference51ZodSchema, test51JzodSchema);
+        
+        // ########################################################################################
+        // TAGS: metaTagSchema is converted to typed meta tag during schema generation of meta-schema
+        const test52JzodSchema:JzodElement = {
+          type: "object",
+          tag: {
+            optional: true,
+            value: "this defines the type of a tag!",
+            schema: {
+              optional: true,
+              metaSchema: {
+                type: "object",
+                optional: true,
+                definition: {
+                  optional: { type: "boolean", optional: true },
+                  metaSchema: {
+                    type: "any"
+                    // type: "schemaReference",
+                    // optional: true,
+                    // definition: {
+                    //   relativePath: "jzodElement"
+                    // }
+                  },
+                  valueSchema: {
+                    type: "any"
+                    // type: "schemaReference",
+                    // optional: true,
+                    // definition: {
+                    //   relativePath: "jzodElement"
+                    // }
+                  }
+                }
+              }
+            }
+          },
+          definition: {
+            a: { type: "string" },
+          },
+        };
+
+        const reference52ZodSchema: ZodTypeAny = z.object({
+          a: z.string(),
+          tag: z
+            .object({
+              optional: boolean().optional(),
+              value: z.any(),
+              schema: z.object({
+                optional: z.boolean().optional(),
+                metaSchema: z.any(),
+                valueSchema: z.any(),
+                // metaSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
+                // valueSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
+              }).optional(),
+            }).optional(),
+        });
+
+        compareZodSchemas("test52", reference52ZodSchema, test52JzodSchema, {
+          jzodElement: jzodBootstrapElementZodSchema,
+        });
       }
     )
 
-
-    // // // ###########################################################################################
-    // // it(
-    // //   'generated Zod schema from jzodBootstrapElementSchema is equivalent to hand-written Zod schema (will have no interest whenever zod schemas for bootstrap will be automatically generated)',
-    // //   () => {
-    // //     const referenceSchemaFilePath = path.join(referencesPath,'jsonZodBootstrap_reference.json');
-    // //     const convertedElementSchemaFilePath = path.join(tmpPath,'jsonZodBootstrap_converted.json');
-
-    // //     const jzodBootstrapElementZodSchema:ZodTypeAny = jzodToZod(jzodBootstrapElementSchema);
-
-    // //     // console.log("jzod bootstrap equivalence convertedJsonZodSchema", JSON.stringify(jzodBootstrapElementZodSchema));
-        
-    // //     const test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-    // //       "jsonZodBootstrap_reference",
-    // //       jzodElement,
-    // //       referenceSchemaFilePath
-    // //     );
-    // //     const test2ZodSchemaJsonSchemaWithoutBootstrapElementString = convertZodSchemaToJsonSchemaAndWriteToFile(
-    // //       "jsonZodBootstrap_converted",
-    // //       jzodBootstrapElementZodSchema,
-    // //       convertedElementSchemaFilePath
-    // //     );
-
-    // //     // equivalence between "hard-coded" and converted schemas
-    // //     expect(test2JsonZodSchemaJsonSchemaWithoutBootstrapElementString).toEqual(test2ZodSchemaJsonSchemaWithoutBootstrapElementString);
-    // //   }
-    // // )
-
-
-
-
     // ###########################################################################################
-    it('jzod schema simple parsing', () => 
+    it('jzod schema simple parsing', () =>
       {
         console.log("jzod schema simple parsing converting jzodBootstrapElementSchema");
-        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+        // const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
         // console.log("jzod schema simple parsing starting parsing proper ", jzodBootstrapElementZodSchema.contextZodText);
         console.log("jzod schema simple parsing starting parsing proper ");
-        
+
         // ########################################################################################
         const testSet: Record<string,JzodElement> = {
           test0: { type: "string", optional: true },
@@ -501,15 +582,14 @@ describe(
     )
 
     // ###########################################################################################
-    it('jzod bootstrap self parsing',
-      () => {
-        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
-        // console.log("jzodBootstrapElementSchema",JSON.stringify(jzodBootstrapElementSchema));
+    it("jzod bootstrap self parsing", () => {
+      // const jzodBootstrapElementZodSchema: ZodSchemaAndDescription =
+      //   jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+      console.log("jzodBootstrapElementSchema", JSON.stringify(jzodBootstrapElementZodSchema.zodSchema));
 
-        // ~~~~~~~~~~~~~~~~~ BOOTSTRAP TEST ~~~~~~~~~~~~~~~~~~~~~~~~
-        expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(jzodBootstrapElementSchema).success).toBeTruthy();
-      }
-    )
+      // ~~~~~~~~~~~~~~~~~ BOOTSTRAP TEST ~~~~~~~~~~~~~~~~~~~~~~~~
+      expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(jzodBootstrapElementSchema).success).toBeTruthy();
+    });
 
     // ###########################################################################################
     it('jzod simple data parsing',
@@ -551,7 +631,7 @@ describe(
                   type: "number",
                   validations: [{ type: "gt", parameter: 5 }],
                 },
-    
+
               },
             },
             ref2: {
@@ -643,7 +723,7 @@ describe(
           type: "schemaReference",
           context: {
             myString: {
-              type: "string" 
+              type: "string"
             },
             myObject: {
               type: "object",
@@ -688,7 +768,7 @@ describe(
 
         // recursive schemaReference
         const test16: JzodElement = {
-          type: "schemaReference", 
+          type: "schemaReference",
           context: {
             "myObject": {
               type: "object",
@@ -864,13 +944,13 @@ describe(
             },
           },
         };
-        
+
         // carry-on type with recursive object reference
         const test24: JzodElement = {
           type: "schemaReference",
           context: {
             myObject: {
-              type: "object", 
+              type: "object",
               definition: {
                 a: { type: "string"},
                 b: { type: "schemaReference", optional: true, definition: { relativePath: "myObject" } }
@@ -887,8 +967,8 @@ describe(
             relativePath: "myObject"
           },
         };
-        
-        const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+
+        // const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test0).success).toBeTruthy();
         expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test1).success).toBeTruthy();
@@ -949,8 +1029,6 @@ describe(
         const test22ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test22);
         const test23ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test23);
         const test24ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test24);
-
-
 
         const test0_OK1 = "toto";
         const test0_OK2 = undefined;
@@ -1045,7 +1123,7 @@ describe(
         const test21_KO4 = { a: "test", b: { d: "false" } }
         const test21_KO5 = { a: "test", b: { c: "test" } }
         const test21_KO6 = { a: { d: true }, b: { c: { d: "false" } } }
-        
+
         // carry-on type with union, array, map, record, reference, set, intersection...
         const test22_OK1 = { d: true }
         const test22_OK2 = { a: 1 }
@@ -1078,7 +1156,6 @@ describe(
         const test24_OK2 = { c: 1 }
         const test24_OK3 = { a: "test", b: { c: 1 }}
         const test24_KO1 = { a: "test", b: { c: "test" }}
-        
 
         // #####
         expect(test0ZodSchema.zodSchema.safeParse(test0_OK1).success).toBeTruthy();
@@ -1138,7 +1215,7 @@ describe(
         expect(test12ZodSchema.zodSchema.safeParse(test12_KO2).success).toBeFalsy();
         // #####
         // console.log("referentialElementSetSchema.test13",referentialElementSetSchema.test13.zodText,JSON.stringify(referentialElementSetSchema.test13.zodSchema));
-        
+
         // const toto = z.intersection(z.object({name:z.string(),}).strict(),z.object({role:z.string(),}).strict())
         // console.log("compare zod schema",JSON.stringify(toto));
         // type Toto =  z.infer<typeof toto>;
@@ -1272,7 +1349,7 @@ describe(
           const testResult = zodToJzod(testZodSchemaAndDescription.zodSchema,typeName);
           // console.log("Zod to Jzod testJzodSchema", typeName, "zod text", testZodSchemaAndDescription.zodText);
           // console.log("Zod to Jzod testJzodSchema", typeName, "jzod result schema", JSON.stringify(testResult,undefined,2));
-          
+
           expect(testZodSchemaAndDescription.zodText).toEqual(expectedZodSchemaText);
           expect(testResult).toEqual(expectedJzodSchema??testJzodSchema);
         }
@@ -1325,7 +1402,7 @@ describe(
           "test20"
         );
         // console.log("Zod to Jzod testJzodSchema test20",JSON.stringify(test20));
-          
+
         expect(
           test20
         ).toEqual({
@@ -1408,7 +1485,7 @@ describe(
         //     type: "schemaReference",
         //     context: {
         //       o: {
-        //         type: "object", 
+        //         type: "object",
         //         definition: {
         //           a: { type: "string" },
         //           b: { type: "number", optional: true },
@@ -1433,7 +1510,6 @@ describe(
 
       }
     )
-
   }
 )
 
