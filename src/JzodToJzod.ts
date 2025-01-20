@@ -440,9 +440,6 @@ export function applyCarryOnSchemaOnLevel(
       const convertedContextSubSchemasReferences: Record<string, JzodElement> = {};
       const convertedAbosulteReferences: Record<string, JzodElement> = {};
       let resultReferenceDefinition = undefined;
-      // resolve absolute definitions?
-      // resolve relative definitions?
-      // use resolution function instead?
       /**
        * absolute references have to be converted for carryOn, then enclosed and pushed-up as a local context reference/definition.
        * this creates a new local reference/context, and the absolute reference has to be replaced by a local reference.
@@ -495,10 +492,7 @@ export function applyCarryOnSchemaOnLevel(
           resultReferenceDefinition = {
             relativePath: localReferenceName,
           };
-          // throw new Error("applyCarryOnSchema could not find absolute reference " + baseSchema.definition.absolutePath + " in ");
         }
-
-        // if reference is found in @param convertedReference, it has already been converted or is being converted right now (in the case of a recursive reference)
       } else {
         // we only need to replace it with a renamed local reference in case we have a prefix
         resultReferenceDefinition = {
@@ -536,22 +530,10 @@ export function applyCarryOnSchemaOnLevel(
 
       return {
         resultSchema: {
-          // // we have a schemaReference baseSchema, it is replaced by a Union schema
-          // optional: baseSchema.optional,
-          // nullable: baseSchema.nullable,
-          // extra: baseSchema.extra,
-          // tag: convertedTag,
-          // type: "union",
-          // definition: [
-          //   {
-              ...baseSchema, // keeping all baseSchema attributes (optional, nullable...) including context! TODO: remove context?
-              // extra: baseSchema.extra,
-              tag: convertedTag,
-              context: convertedContextSubSchemas,
-              definition: resultReferenceDefinition ? resultReferenceDefinition : baseSchema.definition,
-          //   },
-          //   carryOnSchema,
-          // ],
+          ...baseSchema, // keeping all baseSchema attributes (optional, nullable...) including context! TODO: remove context?
+          tag: convertedTag,
+          context: convertedContextSubSchemas,
+          definition: resultReferenceDefinition ? resultReferenceDefinition : baseSchema.definition,
         },
         resolvedReferences: {
           ...convertedReferences,
@@ -562,15 +544,6 @@ export function applyCarryOnSchemaOnLevel(
       break;
     }
     case "intersection":
-    // {
-    // return {
-    //   resultSchema: {
-    //     type: "union",
-    //     definition: [],
-    //   }
-    // };
-    // break;
-    // }
     case "promise":
     case "lazy": // TODO: alter the lazy's returned value to "carryOn" it? (becoming z.lazy(()=>carryOn(baseSchema)))
     case "function":

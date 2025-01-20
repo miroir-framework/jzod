@@ -48,8 +48,8 @@ function compareZodSchemas(
     testJzodSchemaZodSchemaAndDescription.zodSchema,
     undefined
   );
-  // console.log("expected", referenceTestJsonSchema);
-  // console.log("converted", convertedTestJsonSchema);
+  console.log("expected", referenceTestJsonSchema);
+  console.log("converted", convertedTestJsonSchema);
 
   expect(convertedTestJsonSchema).toEqual(referenceTestJsonSchema);
   console.log("######################## done", testName);
@@ -383,37 +383,46 @@ describe(
         
         // ########################################################################################
         // TAGS: metaTagSchema is converted to typed meta tag during schema generation of meta-schema
-        const test52JzodSchema:JzodElement = {
+        const test52JzodSchema: JzodElement = {
           type: "object",
           tag: {
-            optional: true,
-            value: "this defines the type of a tag!",
+            // optional: true,
+            // value: "this defines the type of a tag!",
             schema: {
               optional: true,
-              metaSchema: {
+              // metaSchema: {
+              //   type: "object",
+              //   optional: true,
+              //   definition: {
+              //     optional: {
+              //       type: "boolean",
+              //       optional: true,
+              //     },
+              //     metaSchema: {
+              //       type: "schemaReference",
+              //       optional: true,
+              //       definition: {
+              //         relativePath: "jzodElement",
+              //       },
+              //     },
+              //     valueSchema: {
+              //       type: "schemaReference",
+              //       optional: true,
+              //       definition: {
+              //         relativePath: "jzodElement",
+              //       },
+              //     },
+              //   },
+              // },
+              valueSchema: {
                 type: "object",
-                optional: true,
+                // optional: true,
                 definition: {
-                  optional: { type: "boolean", optional: true },
-                  metaSchema: {
-                    type: "any"
-                    // type: "schemaReference",
-                    // optional: true,
-                    // definition: {
-                    //   relativePath: "jzodElement"
-                    // }
-                  },
-                  valueSchema: {
-                    type: "any"
-                    // type: "schemaReference",
-                    // optional: true,
-                    // definition: {
-                    //   relativePath: "jzodElement"
-                    // }
-                  }
-                }
-              }
-            }
+                  a: { type: "string" },
+                  b: { type: "number" },
+                },
+              },
+            },
           },
           definition: {
             a: { type: "string" },
@@ -422,18 +431,32 @@ describe(
 
         const reference52ZodSchema: ZodTypeAny = z.object({
           a: z.string(),
-          tag: z
-            .object({
-              optional: boolean().optional(),
-              value: z.any(),
-              schema: z.object({
-                optional: z.boolean().optional(),
-                metaSchema: z.any(),
-                valueSchema: z.any(),
-                // metaSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
-                // valueSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
-              }).optional(),
-            }).optional(),
+          // tag: z
+          //   .object({
+          //     optional: boolean().optional(),
+          //     value: z.any(),
+          //     schema: z.object({
+          //       optional: z.boolean().optional(),
+          //       // metaSchema: z.any(),
+          //       // valueSchema: z.any(),
+          //       // metaSchema: z.lazy(() => reference52ZodSchema).optional(),
+          //       // valueSchema: z.any(),
+          //       valueSchema: z.object({
+          //         a: z.string(),
+          //         b: z.number(),
+          //       }),
+          //       // metaSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
+          //       // valueSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
+          //     }).optional(),
+          //   }).optional(),
+          tag: z.object({
+            // schema: z.object({
+              value: z.object({
+                a: z.string(),
+                b: z.number(),
+              }),
+            // }),
+          }).optional(),
         });
 
         compareZodSchemas("test52", reference52ZodSchema, test52JzodSchema, {

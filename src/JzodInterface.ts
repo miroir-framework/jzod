@@ -20,7 +20,6 @@ export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodSchemaAndDescripti
 // ##############################################################################################################
 // ##############################################################################################################
 export const jzodBootstrapElementSchema: any = {
-// export const jzodBootstrapElementSchema: JzodReference = {
   type: "schemaReference",
   context: {
     jzodBaseObject: {
