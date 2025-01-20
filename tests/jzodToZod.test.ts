@@ -1,4 +1,4 @@
-import { ZodObject, ZodTypeAny, boolean, z } from "zod";
+import { ZodObject, ZodTypeAny, boolean, optional, z } from "zod";
 
 import {
   JzodElement,
@@ -376,13 +376,13 @@ describe(
 
         const reference51ZodSchema: ZodTypeAny = z.object({
           a: z.string(),
-          tag: z.object({ optional: z.boolean().optional(), value: z.number().optional() }).optional(),
+          tag: z.object({ value: z.number().optional() }).optional(),
         });
 
         compareZodSchemas("test51", reference51ZodSchema, test51JzodSchema);
         
         // ########################################################################################
-        // TAGS: metaTagSchema is converted to typed meta tag during schema generation of meta-schema
+        // TAGS: valueSchema is converted to typed tag value during schema generation of meta-schema
         const test52JzodSchema: JzodElement = {
           type: "object",
           tag: {
@@ -390,30 +390,6 @@ describe(
             // value: "this defines the type of a tag!",
             schema: {
               optional: true,
-              // metaSchema: {
-              //   type: "object",
-              //   optional: true,
-              //   definition: {
-              //     optional: {
-              //       type: "boolean",
-              //       optional: true,
-              //     },
-              //     metaSchema: {
-              //       type: "schemaReference",
-              //       optional: true,
-              //       definition: {
-              //         relativePath: "jzodElement",
-              //       },
-              //     },
-              //     valueSchema: {
-              //       type: "schemaReference",
-              //       optional: true,
-              //       definition: {
-              //         relativePath: "jzodElement",
-              //       },
-              //     },
-              //   },
-              // },
               valueSchema: {
                 type: "object",
                 // optional: true,
@@ -431,35 +407,104 @@ describe(
 
         const reference52ZodSchema: ZodTypeAny = z.object({
           a: z.string(),
-          // tag: z
-          //   .object({
-          //     optional: boolean().optional(),
-          //     value: z.any(),
-          //     schema: z.object({
-          //       optional: z.boolean().optional(),
-          //       // metaSchema: z.any(),
-          //       // valueSchema: z.any(),
-          //       // metaSchema: z.lazy(() => reference52ZodSchema).optional(),
-          //       // valueSchema: z.any(),
-          //       valueSchema: z.object({
-          //         a: z.string(),
-          //         b: z.number(),
-          //       }),
-          //       // metaSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
-          //       // valueSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
-          //     }).optional(),
-          //   }).optional(),
           tag: z.object({
-            // schema: z.object({
+              // optional: z.boolean().optional(),
               value: z.object({
                 a: z.string(),
                 b: z.number(),
               }),
-            // }),
           }).optional(),
         });
 
         compareZodSchemas("test52", reference52ZodSchema, test52JzodSchema, {
+          jzodElement: jzodBootstrapElementZodSchema,
+        });
+
+        // ########################################################################################
+        // TAGS: metaTagSchema is converted to typed meta tag during schema generation of meta-meta-schema
+        const test53JzodSchema: JzodElement = {
+          type: "object",
+          tag: {
+            optional: true,
+            schema: {
+              optional: true,
+              metaSchema: {
+                type: "object",
+                optional: true,
+                definition: {
+                  optional: {
+                    type: "boolean",
+                    optional: true,
+                  },
+                  metaSchema: {
+                    type: "schemaReference",
+                    optional: true,
+                    definition: {
+                      relativePath: "jzodElement",
+                    },
+                  },
+                  valueSchema: {
+                    type: "schemaReference",
+                    optional: true,
+                    definition: {
+                      relativePath: "jzodElement",
+                    },
+                  },
+                },
+              },
+              valueSchema: {
+                type: "object",
+                optional: true,
+                definition: {
+                  id: {
+                    type: "number",
+                    optional: true,
+                  },
+                  defaultLabel: {
+                    type: "string",
+                    optional: true,
+                  },
+                  initializeTo: {
+                    type: "any",
+                    optional: true,
+                  },
+                  targetEntity: {
+                    type: "string",
+                    optional: true,
+                  },
+                  editable: {
+                    type: "boolean",
+                    optional: true,
+                  },
+                },
+              },
+            },
+          },
+          definition: {
+            a: { type: "string" },
+          },
+        };
+
+        const reference53ZodSchema: ZodTypeAny = z.object({
+          a: z.string(),
+          tag: z.object({
+            value: z.object({
+              id: z.number().optional(),
+              defaultLabel: z.string().optional(),
+              initializeTo: z.any().optional(),
+              targetEntity: z.string().optional(),
+              editable: z.boolean().optional(),
+            }).optional(),
+            schema: z.object({
+                optional: z.boolean().optional(),
+                metaSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
+                valueSchema: jzodBootstrapElementZodSchema.zodSchema.optional(),
+              }).optional(),
+            optional: z.boolean().optional(),
+          }).optional(),
+        });
+
+        compareZodSchemas("test53", reference53ZodSchema, test53JzodSchema, {
           jzodElement: jzodBootstrapElementZodSchema,
         });
       }

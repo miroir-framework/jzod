@@ -543,13 +543,13 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
                     },
                     (element.tag as any).schema.metaSchema
                       ? {
-                          schema: (element.tag as any).schema.metaSchema ?? { type: "any" },
-                          optional: { type: "boolean", optional: true }, // if tag is a meta tag, it says that tag definitions can always be defined as optional / not optional (there can always be a tag.optional attribute)
+                          schema: (element.tag as any).schema.metaSchema ?? { type: "any" }, // the metaSchema becomes the schema of the tag (which is an intance of this metaTag)
+                          optional: { type: "boolean", optional: true }, // if tag is a meta tag, it says that tag definitions can always be defined as optional / not optional (the tag can have a tag.optional attribute in this case)
                         }
                       : {}
                   ),
                 },
-                element.tag.optional ? { optional: element.tag.optional } : {}
+                // element.tag.optional ? { optional: element.tag.optional } : {}
               ),
             }
           : element.definition;
