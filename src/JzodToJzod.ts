@@ -9,11 +9,10 @@ export function forgeCarryOnReferenceName(absolutePath: string, relativePath:str
 
 export function applyCarryOnSchema(
   baseSchema: JzodElement,
-  // carryOnSchema: JzodObject | JzodUnion,
   carryOnSchema: JzodElement,
   localReferencePrefix?: string | undefined,
+  suffixForReferences?: string | undefined,
   resolveJzodReference?: ResolutionFunction, // non-converted reference lookup
-  // eagerJzodSchemas?: Record<string, JzodElement>, // non-converted reference lookup
   convertedReferences?: Record<string, JzodElement>, // converted reference lookup
 ): { resultSchema: JzodElement; resolvedReferences?: Record<string, JzodElement> } {
   return applyCarryOnSchemaOnLevel(
@@ -21,11 +20,13 @@ export function applyCarryOnSchema(
     carryOnSchema,
     true, // applyOnFirstLevel,
     localReferencePrefix,
+    suffixForReferences,
     resolveJzodReference,
     convertedReferences
   );
 }
 
+export interface ApplyCarryOnSchemaOnLevelReturnType { resultSchema: JzodElement; resolvedReferences?: Record<string, JzodElement> }
 /**
  * returns transformed @param baseSchema so that any node within the schema can be replaced
  * with @param carryOnSchema. 
@@ -46,12 +47,11 @@ export function applyCarryOnSchema(
  */
 export function applyCarryOnSchemaOnLevel(
   baseSchema: JzodElement,
-  // carryOnSchema: JzodObject | JzodUnion,
   carryOnSchema: JzodElement,
   applyOnFirstLevel: boolean,
   localReferencePrefix?: string | undefined,
+  suffixForReferences?: string | undefined,
   resolveJzodReference?: ResolutionFunction, // non-converted reference lookup
-  // eagerJzodSchemas?: Record<string, JzodElement>, // non-converted reference lookup
   convertedReferences?: Record<string, JzodElement>, // converted reference lookup
 ): { resultSchema: JzodElement; resolvedReferences?: Record<string, JzodElement> } {
 // ): { resultSchema: JzodUnion | JzodReference; resolvedReferences?: Record<string, JzodElement> } {
@@ -93,6 +93,7 @@ export function applyCarryOnSchemaOnLevel(
           carryOnSchema,
           false, // applyOnFirstLevel
           localReferencePrefix,
+          suffixForReferences,
           resolveJzodReference,
           convertedReferences
         ).resultSchema
@@ -138,9 +139,9 @@ export function applyCarryOnSchemaOnLevel(
       const convertedSubSchema = applyCarryOnSchemaOnLevel(
         baseSchema.definition,
         carryOnSchema,
-        // false, // applyOnFirstLevel
         true, // applyOnFirstLevel
         localReferencePrefix,
+        suffixForReferences,
         resolveJzodReference,
         convertedReferences
       );
@@ -185,9 +186,9 @@ export function applyCarryOnSchemaOnLevel(
       const convertedSubSchema = applyCarryOnSchemaOnLevel(
         baseSchema.definition,
         carryOnSchema,
-        // false, // applyOnFirstLevel
         true, // applyOnFirstLevel
         localReferencePrefix,
+        suffixForReferences,
         resolveJzodReference,
         convertedReferences
       );
@@ -232,9 +233,9 @@ export function applyCarryOnSchemaOnLevel(
       const convertedSubSchema = applyCarryOnSchemaOnLevel(
         baseSchema.definition,
         carryOnSchema,
-        // false, // applyOnFirstLevel
         true, // applyOnFirstLevel
         localReferencePrefix,
+        suffixForReferences,
         resolveJzodReference,
         convertedReferences
       );
@@ -282,6 +283,7 @@ export function applyCarryOnSchemaOnLevel(
           carryOnSchema,
           true, //applyOnFirstLevel
           localReferencePrefix,
+          suffixForReferences,
           resolveJzodReference,
           {
             ...convertedReferences,
@@ -334,8 +336,8 @@ export function applyCarryOnSchemaOnLevel(
           e,
           carryOnSchema,
           false, // applyOnFirstLevel, no need to apply since result is a union, and carryOnSchema is added to union (array) definition
-          // true, // applyOnFirstLevel, recursive conversion is needed, although carryOnSchema is added to union (array) definition itself
           localReferencePrefix,
+          suffixForReferences,
           resolveJzodReference,
           convertedReferences
         )
@@ -366,6 +368,7 @@ export function applyCarryOnSchemaOnLevel(
           carryOnSchema,
           true,
           localReferencePrefix,
+          undefined, // do not add suffixForReferences to definition of an object, only to extended references
           resolveJzodReference,
           { ...convertedReferences, ...convertedSubSchemasReferences }
         );
@@ -376,24 +379,35 @@ export function applyCarryOnSchemaOnLevel(
         }
       }
       // console.log("convertedSubSchemasReferences", JSON.stringify(convertedSubSchemasReferences, null, 2));
-      // console.log("convertedSubSchemas", JSON.stringify(convertedSubSchemas, null, 2));
-      const convertedExtend =
-        baseSchema.extend && baseSchema.extend.type == "schemaReference"
-          ? {
-              ...baseSchema.extend,
-              definition: {
-                eager: baseSchema.extend.definition.eager,
-                relativePath:
-                  baseSchema.extend.definition.absolutePath && baseSchema.extend.definition.relativePath
-                    ? forgeCarryOnReferenceName(
-                        baseSchema.extend.definition.absolutePath,
-                        baseSchema.extend.definition.relativePath,
-                        "extend"
-                      )
-                    : baseSchema.extend.definition.relativePath,
-              },
-            }
-          : baseSchema.extend; // TODO: apply carryOn object
+      // console.log("convertedSubSchemas", JSON.stringify(convertedSubSchemas, null, 2));`
+      const convertedExtendResults: ApplyCarryOnSchemaOnLevelReturnType[] | undefined=
+        baseSchema.extend && typeof baseSchema.extend == "object"?
+         !Array.isArray(baseSchema.extend)?
+           [applyCarryOnSchemaOnLevel(
+              baseSchema.extend,
+              carryOnSchema,
+              false, // applyOnFirstLevel
+              localReferencePrefix,
+              suffixForReferences,
+              resolveJzodReference,
+              convertedReferences,
+            )]
+            :
+            baseSchema.extend.map((e: JzodObject | JzodReference):ApplyCarryOnSchemaOnLevelReturnType => applyCarryOnSchemaOnLevel(
+              e,
+              carryOnSchema,
+              false, // applyOnFirstLevel
+              localReferencePrefix,
+              suffixForReferences,
+              resolveJzodReference,
+              convertedReferences,
+            ))
+          : undefined; // TODO: apply carryOn object
+      // console.log("convertedExtendResults", JSON.stringify(convertedExtendResults, null, 2));
+      const convertedExtendReferences = convertedExtendResults
+        ? Object.fromEntries(convertedExtendResults.flatMap((e) => Object.entries(e.resolvedReferences ?? {})))
+        : undefined;
+      // console.log("convertedExtended references", JSON.stringify(convertedExtendReferences, null, 2));
       if (applyOnFirstLevel) {
         return {
           resultSchema: {
@@ -408,14 +422,17 @@ export function applyCarryOnSchemaOnLevel(
               {
                 type: "object",
                 // extend: baseSchema.extend,
-                extend: convertedExtend as any,
+                extend: convertedExtendResults?convertedExtendResults.map((e) => e.resultSchema) as (JzodReference | JzodObject)[]:undefined,
                 extra: baseSchema.extra,
                 tag: convertedTag,
                 definition: convertedSubSchemas,
               },
             ],
           },
-          resolvedReferences: convertedSubSchemasReferences,
+          resolvedReferences: {
+            ...convertedSubSchemasReferences,
+            ...convertedExtendReferences
+          },
         };
       } else {
         return {
@@ -425,10 +442,13 @@ export function applyCarryOnSchemaOnLevel(
             nullable: baseSchema.nullable,
             extra: baseSchema.extra,
             tag: convertedTag,
-            extend: convertedExtend as any,
+            extend: convertedExtendResults?convertedExtendResults.map((e) => e.resultSchema) as (JzodReference | JzodObject)[]:undefined,
             definition: convertedSubSchemas,
           },
-          resolvedReferences: convertedSubSchemasReferences,
+          resolvedReferences: {
+            ...convertedSubSchemasReferences,
+            ...convertedExtendReferences
+          },
         };
       }
       break;
@@ -436,7 +456,7 @@ export function applyCarryOnSchemaOnLevel(
     case "schemaReference": {
       // if absolute reference, resolve (eager) and add to local context after running carryOnType on it
       // reference resolution is necessarily lazy, because only the name ofr the reference is used for now
-      const convertedContextSubSchemas: Record<string, JzodElement> = {};
+      let convertedContextSubSchemas: Record<string, JzodElement> = undefined as any;
       const convertedContextSubSchemasReferences: Record<string, JzodElement> = {};
       const convertedAbosulteReferences: Record<string, JzodElement> = {};
       let resultReferenceDefinition = undefined;
@@ -452,7 +472,8 @@ export function applyCarryOnSchemaOnLevel(
         // lookup a locally-defined converted version of the reference
         const localReferenceName = forgeCarryOnReferenceName(
           baseSchema.definition.absolutePath,
-          baseSchema.definition.relativePath
+          baseSchema.definition.relativePath,
+          suffixForReferences,
         );
 
         if (!convertedReferences || !convertedReferences[localReferenceName]) {
@@ -476,6 +497,7 @@ export function applyCarryOnSchemaOnLevel(
             carryOnSchema,
             true, // applyOnFirstLevel
             baseSchema.definition.absolutePath,
+            suffixForReferences,
             resolveJzodReference,
             {
               ...convertedReferences,
@@ -484,12 +506,14 @@ export function applyCarryOnSchemaOnLevel(
           );
           convertedAbosulteReferences[localReferenceName] = convertedReference.resultSchema; // what about local references of absolute references?
           resultReferenceDefinition = {
+            ...baseSchema.definition,
             relativePath: localReferenceName,
           };
         }
         else {
           // localReferenceName already exists in convertedReferences, it can be referencesd without further conversion
           resultReferenceDefinition = {
+            ...baseSchema.definition,
             relativePath: localReferenceName,
           };
         }
@@ -498,7 +522,7 @@ export function applyCarryOnSchemaOnLevel(
         resultReferenceDefinition = {
           ...baseSchema.definition,
           relativePath: localReferencePrefix
-            ? forgeCarryOnReferenceName(localReferencePrefix, baseSchema.definition.relativePath)
+            ? forgeCarryOnReferenceName(localReferencePrefix, baseSchema.definition.relativePath, suffixForReferences)
             : baseSchema.definition.relativePath,
         };
       }
@@ -512,9 +536,9 @@ export function applyCarryOnSchemaOnLevel(
         const convertedSubSchema = applyCarryOnSchemaOnLevel(
           contextSubSchema[1],
           carryOnSchema,
-          // false, // applyOnFirstLevel
           true, // applyOnFirstLevel
           localReferencePrefix,
+          suffixForReferences,
           resolveJzodReference,
           {
             ...convertedReferences,
@@ -522,6 +546,9 @@ export function applyCarryOnSchemaOnLevel(
             [contextSubSchema[0]]: { type: "never" },
           }
         );
+        if (!convertedContextSubSchemas) {
+          convertedContextSubSchemas = {};
+        }
         convertedContextSubSchemas[contextSubSchema[0]] = convertedSubSchema.resultSchema;
         for (const c of Object.entries(convertedSubSchema.resolvedReferences ?? {})) {
           convertedContextSubSchemasReferences[c[0]] = c[1];
@@ -533,7 +560,10 @@ export function applyCarryOnSchemaOnLevel(
           ...baseSchema, // keeping all baseSchema attributes (optional, nullable...) including context! TODO: remove context?
           tag: convertedTag,
           context: convertedContextSubSchemas,
-          definition: resultReferenceDefinition ? resultReferenceDefinition : baseSchema.definition,
+          definition: resultReferenceDefinition ? {
+            ...baseSchema.definition,
+            ...resultReferenceDefinition
+          } : baseSchema.definition,
         },
         resolvedReferences: {
           ...convertedReferences,

@@ -23,18 +23,19 @@ function runTest(
   const testResult = applyCarryOnSchema(
     t.testJzodSchema,
     t.carryOnJzodSchema,
-    undefined,
+    undefined, // prefixForReference
+    undefined, // suffixForReference
     t.resolveJzodReference,
     t.convertedReferences
   );
+  console.log(t.name, "result references=", JSON.stringify(testResult.resolvedReferences, null, 2))
+  console.log(t.name, "result=", JSON.stringify(testResult.resultSchema, null, 2))
   // console.log(t.name, "expectedResult=", JSON.stringify(t.expectedResult, null, 2))
-  // console.log(t.name, "result=", JSON.stringify(testResult.resultSchema, null, 2))
-  expect(testResult.resultSchema).toEqual(t.expectedResult)
-
   // console.log(t.name, "expectedReferences=", JSON.stringify(t.expectedReferences, null, 2))
-  // console.log(t.name, "result references=", JSON.stringify(testResult.resolvedReferences, null, 2))
+  console.log("running test:", t.name)
+  expect(testResult.resultSchema).toEqual(t.expectedResult)
+  
   expect(testResult.resolvedReferences).toEqual(t.expectedReferences)
-  // expect(testResult.resolvedReferences).toEqual(t.expectedReferences)
 }
 
 
@@ -176,7 +177,7 @@ describe(
             },
             expectedReferences: {},
           },
-          // test020: simple schemaReference with complex carryOn type
+          // test020: absolutePath schemaReference with complex carryOn type
           {
             name: "test020",
             testJzodSchema: {
@@ -194,8 +195,8 @@ describe(
             },
             expectedResult: {
               type: "schemaReference",
-              context: {},
               definition: {
+                absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                 relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myObject",
               },
             },
@@ -235,7 +236,6 @@ describe(
                         definition: {
                           relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myObject",
                         },
-                        context: {},
                       },
                       c: {
                         type: "union",
@@ -247,7 +247,6 @@ describe(
                               definition: {
                                 relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myObject",
                               },
-                              context: {},
                             },
                           },
                           {
@@ -322,8 +321,8 @@ describe(
             },
             expectedResult: {
               type: "schemaReference",
-              context: {},
               definition: {
+                absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                 relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myString",
               },
             },
@@ -398,8 +397,8 @@ describe(
                   definition: {
                     a: {
                       type: "schemaReference",
-                      context: {},
                       definition: {
+                        absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                         relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myString",
                       },
                     },
@@ -487,9 +486,9 @@ describe(
                         {
                           type: "schemaReference",
                           definition: {
+                            absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                             relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myString",
                           },
-                          context: {},
                         },
                         {
                           type: "number",
@@ -612,16 +611,16 @@ describe(
                     b: {
                       type: "schemaReference",
                       definition: {
+                        absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                         relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myString",
                       },
-                      context: {},
                     },
                     d: {
                       type: "schemaReference",
                       definition: {
+                        absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                         relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_myString",
                       },
-                      context: {},
                     },
                   },
                 },
@@ -639,6 +638,297 @@ describe(
                     definition: {
                       c: {
                         type: "number",
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+          // test070: object with extend clause using schemaReference based on absolutePath
+          {
+            name: "test070",
+            testJzodSchema: {
+              type: "object",
+              extend: {
+                type: "schemaReference",
+                definition: {
+                  eager: true,
+                  absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
+                  relativePath: "extendedObject",
+                },
+              },
+              definition: {
+                a: { type: "string" },
+              },
+            },
+            carryOnJzodSchema: {
+              type: "object",
+              definition: {
+                c: { type: "number" },
+              },
+            },
+            resolveJzodReference: (ref: JzodReference): JzodElement | undefined => {
+              const store: Record<string, JzodReference> = {
+                "1e8dab4b-65a3-4686-922e-ce89a2d62aa9": {
+                  type: "schemaReference",
+                  context: {
+                    extendedObject: { type: "object", definition: { b: { type: "number" } } },
+                  },
+                  definition: { relativePath: "extendedObject" },
+                },
+              };
+              const resolvedAbsolutePath = store[ref.definition?.absolutePath ?? ""];
+              return resolvedAbsolutePath && resolvedAbsolutePath.context
+                ? resolvedAbsolutePath.context[ref.definition?.relativePath ?? ""]
+                : undefined;
+            },
+            expectedResult: {
+              type: "union",
+              definition: [
+                {
+                  type: "object",
+                  definition: {
+                    c: {
+                      type: "number",
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  extend: [
+                    {
+                      type: "schemaReference",
+                      definition: {
+                        eager: true,
+                        absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
+                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject",
+                      },
+                    },
+                  ],
+                  definition: {
+                    a: {
+                      type: "union",
+                      definition: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          definition: {
+                            c: {
+                              type: "number",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+            expectedReferences: {
+              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject: {
+                type: "union",
+                definition: [
+                  {
+                    type: "object",
+                    definition: {
+                      c: {
+                        type: "number",
+                      },
+                    },
+                  },
+                  {
+                    type: "object",
+                    definition: {
+                      b: {
+                        type: "union",
+                        definition: [
+                          {
+                            type: "number",
+                          },
+                          {
+                            type: "object",
+                            definition: {
+                              c: {
+                                type: "number",
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+          // test080: object with array extend clause using schemaReference based on absolutePath
+          {
+            name: "test080",
+            testJzodSchema: {
+              type: "object",
+              extend: [
+                {
+                  type: "schemaReference",
+                  definition: {
+                    eager: true,
+                    absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
+                    relativePath: "extendedObject1",
+                  },
+                },
+                {
+                  type: "schemaReference",
+                  definition: {
+                    eager: true,
+                    absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
+                    relativePath: "extendedObject2",
+                  },
+                },
+              ],
+              definition: {
+                a: { type: "string" },
+              },
+            },
+            carryOnJzodSchema: {
+              type: "object",
+              definition: {
+                c: { type: "number" },
+              },
+            },
+            resolveJzodReference: (ref: JzodReference): JzodElement | undefined => {
+              const store: Record<string, JzodReference> = {
+                "1e8dab4b-65a3-4686-922e-ce89a2d62aa9": {
+                  type: "schemaReference",
+                  context: {
+                    extendedObject1: { type: "object", definition: { b: { type: "number" } } },
+                    extendedObject2: { type: "object", definition: { d: { type: "string" } } },
+                  },
+                  definition: { relativePath: "extendedObject1" },
+                },
+              };
+              const resolvedAbsolutePath = store[ref.definition?.absolutePath ?? ""];
+              return resolvedAbsolutePath && resolvedAbsolutePath.context
+                ? resolvedAbsolutePath.context[ref.definition?.relativePath ?? ""]
+                : undefined;
+            },
+            expectedResult: {
+              type: "union",
+              definition: [
+                {
+                  type: "object",
+                  definition: {
+                    c: {
+                      type: "number",
+                    },
+                  },
+                },
+                {
+                  type: "object",
+                  extend: [
+                    {
+                      type: "schemaReference",
+                      definition: {
+                        absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
+                        eager: true,
+                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject1",
+                      },
+                    },
+                    {
+                      type: "schemaReference",
+                      definition: {
+                        absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
+                        eager: true,
+                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject2",
+                      },
+                    },
+                  ],
+                  definition: {
+                    a: {
+                      type: "union",
+                      definition: [
+                        {
+                          type: "string",
+                        },
+                        {
+                          type: "object",
+                          definition: {
+                            c: {
+                              type: "number",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+            expectedReferences: {
+              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject1: {
+                type: "union",
+                definition: [
+                  {
+                    type: "object",
+                    definition: {
+                      c: {
+                        type: "number",
+                      },
+                    },
+                  },
+                  {
+                    type: "object",
+                    definition: {
+                      b: {
+                        type: "union",
+                        definition: [
+                          {
+                            type: "number",
+                          },
+                          {
+                            type: "object",
+                            definition: {
+                              c: {
+                                type: "number",
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject2: {
+                type: "union",
+                definition: [
+                  {
+                    type: "object",
+                    definition: {
+                      c: {
+                        type: "number",
+                      },
+                    },
+                  },
+                  {
+                    type: "object",
+                    definition: {
+                      d: {
+                        type: "union",
+                        definition: [
+                          {
+                            type: "string",
+                          },
+                          {
+                            type: "object",
+                            definition: {
+                              c: {
+                                type: "number",
+                              },
+                            },
+                          },
+                        ],
                       },
                     },
                   },

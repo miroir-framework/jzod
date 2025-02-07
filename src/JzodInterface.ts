@@ -6,7 +6,9 @@ import { JzodElement, JzodReference } from "@miroir-framework/jzod-ts";
 
 export interface ZodSchemaAndDescription {
   contextZodSchema?: { [k: string]: ZodTypeAny }, 
-  contextZodText?: { [k: string]: string }
+  contextZodText?: { [k: string]: string },
+  objectShapeZodSchema?: { [k: string]: ZodTypeAny },
+  objectShapeZodText?: { [k: string]: string },
   jzodSchema?: JzodElement, 
   zodSchema: ZodTypeAny, 
   zodText:string
@@ -37,24 +39,24 @@ export const jzodBootstrapElementSchema: any = {
                 type: "schemaReference",
                 optional: true,
                 definition: {
-                  relativePath: "jzodElement"
-                }
+                  relativePath: "jzodElement",
+                },
               },
               valueSchema: {
                 type: "schemaReference",
                 optional: true,
                 definition: {
-                  relativePath: "jzodElement"
-                }
-              }
-            }
-          }
+                  relativePath: "jzodElement",
+                },
+              },
+            },
+          },
         },
       },
       definition: {
         optional: { type: "boolean", optional: true },
         nullable: { type: "boolean", optional: true },
-        extra: { type: "any" , optional: true },
+        extra: { type: "any", optional: true },
       },
     },
     jzodArray: {
@@ -355,8 +357,25 @@ export const jzodBootstrapElementSchema: any = {
           type: "union",
           optional: true,
           definition: [
-            { type: "schemaReference", definition: { relativePath: "jzodReference" } },
-            { type: "schemaReference", definition: { relativePath: "jzodObject" } },
+            {
+              type: "union",
+              optional: true,
+              definition: [
+                { type: "schemaReference", definition: { relativePath: "jzodReference" } },
+                { type: "schemaReference", definition: { relativePath: "jzodObject" } },
+              ],
+            },
+            {
+              type: "array",
+              definition: {
+                type: "union",
+                optional: true,
+                definition: [
+                  { type: "schemaReference", definition: { relativePath: "jzodReference" } },
+                  { type: "schemaReference", definition: { relativePath: "jzodObject" } },
+                ],
+              },
+            }
           ],
         },
         type: { type: "literal", definition: "object" },
@@ -369,16 +388,16 @@ export const jzodBootstrapElementSchema: any = {
             {
               type: "schemaReference",
               definition: {
-                relativePath: "jzodObject"
-              }
+                relativePath: "jzodObject",
+              },
             },
             {
               type: "schemaReference",
               definition: {
-                relativePath: "jzodUnion"
-              }
+                relativePath: "jzodUnion",
+              },
             },
-          ]
+          ],
         },
         definition: {
           type: "record",
@@ -419,16 +438,16 @@ export const jzodBootstrapElementSchema: any = {
             {
               type: "schemaReference",
               definition: {
-                relativePath: "jzodObject"
-              }
+                relativePath: "jzodObject",
+              },
             },
             {
               type: "schemaReference",
               definition: {
-                relativePath: "jzodUnion"
-              }
+                relativePath: "jzodUnion",
+              },
             },
-          ]
+          ],
         },
         definition: {
           type: "object",
