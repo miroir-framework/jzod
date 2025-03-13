@@ -1,4 +1,4 @@
-import { JzodElement, JzodObject, JzodReference, JzodUnion } from "@miroir-framework/jzod-ts";
+import { JzodElement, JzodObject, JzodReference } from "@miroir-framework/jzod-ts";
 
 export type ResolutionFunction = (schema: JzodReference) => JzodElement | undefined;
 
@@ -83,13 +83,14 @@ export function applyCarryOnSchemaOnLevel(
 
 
   // const convertedTag = baseSchema.tag;
-  const convertedTag = baseSchema.tag && baseSchema.tag.schema && baseSchema.tag.schema.valueSchema
+  const castTag = (baseSchema as any).tag as any;
+  const convertedTag = castTag && castTag.schema && castTag.schema.valueSchema
     ? {
-      ...baseSchema.tag,
+      ...castTag,
       schema: {
-        ...baseSchema.tag.schema,
+        ...castTag.schema,
         valueSchema: applyCarryOnSchemaOnLevel(
-          baseSchema.tag.schema.valueSchema, // hard-coded type for jzodBaseSchema.extra is "any", it is replaced in any "concrete" jzodSchema definition 
+          castTag.schema.valueSchema, // hard-coded type for jzodBaseSchema.extra is "any", it is replaced in any "concrete" jzodSchema definition 
           carryOnSchema,
           false, // applyOnFirstLevel
           localReferencePrefix,
@@ -99,7 +100,7 @@ export function applyCarryOnSchemaOnLevel(
         ).resultSchema
       }
     } // TODO: what about resolvedReferences for extra? They are ignored, is it about right?
-    : baseSchema.tag;
+    : castTag;
 
   // if (baseSchema.tag && baseSchema.tag.schema && baseSchema.tag.schema.valueSchema) {
   //   console.log("############# applyCarryOnSchema", "convertedTag", convertedTag)
@@ -128,7 +129,7 @@ export function applyCarryOnSchemaOnLevel(
               tag: convertedTag,
               type: "union",
               definition: [baseSchema, carryOnSchema],
-            }
+            } as any
           : baseSchema,
       };
       break;
@@ -161,10 +162,10 @@ export function applyCarryOnSchemaOnLevel(
                 tag: convertedTag,
                 type: "record",
                 definition: convertedSubSchema.resultSchema,
-              },
+              } as any,
               carryOnSchema,
             ],
-          },
+          } as any,
           resolvedReferences: convertedSubSchemasReferences,
         };
       } else {
@@ -174,7 +175,7 @@ export function applyCarryOnSchemaOnLevel(
             tag: convertedTag,
             type: "record",
             definition: convertedSubSchema.resultSchema,
-          },
+          } as any,
           resolvedReferences: convertedSubSchemasReferences,
         };
       }
@@ -211,7 +212,7 @@ export function applyCarryOnSchemaOnLevel(
               },
               carryOnSchema,
             ],
-          },
+          } as any,
           resolvedReferences: convertedSubSchemasReferences,
         };
       } else {
@@ -221,7 +222,7 @@ export function applyCarryOnSchemaOnLevel(
             tag: convertedTag,
             type: "set",
             definition: convertedSubSchema.resultSchema,
-          },
+          } as any,
           resolvedReferences: convertedSubSchemasReferences,
         };
       }
@@ -255,10 +256,10 @@ export function applyCarryOnSchemaOnLevel(
                 tag: convertedTag,
                 type: "array",
                 definition: convertedSubSchema.resultSchema,
-              },
+              } as any,
               carryOnSchema,
             ],
-          },
+          } as any,
           resolvedReferences: convertedSubSchemasReferences,
         };
       } else {
@@ -268,7 +269,7 @@ export function applyCarryOnSchemaOnLevel(
             tag: convertedTag,
             type: "array",
             definition: convertedSubSchema.resultSchema,
-          },
+          } as any,
           resolvedReferences: convertedSubSchemasReferences,
         };
       }
@@ -306,14 +307,14 @@ export function applyCarryOnSchemaOnLevel(
                 ...baseSchema,
                 tag: convertedTag,
                 definition: convertedSubSchemas,
-              },
+              } as any,
               carryOnSchema,
               // {
 
               //   resolvedReferences: convertedSubSchemasReferences
               // }
             ],
-          },
+          } as any,
         };
       } else {
         return {
@@ -323,7 +324,7 @@ export function applyCarryOnSchemaOnLevel(
             tag: convertedTag,
             // type: "tuple",
             definition: convertedSubSchemas,
-          },
+          } as any,
           resolvedReferences: convertedSubSchemasReferences,
         };
       }
@@ -353,7 +354,7 @@ export function applyCarryOnSchemaOnLevel(
           type: "union",
           definition: [...subConvertedSchemas.map((e) => e.resultSchema), carryOnSchema],
           // definition: [...baseSchema.definition, carryOnSchema],
-        },
+        } as any,
         resolvedReferences: references,
       };
       break;
@@ -380,28 +381,32 @@ export function applyCarryOnSchemaOnLevel(
       }
       // console.log("convertedSubSchemasReferences", JSON.stringify(convertedSubSchemasReferences, null, 2));
       // console.log("convertedSubSchemas", JSON.stringify(convertedSubSchemas, null, 2));`
-      const convertedExtendResults: ApplyCarryOnSchemaOnLevelReturnType[] | undefined=
-        baseSchema.extend && typeof baseSchema.extend == "object"?
-         !Array.isArray(baseSchema.extend)?
-           [applyCarryOnSchemaOnLevel(
-              baseSchema.extend,
-              carryOnSchema,
-              false, // applyOnFirstLevel
-              localReferencePrefix,
-              suffixForReferences,
-              resolveJzodReference,
-              convertedReferences,
-            )]
-            :
-            baseSchema.extend.map((e: JzodObject | JzodReference):ApplyCarryOnSchemaOnLevelReturnType => applyCarryOnSchemaOnLevel(
-              e,
-              carryOnSchema,
-              false, // applyOnFirstLevel
-              localReferencePrefix,
-              suffixForReferences,
-              resolveJzodReference,
-              convertedReferences,
-            ))
+      const convertedExtendResults: ApplyCarryOnSchemaOnLevelReturnType[] | undefined =
+        baseSchema.extend && typeof baseSchema.extend == "object"
+          ? !Array.isArray(baseSchema.extend)
+            ? [
+                applyCarryOnSchemaOnLevel(
+                  baseSchema.extend,
+                  carryOnSchema,
+                  false, // applyOnFirstLevel
+                  localReferencePrefix,
+                  suffixForReferences,
+                  resolveJzodReference,
+                  convertedReferences
+                ),
+              ]
+            : (baseSchema.extend as (JzodObject | JzodReference)[]).map(
+                (e: JzodObject | JzodReference): ApplyCarryOnSchemaOnLevelReturnType =>
+                  applyCarryOnSchemaOnLevel(
+                    e,
+                    carryOnSchema,
+                    false, // applyOnFirstLevel
+                    localReferencePrefix,
+                    suffixForReferences,
+                    resolveJzodReference,
+                    convertedReferences
+                  )
+              )
           : undefined; // TODO: apply carryOn object
       // console.log("convertedExtendResults", JSON.stringify(convertedExtendResults, null, 2));
       const convertedExtendReferences = convertedExtendResults
@@ -428,7 +433,7 @@ export function applyCarryOnSchemaOnLevel(
                 definition: convertedSubSchemas,
               },
             ],
-          },
+          } as any,
           resolvedReferences: {
             ...convertedSubSchemasReferences,
             ...convertedExtendReferences
@@ -444,7 +449,7 @@ export function applyCarryOnSchemaOnLevel(
             tag: convertedTag,
             extend: convertedExtendResults?convertedExtendResults.map((e) => e.resultSchema) as (JzodReference | JzodObject)[]:undefined,
             definition: convertedSubSchemas,
-          },
+          } as any,
           resolvedReferences: {
             ...convertedSubSchemasReferences,
             ...convertedExtendReferences
@@ -564,7 +569,7 @@ export function applyCarryOnSchemaOnLevel(
             ...baseSchema.definition,
             ...resultReferenceDefinition
           } : baseSchema.definition,
-        },
+        } as any,
         resolvedReferences: {
           ...convertedReferences,
           ...convertedAbosulteReferences,

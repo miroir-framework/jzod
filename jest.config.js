@@ -1,6 +1,8 @@
 // import { pathsToModuleNameMapper } from 'ts-jest';
 // import compilerOptions from './tsconfig'
 
+import babelConfig from "./babel.config.cjs";
+
 const esModules = ['uuid'].join('|');
 
 export default (path, options) =>({
@@ -25,16 +27,23 @@ export default (path, options) =>({
   ,
   // resolver:options.defaultResolver(path, {...options}),
   testEnvironment: "node",
+  // globals: {
+  //   "ts-jest": {
+  //     "tsconfig": "tsconfig.json",
+  //     "useESM": true
+  //   }
+  // },
   moduleFileExtensions:[
     "ts", "tsx", "js", "mjs", "cjs", "jsx", "json", "node"
   ],
-  // preset:'ts-jest/presets/default-esm',
+  preset:'ts-jest',
   "transform": {
-    "^.+\\.tsx?$": [
+    "^.+\\.ts?$": [
       "ts-jest",
       {
-        // useESM:true,
+        useESM:true,
         // tsconfig: "../../tsconfig.json"
+        babelConfig: babelConfig,
         tsconfig: 
         {
           resolveJsonModule: true,
@@ -42,20 +51,19 @@ export default (path, options) =>({
           allowSyntheticDefaultImports:true,
           allowJs: true,
           moduleResolution: "node",
-          // module: "ESNext",
-          // target: "ES2017",
-                // rootDir: "./src/",
+          module: "ESNext",
+          target: "ESNext",
           traceResolution: true,
-          module:"commonjs"
+          // module:"commonjs"
         },
       }
     ],
     "^.+\\.js?$": ["babel-jest"],
   },
-  // moduleNameMapper: {
-  //   "^miroir-fwk\/(.+)$": "<rootDir>/src/$1",
-  //   '\\.(css|scss|sass)$': 'identity-obj-proxy',
-  // },
+  moduleNameMapper: {
+    "^miroir-fwk\/(.+)$": "<rootDir>/src/$1",
+    '\\.(css|scss|sass)$': 'identity-obj-proxy',
+  },
   "testPathIgnorePatterns": [
     "./node_modules/",
     "./.cache/"

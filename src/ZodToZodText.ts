@@ -1,4 +1,3 @@
-import { JzodElement } from "@miroir-framework/jzod-ts";
 import { ZodTypeAny } from "zod";
 
 const a: null = null;
@@ -72,7 +71,7 @@ export const zodToZodText = (zod: ZodTypeAny, identifier: string): string => {
 
       // console.log("isStrict",isStrict, zod._def["unknownKeys"]);
       
-      const propertiesJzodTextArray = properties.map(([key, value]) => {
+      const propertiesJzodTextArray: [string, string][] = properties.map(([key, value]) => {
         const nextZodNode = value as ZodTypeAny;
         const propertyJzodSchema = zodToZodText(nextZodNode, identifier);
         const { typeName: nextZodNodeTypeName } = nextZodNode._def;
@@ -127,7 +126,8 @@ export const zodToZodText = (zod: ZodTypeAny, identifier: string): string => {
       const zodUnionElements: string[] = zod._def.options.map((option: ZodTypeAny) =>
         zodToZodText(option, identifier)
       );
-      const propertiesText = zodUnionElements.reduce((acc:string,curr:string)=>acc.length > 0?`, ${curr}`: `${curr}`,"")
+      // const propertiesText = zodUnionElements.reduce((acc:string,curr:string)=>acc.length > 0?`, ${curr}`: `${curr}`,"")
+      const propertiesText = zodUnionElements.join(", ");
       return `z.union([${propertiesText}])`;
     }
     case "ZodDiscriminatedUnion": {
@@ -161,7 +161,8 @@ export const zodToZodText = (zod: ZodTypeAny, identifier: string): string => {
     case "ZodTuple": {
       // z.tuple([z.string(), z.number()]) -> [string, number]
       const types: string[] = zod._def.items.map((option: ZodTypeAny) => zodToZodText(option, identifier));
-      const propertiesText = types.reduce((acc:string,curr:string)=>acc.length > 0?`, ${curr}`: `${curr}`,"")
+      // const propertiesText = types.reduce((acc:string,curr:string)=>acc.length > 0?`, ${curr}`: `${curr}`,"")
+      const propertiesText = types.join(", ");
       return `z.tuple([${propertiesText}])`;
       break;
     }

@@ -3,42 +3,67 @@
   "private": false,
   "version": "0.8.0",
   "description": "The Json bootstrapper for Zod.",
-  "main": "dist/bundle.js",
-  "types": "dist/bundle.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "rollup --config",
-    "test": "cross-env NODE_ENV=test jest --verbose --silent=false -t"
+    "build": "tsup",
+    "test": "cross-env NODE_ENV=test vitest run --poolOptions.threads.singleThread --passWithNoTests -t"
   },
   "author": "Miroir Framework <miroir-framework@protonmail.com>",
   "homepage": "https://github.com/miroir-framework/jzod/#readme",
   "bugs": "https://github.com/miroir-framework/jzod/issues",
   "license": "MIT",
-  "dependencies": {
-    "zod": "^3.22.2"
-  },
   "files": [
     "LICENSE.md",
     "package.json",
-    "dist/bundle.js",
-    "dist/bundle.d.ts"
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/src/worker.js"
   ],
+  "dependencies": {
+    "zod": "^3.22.2"
+  },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.20.11",
     "@babel/preset-env": "^7.22.5",
+    "@babel/preset-typescript": "^7.26.0",
     "@jest/globals": "^29.3.1",
-    "@miroir-framework/jzod-ts": "0.6.3",
-    "@rollup/plugin-commonjs": "^24.0.1",
+    "@miroir-framework/jzod-ts": "*",
+    "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
     "@types/jest": "^29.2.4",
     "babel-jest": "^29.4.0",
+    "is-module": "^1.0.0",
     "rollup": "^3.10.1",
     "rollup-plugin-dts": "^5.1.1",
     "rollup-plugin-typescript2": "^0.34.1",
     "ts-jest": "^29.0.3",
     "tsconfig-paths": "^4.1.2",
-    "typescript": "5.0.3",
+    "tsup": "^8.4.0",
+    "typescript": "5.8.2",
+    "vite-plugin-node-polyfills": "^0.23.0",
+    "vitest": "^3.0.8",
     "zod-to-json-schema": "^3.21.2",
     "zod-to-ts": "^1.2.0"
+  },
+  "tsup": {
+    "dts": true,
+    "clean": true,
+    "bundle": true,
+    "treeshake": true,
+    "target": "esNext",
+    "module": "nodeNext",
+    "moduleResolution": "nodeNext",
+    "strict": true,
+    "format": [
+      "esm"
+    ],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "entry": [
+      "src/index.ts"
+    ]
   }
 }

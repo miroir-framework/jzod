@@ -1,13 +1,12 @@
-import { ZodObject, ZodTypeAny, boolean, number, optional, z } from "zod";
+import { ZodTypeAny, z } from "zod";
 
 import {
-  JzodElement,
-  jzodToTsCode
+  JzodElement
 } from "@miroir-framework/jzod-ts";
 
 import {
-  ZodSchemaAndDescription,
   ZodSchemaAndDescriptionRecord,
+  ZodTextAndZodSchema,
   jzodBootstrapElementSchema
 } from "../src/JzodInterface";
 import {
@@ -20,7 +19,7 @@ import { convertZodSchemaToJsonSchemaAndWriteToFile } from "./utils";
 const tmpPath = "./tests/tmp";
 const referencesPath = "./tests/references";
 
-const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+const jzodBootstrapElementZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
 function compareZodSchemas(
   testName: string,
@@ -31,7 +30,7 @@ function compareZodSchemas(
   // TODO: comparison of JSON schemas does not take "strict" into account
   console.log("######################## starting", testName);
 
-  const testJzodSchemaZodSchemaAndDescription: ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+  const testJzodSchemaZodSchemaAndDescription: ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(
     testJzodSchema,
     definitions ? () => definitions : undefined
   );
@@ -86,7 +85,7 @@ describe(
     //       }
     //     ;
 
-    //     const reference1ZodSchema:ZodSchemaAndDescription = {
+    //     const reference1ZodSchema:ZodTextAndZodSchema = {
     //       zodSchema: z.object({
     //         a: z.string(),
     //         b: z.object({b1:z.boolean().optional(), b2: z.array(z.boolean())})
@@ -653,7 +652,7 @@ describe(
     // it('jzod schema simple parsing', () =>
     //   {
     //     console.log("jzod schema simple parsing converting jzodBootstrapElementSchema");
-    //     // const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+    //     // const jzodBootstrapElementZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
     //     // console.log("jzod schema simple parsing starting parsing proper ", jzodBootstrapElementZodSchema.contextZodText);
     //     console.log("jzod schema simple parsing starting parsing proper ");
@@ -790,7 +789,7 @@ describe(
 
     // // ###########################################################################################
     // it("jzod bootstrap self parsing", () => {
-    //   // const jzodBootstrapElementZodSchema: ZodSchemaAndDescription =
+    //   // const jzodBootstrapElementZodSchema: ZodTextAndZodSchema =
     //   //   jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
     //   console.log("jzodBootstrapElementSchema", JSON.stringify(jzodBootstrapElementZodSchema.zodSchema));
 
@@ -1175,7 +1174,7 @@ describe(
     //       },
     //     };
 
-    //     // const jzodBootstrapElementZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
+    //     // const jzodBootstrapElementZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
     //     expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test0).success).toBeTruthy();
     //     expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test1).success).toBeTruthy();
@@ -1203,39 +1202,39 @@ describe(
     //     expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test23).success).toBeTruthy();
     //     expect(jzodBootstrapElementZodSchema.zodSchema.safeParse(test24).success).toBeTruthy();
 
-    //     const test0ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test0);
-    //     const test1ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test1);
-    //     const test2ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test2);
-    //     const test3ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test3);
-    //     const test4ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test4);
-    //     const test5ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test5);
-    //     const test6ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test6);
-    //     const test7ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test7);
-    //     const test8ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+    //     const test0ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test0);
+    //     const test1ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test1);
+    //     const test2ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test2);
+    //     const test3ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test3);
+    //     const test4ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test4);
+    //     const test5ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test5);
+    //     const test6ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test6);
+    //     const test7ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test7);
+    //     const test8ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(
     //       test8,
     //       undefined,
     //       () => absoluteReferences
     //     );
-    //     const test9ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test9);
-    //     const test10ZodSchema: ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+    //     const test9ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test9);
+    //     const test10ZodSchema: ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(
     //       test10,
     //       undefined,
     //       () => absoluteReferences
     //     );
-    //     const test11ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test11);
-    //     const test12ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test12);
-    //     const test13ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test13);
-    //     const test14ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test14);
-    //     const test15ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test15);
-    //     const test16ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test16);
-    //     const test17ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test17);
-    //     const test18ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test18);
-    //     const test19ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test19);
-    //     const test20ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test20);
-    //     const test21ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test21);
-    //     const test22ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test22);
-    //     const test23ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test23);
-    //     const test24ZodSchema:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(test24);
+    //     const test11ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test11);
+    //     const test12ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test12);
+    //     const test13ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test13);
+    //     const test14ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test14);
+    //     const test15ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test15);
+    //     const test16ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test16);
+    //     const test17ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test17);
+    //     const test18ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test18);
+    //     const test19ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test19);
+    //     const test20ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test20);
+    //     const test21ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test21);
+    //     const test22ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test22);
+    //     const test23ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test23);
+    //     const test24ZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(test24);
 
     //     const test0_OK1 = "toto";
     //     const test0_OK2 = undefined;
@@ -1535,7 +1534,7 @@ describe(
     it("Jzod to Zod and back",
       async() => {
 
-        const lazyRef:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+        const lazyRef:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(
           {type:"string"},
           () => ({}) as ZodSchemaAndDescriptionRecord,
           () => ({}) as ZodSchemaAndDescriptionRecord,
@@ -1548,7 +1547,7 @@ describe(
           expectedJzodSchema?: JzodElement,
 
         ) => {
-          const testZodSchemaAndDescription:ZodSchemaAndDescription = jzodElementSchemaToZodSchemaAndDescription(
+          const testZodSchemaAndDescription:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(
             testJzodSchema,
             () => ({}) as ZodSchemaAndDescriptionRecord,
             () => ({lazyRef}) as ZodSchemaAndDescriptionRecord,

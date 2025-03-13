@@ -1,21 +1,40 @@
-import { ZodTypeAny, nullable, optional, union } from "zod";
+import { JzodElement } from "@miroir-framework/jzod-ts";
+import { ZodTypeAny } from "zod";
 
 
-import { JzodElement, JzodReference } from "@miroir-framework/jzod-ts";
+export interface ZodTextAndTsTypeText {
+  contextTsTypeText?: { [k: string]: string },
+  contextZodText?: { [k: string]: string },
+  objectShapeZodText?: { [k: string]: string },
+  zodText:string,
+  tsTypeText?: string,
+};
 
-
-export interface ZodSchemaAndDescription {
+export interface ZodTextAndZodSchema {
   contextZodSchema?: { [k: string]: ZodTypeAny }, 
   contextZodText?: { [k: string]: string },
   objectShapeZodSchema?: { [k: string]: ZodTypeAny },
   objectShapeZodText?: { [k: string]: string },
   jzodSchema?: JzodElement, 
   zodSchema: ZodTypeAny, 
-  zodText:string
+  zodText:string,
+  // tsTypeText?: string,
 };
 
-export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodSchemaAndDescription };
 
+export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodTextAndZodSchema };
+
+// ##############################################################################################################
+export interface TsTypeString {
+  contextTsTypeStrings: { [k: string]: string },
+  mainTsTypeString: string,
+}
+
+export type ZodSchemaToTsTypeStringFunction = (
+  zodSchema: ZodTypeAny,
+  contextZodSchema: Record<string,ZodTypeAny>,
+  typeName?: string,
+) => TsTypeString;
 
 // ##############################################################################################################
 // ##############################################################################################################
@@ -545,29 +564,3 @@ export const jzodBootstrapElementSchema: any = {
 
 // ################################################################################################
 // ################################################################################################
-export {
-  jzodObject,
-  jzodArray,
-  jzodPlainAttribute,
-  jzodAttributeDateValidations,
-  jzodAttributePlainDateWithValidations,
-  jzodAttributeNumberValidations,
-  jzodAttributePlainNumberWithValidations,
-  jzodAttributeStringValidations,
-  jzodAttributePlainStringWithValidations,
-  jzodElement,
-  jzodEnum,
-  jzodEnumAttributeTypes,
-  jzodEnumElementTypes,
-  jzodFunction,
-  jzodIntersection,
-  jzodLazy,
-  jzodLiteral,
-  jzodMap,
-  jzodPromise,
-  jzodRecord,
-  jzodReference,
-  jzodSet,
-  jzodTuple,
-  jzodUnion,
-} from "@miroir-framework/jzod-ts";

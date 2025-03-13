@@ -137,7 +137,7 @@ export const zodToJzod = (zod: ZodTypeAny, identifier: string): JzodElement => {
       return zod._def.discriminator
         ? {
             type: "union",
-            discriminator: { discriminatorType: "string", value: zod._def.discriminator },
+            discriminator: { discriminatorType: "string", value: zod._def.discriminator } as any,
             definition: jzodUnionElements,
           }
         : { type: "union", definition: jzodUnionElements }
