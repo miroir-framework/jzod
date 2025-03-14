@@ -47,23 +47,5 @@
     "vitest": "^3.0.8",
     "zod-to-json-schema": "^3.21.2",
     "zod-to-ts": "^1.2.0"
-  },
-  "tsup": {
-    "dts": true,
-    "clean": true,
-    "bundle": true,
-    "treeshake": true,
-    "target": "esNext",
-    "module": "nodeNext",
-    "moduleResolution": "nodeNext",
-    "strict": true,
-    "format": [
-      "esm"
-    ],
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "entry": [
-      "src/index.ts"
-    ]
   }
 }

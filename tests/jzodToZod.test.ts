@@ -21,7 +21,7 @@ const referencesPath = "./tests/references";
 
 const jzodBootstrapElementZodSchema:ZodTextAndZodSchema = jzodElementSchemaToZodSchemaAndDescription(jzodBootstrapElementSchema);
 
-function compareZodSchemas(
+async function compareZodSchemas(
   testName: string,
   referenceZodSchema: ZodTypeAny,
   testJzodSchema: JzodElement,
@@ -37,12 +37,12 @@ function compareZodSchemas(
   // console.log("#### converted", testName);
   console.log("#### converted Jzod schema yields Zod schema text:", testJzodSchemaZodSchemaAndDescription.zodText);
 
-  const referenceTestJsonSchema = convertZodSchemaToJsonSchemaAndWriteToFile(
+  const referenceTestJsonSchema = await convertZodSchemaToJsonSchemaAndWriteToFile(
     "testZodSchema",
     referenceZodSchema,
     undefined,
   );
-  const convertedTestJsonSchema = convertZodSchemaToJsonSchemaAndWriteToFile(
+  const convertedTestJsonSchema = await convertZodSchemaToJsonSchemaAndWriteToFile(
     "test2ZodSchema",
     testJzodSchemaZodSchemaAndDescription.zodSchema,
     undefined
