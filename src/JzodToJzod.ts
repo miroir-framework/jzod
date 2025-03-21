@@ -1,6 +1,6 @@
 import { JzodElement, JzodObject, JzodReference } from "@miroir-framework/jzod-ts";
 
-export type ResolutionFunction = (schema: JzodReference) => JzodElement | undefined;
+export type JzodReferenceResolutionFunction = (schema: JzodReference) => JzodElement | undefined;
 
 // function forgeIdFromReference(r:JzodReference) {
 export function forgeCarryOnReferenceName(absolutePath: string, relativePath:string | undefined, suffix?: string) {
@@ -12,7 +12,7 @@ export function applyCarryOnSchema(
   carryOnSchema: JzodElement,
   localReferencePrefix?: string | undefined,
   suffixForReferences?: string | undefined,
-  resolveJzodReference?: ResolutionFunction, // non-converted reference lookup
+  resolveJzodReference?: JzodReferenceResolutionFunction, // non-converted reference lookup
   convertedReferences?: Record<string, JzodElement>, // converted reference lookup
 ): { resultSchema: JzodElement; resolvedReferences?: Record<string, JzodElement> } {
   return applyCarryOnSchemaOnLevel(
@@ -51,11 +51,9 @@ export function applyCarryOnSchemaOnLevel(
   applyOnFirstLevel: boolean,
   localReferencePrefix?: string | undefined,
   suffixForReferences?: string | undefined,
-  resolveJzodReference?: ResolutionFunction, // non-converted reference lookup
+  resolveJzodReference?: JzodReferenceResolutionFunction, // non-converted reference lookup
   convertedReferences?: Record<string, JzodElement>, // converted reference lookup
 ): { resultSchema: JzodElement; resolvedReferences?: Record<string, JzodElement> } {
-// ): { resultSchema: JzodUnion | JzodReference; resolvedReferences?: Record<string, JzodElement> } {
-  // const convertedExtra = baseSchema.extra
   /**
    * jzodBaseObject.extra is {type: "any"} by default but can be subtyped to any concrete type
    * and shall then be applied the carryOn type
@@ -390,7 +388,7 @@ export function applyCarryOnSchemaOnLevel(
                   carryOnSchema,
                   false, // applyOnFirstLevel
                   localReferencePrefix,
-                  suffixForReferences,
+                  "extend", //suffixForReferences,
                   resolveJzodReference,
                   convertedReferences
                 ),
@@ -402,7 +400,7 @@ export function applyCarryOnSchemaOnLevel(
                     carryOnSchema,
                     false, // applyOnFirstLevel
                     localReferencePrefix,
-                    suffixForReferences,
+                    "extend", //suffixForReferences,
                     resolveJzodReference,
                     convertedReferences
                   )
@@ -460,7 +458,7 @@ export function applyCarryOnSchemaOnLevel(
     }
     case "schemaReference": {
       // if absolute reference, resolve (eager) and add to local context after running carryOnType on it
-      // reference resolution is necessarily lazy, because only the name ofr the reference is used for now
+      // reference resolution is necessarily lazy, because only the name of the reference is used for now
       let convertedContextSubSchemas: Record<string, JzodElement> = undefined as any;
       const convertedContextSubSchemasReferences: Record<string, JzodElement> = {};
       const convertedAbosulteReferences: Record<string, JzodElement> = {};

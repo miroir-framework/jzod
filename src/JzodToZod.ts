@@ -24,8 +24,6 @@ import {
 // import { ZodTextAndZodSchema, ZodSchemaAndDescriptionRecord, ZodTextAndTsTypeText, ZodSchemaToTsTypeStringFunction } from "./JzodInterface";
 import { ZodSchemaAndDescriptionRecord, ZodTextAndZodSchema } from "./JzodInterface.js";
 import { zodToZodText } from "./ZodToZodText.js";
-// import { WorkerPool } from "./WorkerPool.js";
-// import { typeScriptLazyReferenceConverter } from "./worker";
 
 // ##############################################################################################################
 export interface TypeScriptGenerationParams {
@@ -163,6 +161,7 @@ function resolveEagerReference(
    * under a new name using the hash of the carryOn (use Json Web Token JWT?), unless the conversion has already been done.
    *
    */
+  // console.log("resolveEagerReference resolving relativePath", eagerReference, !!element.definition.eager);
   if (eagerReference) {
     const eagerReferences: ZodSchemaAndDescriptionRecord = {
       ...getSchemaEagerReferences(),
@@ -212,6 +211,7 @@ function getLazyResolverZodSchema(
   typeScriptLazyReferenceConverter?: (lazyZodSchema: ZodLazy<any>, relativeReference: string | undefined) => ZodTypeAny
 ): ZodLazy<any> {
   return z.lazy(() => {
+    // console.log("getLazyResolverZodSchema resolving relativePath", element.definition.relativePath, !!typeScriptLazyReferenceConverter);
     /**
      * issue with zod-to-ts: specifying a TS AST generation function induces a call to the lazy function!! :-(
      * this call is avoided in this case, but this means Zod schemas used to generate typescript types must
@@ -1004,6 +1004,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         element.partial
       );
 
+      // squashing "extend" clause
       const extendedObjectShapeZodText = {
         ...extendsSubObjects?.reduceRight(
           (acc: { [k: string]: string }, curr: ZodTextAndZodSchema) => ({
@@ -1325,7 +1326,8 @@ function resolveJzodReferenceSchema(
       element,
       contextSubObjectSchemaAndDescriptionRecord,
       getSchemaEagerReferences,
-      getLazyReferences
+      getLazyReferences,
+      typeScriptGeneration?.typeScriptLazyReferenceConverter
     );
     objectShapeZodSchema = undefined;
     objectShapeZodText = undefined;

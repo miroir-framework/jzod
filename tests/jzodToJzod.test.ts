@@ -5,7 +5,7 @@ import {
   JzodReference
 } from "@miroir-framework/jzod-ts";
 
-import { ResolutionFunction, applyCarryOnSchema } from "../src/JzodToJzod";
+import { JzodReferenceResolutionFunction, applyCarryOnSchema } from "../src/JzodToJzod";
 
 
 interface TestCase {
@@ -14,7 +14,7 @@ interface TestCase {
   carryOnJzodSchema: JzodObject,
   expectedReferences: Record<string,JzodElement>,
   expectedResult: JzodElement,
-  resolveJzodReference?: ResolutionFunction, // non-converted reference lookup
+  resolveJzodReference?: JzodReferenceResolutionFunction, // non-converted reference lookup
   convertedReferences?: Record<string, JzodElement>, // converted reference lookup
 }
 function runTest(
@@ -702,7 +702,7 @@ describe(
                       definition: {
                         eager: true,
                         absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
-                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject",
+                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject_extend",
                       },
                     },
                   ],
@@ -728,7 +728,7 @@ describe(
               ],
             },
             expectedReferences: {
-              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject: {
+              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject_extend: {
                 type: "union",
                 definition: [
                   {
@@ -832,7 +832,7 @@ describe(
                       definition: {
                         absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                         eager: true,
-                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject1",
+                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject1_extend",
                       },
                     },
                     {
@@ -840,7 +840,7 @@ describe(
                       definition: {
                         absolutePath: "1e8dab4b-65a3-4686-922e-ce89a2d62aa9",
                         eager: true,
-                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject2",
+                        relativePath: "carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject2_extend",
                       },
                     },
                   ],
@@ -866,7 +866,7 @@ describe(
               ],
             },
             expectedReferences: {
-              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject1: {
+              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject1_extend: {
                 type: "union",
                 definition: [
                   {
@@ -900,7 +900,7 @@ describe(
                   },
                 ],
               },
-              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject2: {
+              carryOn_1e8dab4b$65a3$4686$922e$ce89a2d62aa9_extendedObject2_extend: {
                 type: "union",
                 definition: [
                   {

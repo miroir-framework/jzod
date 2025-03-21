@@ -23,6 +23,7 @@ export {
   zodToZodText
 } from "./ZodToZodText.js"
 export {
+  JzodReferenceResolutionFunction,
   applyCarryOnSchema,
   applyCarryOnSchemaOnLevel,
   forgeCarryOnReferenceName
@@ -30,29 +31,3 @@ export {
 export {
   jzodToZod
 } from "./facade.js"
-// export {
-//   jzodObject,
-//   jzodArray,
-//   jzodPlainAttribute,
-//   jzodAttributeDateValidations,
-//   jzodAttributePlainDateWithValidations,
-//   jzodAttributeNumberValidations,
-//   jzodAttributePlainNumberWithValidations,
-//   jzodAttributeStringValidations,
-//   jzodAttributePlainStringWithValidations,
-//   jzodElement,
-//   jzodEnum,
-//   jzodEnumAttributeTypes,
-//   jzodEnumElementTypes,
-//   jzodFunction,
-//   jzodIntersection,
-//   jzodLazy,
-//   jzodLiteral,
-//   jzodMap,
-//   jzodPromise,
-//   jzodRecord,
-//   jzodReference,
-//   jzodSet,
-//   jzodTuple,
-//   jzodUnion,
-// } from "@miroir-framework/jzod-ts";
