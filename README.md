@@ -206,7 +206,7 @@ In the separate [Jzod-ts](https://www.npmjs.com/package/jzod-ts) package, the fu
 
 ```ts
 import { jzodToZod } from "jzod-ts"
-jzodToTsCode({ type: "string" }, true/*export declaration*/, "testJzodSchema1")
+jzodToTsCode("testJzodSchema1", { type: "string" })
 
 // /* returns: */
 // import { ZodType, ZodTypeAny, z } from "zod";
@@ -218,8 +218,8 @@ jzodToTsCode({ type: "string" }, true/*export declaration*/, "testJzodSchema1")
 The function
 
 ```ts
-import { jzodToTsTypeAliasesAndZodText } from "jzod-ts"
-jzodToTsTypeAliasesAndZodText(
+import { jzodToZodTextAndTsTypeAliases } from "jzod-ts"
+jzodToZodTextAndTsTypeAliases(
   element: JzodElement,
   typeName?: string,
 ): TsTypeAliasesAndZodText
@@ -227,7 +227,7 @@ jzodToTsTypeAliasesAndZodText(
 
 returns the Typescript Type Abstract Syntax Tree (AST) and the textual form of the Zod definition corresponding to:
 
-- the context of the defined schema (which is non-empty whenever some schema reference defines such a context whithin the definition),
+- the context of the defined schema (which is non-empty whenever some schema reference defines such a context within the definition),
 - the defined schema itself.
 
 ### Bootstrap

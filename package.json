@@ -1,7 +1,7 @@
 {
   "name": "@miroir-framework/jzod",
   "private": false,
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "The Json bootstrapper for Zod.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,6 +18,7 @@
     "test": "cross-env NODE_ENV=test vitest run --poolOptions.threads.singleThread --passWithNoTests -t"
   },
 	"keywords": [
+		"jzod",
 		"zod",
 		"generator"
 	],
@@ -34,14 +35,14 @@
     "dist/src/worker.js"
   ],
   "dependencies": {
-    "zod": "^3.22.2"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.20.11",
     "@babel/preset-env": "^7.22.5",
     "@babel/preset-typescript": "^7.26.0",
     "@jest/globals": "^29.3.1",
-    "@miroir-framework/jzod-ts": "*",
+    "@miroir-framework/jzod-ts": "0.8.0",
     "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^16.0.0",

@@ -1,20 +1,16 @@
 export {
-  ZodSchemaAndDescriptionRecord,
+  ZodTextAndZodSchemaRecord,
   ZodTextAndZodSchema,
-  ZodTextAndTsTypeText,
   jzodBootstrapElementSchema,
-  TsTypeString,
-  ZodSchemaToTsTypeStringFunction,
 } from "./JzodInterface.js"
 export {
   getDescriptions,
   getZodSchemas,
-  jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn,
-  jzodElementSchemaToZodSchemaAndDescription,
+  jzodWithCarryOnToZodTextAndZodSchema,
+  jzodToZodTextAndZodSchema,
   getJsResultSetConstDeclarations,
   objectToJsStringArray,
   objectToJsStringObject,
-  TypeScriptGenerationParams,
 } from "./JzodToZod.js"
 export {
   zodToJzod

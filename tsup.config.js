@@ -8,11 +8,11 @@ export default defineConfig({
     'cjs',
   ],
   "dts": true,
+  clean: true,
   // "dts": {
   //   "resolve": true
   // },
   // sourcemap: true,
-  // clean: true,
   // "treeshake": true,
   // minify: true,
   // bundle: true,

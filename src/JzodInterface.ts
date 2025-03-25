@@ -1,14 +1,5 @@
 import { JzodElement } from "@miroir-framework/jzod-ts";
-import { ZodTypeAny } from "zod";
-
-
-export interface ZodTextAndTsTypeText {
-  contextTsTypeText?: { [k: string]: string },
-  contextZodText?: { [k: string]: string },
-  objectShapeZodText?: { [k: string]: string },
-  zodText:string,
-  tsTypeText?: string,
-};
+import { ZodLazy, ZodTypeAny } from "zod";
 
 export interface ZodTextAndZodSchema {
   contextZodSchema?: { [k: string]: ZodTypeAny }, 
@@ -18,23 +9,10 @@ export interface ZodTextAndZodSchema {
   jzodSchema?: JzodElement, 
   zodSchema: ZodTypeAny, 
   zodText:string,
-  // tsTypeText?: string,
 };
 
 
-export type ZodSchemaAndDescriptionRecord = { [k: string]: ZodTextAndZodSchema };
-
-// ##############################################################################################################
-export interface TsTypeString {
-  contextTsTypeStrings: { [k: string]: string },
-  mainTsTypeString: string,
-}
-
-export type ZodSchemaToTsTypeStringFunction = (
-  zodSchema: ZodTypeAny,
-  contextZodSchema: Record<string,ZodTypeAny>,
-  typeName?: string,
-) => TsTypeString;
+export type ZodTextAndZodSchemaRecord = { [k: string]: ZodTextAndZodSchema };
 
 // ##############################################################################################################
 // ##############################################################################################################

@@ -21,23 +21,10 @@ import {
   JzodTuple,
   JzodUnion,
 } from "@miroir-framework/jzod-ts";
-// import { ZodTextAndZodSchema, ZodSchemaAndDescriptionRecord, ZodTextAndTsTypeText, ZodSchemaToTsTypeStringFunction } from "./JzodInterface";
-import { ZodSchemaAndDescriptionRecord, ZodTextAndZodSchema } from "./JzodInterface.js";
+import { ZodTextAndZodSchema, ZodTextAndZodSchemaRecord } from "./JzodInterface.js";
 import { zodToZodText } from "./ZodToZodText.js";
 
 // ##############################################################################################################
-export interface TypeScriptGenerationParams {
-  typeScriptLazyReferenceConverter?: (
-    lazyZodSchema: ZodLazy<any>,
-    relativeReference: string | undefined
-  ) => any /** returns "any" to avoid pollution from zod-to-ts type "GetType", actual return type is ZodType<any, any, any> & GetType */;
-  returnTypeScript: boolean;
-  poolsize?: number;
-  typeName?: string;
-  // exportPrefix?: string;
-  exportPrefix?: boolean;
-}
-
 export interface JzodElementToTsTypeMessageType {
   key: string;
   value: JzodElement;
@@ -80,17 +67,17 @@ export const objectToJsStringArray = (o: Object): string =>
   "]";
 
 // ######################################################################################################
-export function getDescriptions(set: ZodSchemaAndDescriptionRecord) {
+export function getDescriptions(set: ZodTextAndZodSchemaRecord) {
   return Object.fromEntries(Object.entries(set).map((a) => [a[0], a[1].zodText]));
 }
 
 // ######################################################################################################
-export function getRecordZodText(set: ZodSchemaAndDescriptionRecord) {
+export function getRecordZodText(set: ZodTextAndZodSchemaRecord) {
   return Object.fromEntries(Object.entries(set).map((a) => [a[0], zodToZodText(a[1].zodSchema, a[0])]));
 }
 
 // ######################################################################################################
-export function getContextDescriptions(set: ZodSchemaAndDescriptionRecord) {
+export function getContextDescriptions(set: ZodTextAndZodSchemaRecord) {
   return Object.fromEntries(
     Object.entries(set).reduce(
       (acc: [string, string][], curr: [string, ZodTextAndZodSchema]) => [
@@ -103,17 +90,17 @@ export function getContextDescriptions(set: ZodSchemaAndDescriptionRecord) {
 }
 
 // ######################################################################################################
-export function getJsResultSetConstDeclarations(set: ZodSchemaAndDescriptionRecord) {
+export function getJsResultSetConstDeclarations(set: ZodTextAndZodSchemaRecord) {
   return Object.entries(set).reduce((acc, curr) => acc + `export const ${curr[0]} = ${curr[1].zodText};`, "");
 }
 
 // ######################################################################################################
-export function getZodSchemas(set: ZodSchemaAndDescriptionRecord) {
+export function getZodSchemas(set: ZodTextAndZodSchemaRecord) {
   return Object.fromEntries(Object.entries(set).map((a) => [a[0], a[1].zodSchema]));
 }
 
 // ######################################################################################################
-export function getContextZodSchemas(set: ZodSchemaAndDescriptionRecord) {
+export function getContextZodSchemas(set: ZodTextAndZodSchemaRecord) {
   return Object.fromEntries(
     Object.entries(set).reduce(
       (acc: [string, ZodTypeAny][], curr: [string, ZodTextAndZodSchema]) => [
@@ -153,8 +140,8 @@ function optionalNullablePartialZodDescription(
 function resolveEagerReference(
   eagerReference: string | undefined,
   element: JzodReference,
-  contextSubObjectSchemaAndDescriptionRecord: ZodSchemaAndDescriptionRecord,
-  getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({})
+  contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord,
+  getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({})
 ): ZodTextAndZodSchema {
   /**
    * TODO: if there is a carryOn clause on the reference, then the JzodSchema corresponding to this reference has to be converted again and made available
@@ -163,7 +150,7 @@ function resolveEagerReference(
    */
   // console.log("resolveEagerReference resolving relativePath", eagerReference, !!element.definition.eager);
   if (eagerReference) {
-    const eagerReferences: ZodSchemaAndDescriptionRecord = {
+    const eagerReferences: ZodTextAndZodSchemaRecord = {
       ...getSchemaEagerReferences(),
       ...contextSubObjectSchemaAndDescriptionRecord,
     };
@@ -205,10 +192,10 @@ function resolveEagerReference(
 // ################################################################################################
 function getLazyResolverZodSchema(
   element: JzodReference,
-  contextSubObjectSchemaAndDescriptionRecord: ZodSchemaAndDescriptionRecord,
-  getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  typeScriptLazyReferenceConverter?: (lazyZodSchema: ZodLazy<any>, relativeReference: string | undefined) => ZodTypeAny
+  contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord,
+  getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
+  getLazyReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
+  typeScriptGeneration: boolean = false,
 ): ZodLazy<any> {
   return z.lazy(() => {
     // console.log("getLazyResolverZodSchema resolving relativePath", element.definition.relativePath, !!typeScriptLazyReferenceConverter);
@@ -218,7 +205,8 @@ function getLazyResolverZodSchema(
      * not be used for validation purposes, please perform separate generations to accomodate each case.
      */
 
-    if (typeScriptLazyReferenceConverter) {
+    if (typeScriptGeneration) {
+    // if (typeScriptLazyReferenceConverter) {
       /**
        * in the case of TS conversion, this function is called, but the obtained jzod schema shall not be used for validation purposes!
        * (the actual schema to be used is not known yet, since it's... lazy!).
@@ -226,7 +214,7 @@ function getLazyResolverZodSchema(
       // return z.any(); // not working: this makes returned schema optional.
       return z.never(); // all validations will fail
     } else {
-      const lazyReferences: ZodSchemaAndDescriptionRecord = getLazyReferences();
+      const lazyReferences: ZodTextAndZodSchemaRecord = getLazyReferences();
 
       // console.log("JzodToZod when evaluating",element.definition,"got lazy references", lazyReferences);
       if (element.definition.absolutePath && lazyReferences[element.definition.absolutePath]) {
@@ -278,341 +266,25 @@ function getLazyResolverZodSchema(
   }); // resolveReference
 }
 
-// // ######################################################################################################
-// export function jzodElementSchemaToZodTextAndTsText(
-//   element: JzodElement,
-//   carryOn: ZodTextAndZodSchema | undefined,
-//   getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-//   getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-//   typeScriptGeneration?: TypeScriptGenerationParams,
-// ): ZodTextAndTsTypeText {
-//   // return new Promise(async (resolve, reject) => {
-//     try {
-//       if ((element as any)?.carryOn && !!carryOn) {
-//         throw new Error(
-//           "jzodElementSchemaToZodSchemaAndDecritpionWithCarryOn carryOn override is not allowed, at most 1 carryOn clause can be specified in any jzod schema tree."
-//         );
-//       }
-    
-//       if (!!carryOn && !["object", "schemaReference", "union"].includes(element.type)) {
-//         const plainZodSchema = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-//           element,
-//           undefined, // carryOn
-//           getSchemaEagerReferences,
-//           getLazyReferences,
-//           typeScriptGeneration
-//         );
-    
-//         return { // if there is carryOn, then the union of the CarryOn with the top-level jzod element is returned
-//           // contextTsTypeText?: { [k: string]: string },
-//           // contextZodText?: { [k: string]: string },
-//           // objectShapeZodText?: { [k: string]: string },
-//           // zodText:string,
-//           // tsTypeText?: string,
-        
-//           // TODO: handle discriminators! There should be a list of discriminators for heteronomous object unions!
-//           contextZodText: undefined, // lazy evaluation obfuscates any context defined within it
-//           // contextZodSchema: undefined,
-//           // jzodSchema: element,
-//           // zodSchema: z.union([plainZodSchema.zodSchema, carryOn.zodSchema]),
-//           zodText: `z.union([${plainZodSchema.zodText}, ${carryOn.zodText}])`,
-//         };
-//       }
-
-//       switch (element.type) {
-//         case "schemaReference": {
-//           // const carryOnZodSchemaAndDescription = element.carryOn
-//           //   ? jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-//           //       element.carryOn,
-//           //       undefined,
-//           //       getSchemaEagerReferences,
-//           //       getLazyReferences,
-//           //       typeScriptGeneration
-//           //     )
-//           //   : carryOn;
-
-//           // const localContextReferences: [string, ZodTextAndZodSchema][] = [];
-//           if (typeScriptGeneration?.returnTypeScript) {
-//             // spawn a call to jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn (via the Worker) for each context entry
-//             // only serializable data can be passed to the worker,
-//             // if (
-//             //   !typeScriptGeneration.poolsize ||
-//             //   !typeScriptGeneration.typeName ||
-//             //   !typeScriptGeneration.exportPrefix
-//             // ) {
-//             //   throw new Error(
-//             //     "poolsize, typename, exportPrefix must be defined in typeScriptGeneration when generating TypeScript: " +
-//             //       JSON.stringify(typeScriptGeneration)
-//             //   );
-//             // }
-//             // const entries = Object.entries((element as JzodReference).context ?? {});
-//             // const workerPool = new WorkerPool(typeScriptGeneration.poolsize);
-//             // console.log("jzodElementSchemaToZodTextAndTsTextInParallel created worker pool", entries);
-//             // const tasks = entries.map((entry) =>
-//             //   workerPool.run({
-//             //     key: entry[0],
-//             //     value: {
-//             //       jzodElement:entry[1],
-//             //       typename: typeScriptGeneration.typeName,
-//             //       exportPrefix: typeScriptGeneration.exportPrefix,
-//             //     },
-//             //   })
-//             // );
-//             // // const results = await Promise.all(tasks);
-//             // console.log("jzodElementSchemaToZodTextAndTsTextInParallel context results", results);
-//             // // const contextTsTypesString = Object.fromEntries(results.map((result) => [result.key, result.typeAlias]));
-//             // // const contextSubObjectSchemaAndDescriptionRecord = Object.fromEntries(
-//             // //   results.map((result) => [result.key, {result.typeAlias}])
-//             // // );
-//             // workerPool.terminate();
-
-//             // const resolvedDefinition: ZodTextAndZodSchema = resolveJzodReferenceSchema(
-//             //   element,
-//             //   contextSubObjectSchemaAndDescriptionRecord,
-//             //   getSchemaEagerReferences,
-//             //   getLazyReferences,
-//             //   undefined, // typeScriptGeneration,
-//             //   carryOnZodSchemaAndDescription
-//             // );
-//             // const tsNode = zodToTs(value, typeName).node;
-//             // const typeAlias = createTypeAlias(tsNode, actualTypeName);
-//             // // Convert the AST node to a string
-//             // // const printer = ts.createPrinter();
-//             // // const sourceFile = ts.createSourceFile("dummy.ts", "", ts.ScriptTarget.Latest);
-//             // // const printedTypeAlias = printer.printNode(ts.EmitHint.Unspecified, typeAlias, sourceFile);
-//             // const printedTypeAlias = printNode(typeAlias);
-      
-//   //           const tsTypeText = printNode(createTypeAlias(zodToTs(resolvedDefinition.zodSchema, typeScriptGeneration.typeName).node, typeScriptGeneration.typeName));
-//             const result:ZodTextAndTsTypeText = {
-//               contextTsTypeText: {"contextTsTypeText not defined": "contextTsTypeText not defined"},
-//               // zodText: resolvedDefinition.zodText,
-//               zodText: "zodText not defined",
-//               tsTypeText: "tsTypeText not defined",
-//               contextZodText: {"contextZodText not defined": "contextZodText not defined"},
-//               objectShapeZodText: {"objectShapeZodText not defined": "objectShapeZodText not defined"},
-//             }
-//             // resolve(result);
-//             return result;
-//           } else {
-//             throw new Error("schemaReference is not supported in non-TypeScript generation mode");
-//           }
-//           break;
-//         }
-//         case "string":
-//         case "number":
-//         case "bigint":
-//         case "boolean":
-//         case "undefined":
-//         case "object":
-//         case "function":
-//         case "array":
-//         case "any":
-//         case "date":
-//         case "never":
-//         case "null":
-//         case "uuid":
-//         case "unknown":
-//         case "void":
-//         case "enum":
-//         case "lazy":
-//         case "literal":
-//         case "intersection":
-//         case "map":
-//         case "promise":
-//         case "record":
-//         case "set":
-//         case "tuple":
-//         case "union":
-//         default: {
-//           const preResult = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-//               element,
-//               carryOn,
-//               getSchemaEagerReferences,
-//               getLazyReferences,
-//               typeScriptGeneration
-//             )
-//           ;
-//           const result = {
-//             contextZodText: preResult.contextZodText,
-//             contextZodSchema: preResult.contextZodSchema,
-//             jzodSchema: element,
-//             zodSchema: preResult.zodSchema,
-//             zodText: preResult.zodText,
-//           }
-//           return result
-//           break;
-//         }
-//       }
-//     } catch (error) {
-//       throw error;
-//       // reject(error);
-//     }
-//   // });
-// }
-// // ######################################################################################################
-// export async function jzodElementSchemaToZodTextAndTsTextInParallel(
-//   element: JzodElement,
-//   carryOn: ZodTextAndZodSchema | undefined,
-//   getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-//   getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-//   zodSchemaToTsTypeString: ZodSchemaToTsTypeStringFunction,
-//   typeScriptGeneration?: TypeScriptGenerationParams,
-// ): Promise<ZodTextAndTsTypeText> {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       if ((element as any)?.carryOn && !!carryOn) {
-//         throw new Error(
-//           "jzodElementSchemaToZodSchemaAndDecritpionWithCarryOn carryOn override is not allowed, at most 1 carryOn clause can be specified in any jzod schema tree."
-//         );
-//       }
-    
-//       if (!!carryOn && !["object", "schemaReference", "union"].includes(element.type)) {
-//         const plainZodSchema = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-//           element,
-//           undefined, // carryOn
-//           getSchemaEagerReferences,
-//           getLazyReferences,
-//           typeScriptGeneration
-//         );
-//         const zodSchema = z.union([plainZodSchema.zodSchema, carryOn.zodSchema]);
-//         const zodText = `z.union([${plainZodSchema.zodText}, ${carryOn.zodText}])`;
-        
-//         if (!typeScriptGeneration?.typeName) {
-//           throw new Error("typeName must be defined in typeScriptGeneration when generating TypeScript: " + JSON.stringify(typeScriptGeneration));
-//         }
-//         const context = Object.fromEntries(Object.entries(getSchemaEagerReferences()).map(e => [e[0], e[1].zodSchema]));
-//         const tsTypeText = zodSchemaToTsTypeString(zodSchema, context, typeScriptGeneration.typeName);
-//         const result:ZodTextAndTsTypeText = {
-//           contextZodText: undefined,
-//           contextTsTypeText: tsTypeText.contextTsTypeStrings,
-//           tsTypeText: tsTypeText.mainTsTypeString,
-//           zodText,
-//         };
-//         return result;
-//       }
-//       switch (element.type) {
-//         case "schemaReference": {
-//           // const carryOnZodSchemaAndDescription = element.carryOn
-//           //   ? jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-//           //       element.carryOn,
-//           //       undefined,
-//           //       getSchemaEagerReferences,
-//           //       getLazyReferences,
-//           //       typeScriptGeneration
-//           //     )
-//           //   : carryOn;
-
-//           // const localContextReferences: [string, ZodTextAndZodSchema][] = [];
-//           if (typeScriptGeneration?.returnTypeScript) {
-//             // spawn a call to jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn (via the Worker) for each context entry
-//             // only serializable data can be passed to the worker,
-//             if (
-//               !typeScriptGeneration.poolsize ||
-//               !typeScriptGeneration.typeName ||
-//               !typeScriptGeneration.exportPrefix
-//             ) {
-//               throw new Error(
-//                 "poolsize, typename, exportPrefix must be defined in typeScriptGeneration when generating TypeScript: " +
-//                   JSON.stringify(typeScriptGeneration)
-//               );
-//             }
-//             const entries = Object.entries((element as JzodReference).context ?? {});
-//             // console.log("jzodElementSchemaToZodTextAndTsTextInParallel using zodSchemaToTsTypeString in worker pool:", zodSchemaToTsTypeString.toString());
-//             const workerPool = pool()
-
-
-//             // const workerPool = new WorkerPool(typeScriptGeneration.poolsize, zodSchemaToTsTypeString, { workDataZodSchemaToTsTypeString: zodSchemaToTsTypeString });
-//             // console.log("jzodElementSchemaToZodTextAndTsTextInParallel created worker pool", entries, zodSchemaToTsTypeString);
-//             // const tasks = entries.map((entry) =>
-//             //   workerPool.run({
-//             //     key: entry[0],
-//             //     value: {
-//             //       jzodElement:entry[1],
-//             //       typename: typeScriptGeneration.typeName,
-//             //       exportPrefix: typeScriptGeneration.exportPrefix,
-//             //     },
-//             //   })
-//             // );
-//             // const results = await Promise.all(tasks);
-//             // console.log("jzodElementSchemaToZodTextAndTsTextInParallel context results", results);
-//             // workerPool.terminate();
-
-//             const result:ZodTextAndTsTypeText = {
-//               contextTsTypeText: {"contextTsTypeText not defined": "contextTsTypeText not defined"},
-//               // zodText: resolvedDefinition.zodText,
-//               zodText: "zodText not defined",
-//               tsTypeText: "tsTypeText not defined",
-//               contextZodText: {"contextZodText not defined": "contextZodText not defined"},
-//               objectShapeZodText: {"objectShapeZodText not defined": "objectShapeZodText not defined"},
-//             }
-//             resolve(result);
-//           } else {
-//             throw new Error("schemaReference is not supported in non-TypeScript generation mode");
-//           }
-//           break;
-//         }
-//         case "string":
-//         case "number":
-//         case "bigint":
-//         case "boolean":
-//         case "undefined":
-//         case "object":
-//         case "function":
-//         case "array":
-//         case "any":
-//         case "date":
-//         case "never":
-//         case "null":
-//         case "uuid":
-//         case "unknown":
-//         case "void":
-//         case "enum":
-//         case "lazy":
-//         case "literal":
-//         case "intersection":
-//         case "map":
-//         case "promise":
-//         case "record":
-//         case "set":
-//         case "tuple":
-//         case "union":
-//         default: {
-//           resolve(
-//             jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-//               element,
-//               carryOn,
-//               getSchemaEagerReferences,
-//               getLazyReferences,
-//               typeScriptGeneration
-//             )
-//           );
-//           break;
-//         }
-//       }
-//     } catch (error) {
-//       reject(error);
-//     }
-//   });
-// }
 // ######################################################################################################
-export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+export function jzodWithCarryOnToZodTextAndZodSchema(
   element: JzodElement,
   carryOn: ZodTextAndZodSchema | undefined,
-  getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  typeScriptGeneration?: TypeScriptGenerationParams,
+  getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
+  getLazyReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
+  typeScriptGeneration: boolean = false, // needed to avoid lookup of lazy references when generating typescript types
 ): ZodTextAndZodSchema {
-  // console.log("jzodElementSchemaToZodSchemaAndDescription called for type",element.type);
-  // console.log("jzodElementSchemaToZodSchemaAndDescription called for element",JSON.stringify(element, null, 2));
+  // console.log("jzodWithCarryOnToZodTextAndZodSchema called for type",element.type);
+  // console.log("jzodWithCarryOnToZodTextAndZodSchema called for element",JSON.stringify(element, null, 2));
 
   if ((element as any)?.carryOn && !!carryOn) {
     throw new Error(
-      "jzodElementSchemaToZodSchemaAndDecritpionWithCarryOn carryOn override is not allowed, at most 1 carryOn clause can be specified in any jzod schema tree."
+      "jzodWithCarryOnToZodTextAndZodSchema carryOn override is not allowed, at most 1 carryOn clause can be specified in any jzod schema tree."
     );
   }
 
   if (!!carryOn && !["object", "schemaReference", "union"].includes(element.type)) {
-    const plainZodSchema = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+    const plainZodSchema = jzodWithCarryOnToZodTextAndZodSchema(
       element,
       undefined, // carryOn
       getSchemaEagerReferences,
@@ -705,7 +377,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       };
     }
     case "array": {
-      const sub = jzodElementSchemaToZodSchemaAndDescription(
+      const sub = jzodToZodTextAndZodSchema(
         // TODO: bug? shouldn't it be jzodElementSchemaToZodSchemaAndDescriptionWithCarrryOn?
         (element as JzodArray).definition,
         getSchemaEagerReferences,
@@ -748,7 +420,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
     }
     case "function": {
       const args = Object.entries((element as JzodFunction).definition.args).map((e) =>
-        jzodElementSchemaToZodSchemaAndDescription(
+        jzodToZodTextAndZodSchema(
           e[1],
           getSchemaEagerReferences,
           getLazyReferences,
@@ -757,7 +429,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       );
       const castElement = element as JzodFunction;
       if (castElement.definition.returns) {
-        const returns = jzodElementSchemaToZodSchemaAndDescription(
+        const returns = jzodToZodTextAndZodSchema(
           castElement.definition.returns,
           getSchemaEagerReferences,
           getLazyReferences,
@@ -783,14 +455,14 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       break;
     }
     case "intersection": {
-      const subLeft = jzodElementSchemaToZodSchemaAndDescription(
+      const subLeft = jzodToZodTextAndZodSchema(
         // "left",
         (element as JzodIntersection).definition.left,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptGeneration
       );
-      const subRight = jzodElementSchemaToZodSchemaAndDescription(
+      const subRight = jzodToZodTextAndZodSchema(
         // "right",
         (element as JzodIntersection).definition.right,
         getSchemaEagerReferences,
@@ -834,7 +506,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       break;
     }
     case "lazy": {
-      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      const sub = jzodWithCarryOnToZodTextAndZodSchema(
         (element as JzodLazy).definition,
         carryOn,
         getSchemaEagerReferences,
@@ -852,14 +524,14 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       break;
     }
     case "map": {
-      const sub0 = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      const sub0 = jzodWithCarryOnToZodTextAndZodSchema(
         (element as JzodMap).definition[0],
         carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
         typeScriptGeneration
       );
-      const sub1 = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      const sub1 = jzodWithCarryOnToZodTextAndZodSchema(
         (element as JzodMap).definition[1],
         carryOn,
         getSchemaEagerReferences,
@@ -888,7 +560,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
         ? undefined
         : !Array.isArray(element.extend)
         ? [
-            jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+            jzodWithCarryOnToZodTextAndZodSchema(
               element.extend,
               undefined,
               getSchemaEagerReferences,
@@ -898,7 +570,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
           ]
         : element.extend.length > 0
         ? (element.extend as JzodElement[]).map((e) =>
-            jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+            jzodWithCarryOnToZodTextAndZodSchema(
               e,
               undefined,
               getSchemaEagerReferences,
@@ -908,7 +580,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
           )
         : undefined;
       const carryOnZodSchemaAndDescription = (element as any).carryOn
-        ? jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+        ? jzodWithCarryOnToZodTextAndZodSchema(
           (element as any).carryOn,
             undefined,
             getSchemaEagerReferences,
@@ -945,12 +617,12 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
           : element.definition;
       // console.log("objectDefinitionWithTag", JSON.stringify(objectDefinitionWithTag));
 
-      const definitionSubObject: ZodSchemaAndDescriptionRecord = Object.fromEntries(
+      const definitionSubObject: ZodTextAndZodSchemaRecord = Object.fromEntries(
         Object.entries(objectDefinitionWithTag).map((a) => {
           try {
             return [
               a[0],
-              jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+              jzodWithCarryOnToZodTextAndZodSchema(
                 a[1],
                 carryOnZodSchemaAndDescription,
                 getSchemaEagerReferences,
@@ -1057,7 +729,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       break;
     }
     case "promise": {
-      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      const sub = jzodWithCarryOnToZodTextAndZodSchema(
         // name,
         (element as JzodPromise).definition,
         carryOn,
@@ -1075,7 +747,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       break;
     }
     case "record": {
-      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      const sub = jzodWithCarryOnToZodTextAndZodSchema(
         // name,
         (element as JzodRecord).definition,
         carryOn,
@@ -1100,65 +772,67 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       };
     }
     case "schemaReference": {
-      // console.log("jzodElementSchemaToZodSchemaAndDescription schemaReference", JSON.stringify(element));
+      // console.log("jzodWithCarryOnToZodTextAndZodSchema schemaReference", JSON.stringify(element));
       const castElement = element as any;
 
-      // if (castElement.carryOn) {
-        const carryOnZodSchemaAndDescription = castElement.carryOn
-          ? jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-              castElement.carryOn,
-              undefined,
-              getSchemaEagerReferences,
-              getLazyReferences,
+      const carryOnZodSchemaAndDescription = castElement.carryOn
+        ? jzodWithCarryOnToZodTextAndZodSchema(
+            castElement.carryOn,
+            undefined,
+            getSchemaEagerReferences,
+            getLazyReferences,
+            typeScriptGeneration
+          )
+        : carryOn;
+
+      const localContextReferences: [string, ZodTextAndZodSchema][] = [];
+
+      // resolve schemaReference.context
+      for (const curr of Object.entries((element as JzodReference).context ?? {})) {
+        try {
+          const subResult: [string, ZodTextAndZodSchema] = [
+            curr[0],
+            jzodWithCarryOnToZodTextAndZodSchema(
+              // name,
+              curr[1],
+              carryOnZodSchemaAndDescription,
+              () => ({
+                ...getSchemaEagerReferences(),
+                ...Object.fromEntries(localContextReferences),
+              }),
+              () => ({ ...getLazyReferences(), ...Object.fromEntries(localContextReferences) }),
               typeScriptGeneration
-            )
-          : carryOn;
-  
-        const localContextReferences: [string, ZodTextAndZodSchema][] = [];
-  
-        // resolve schemaReference.context
-        for (const curr of Object.entries((element as JzodReference).context ?? {})) {
-          try {
-            const subResult: [string, ZodTextAndZodSchema] = [
-              curr[0],
-              jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-                // name,
-                curr[1],
-                carryOnZodSchemaAndDescription,
-                () => ({ ...getSchemaEagerReferences(), ...Object.fromEntries(localContextReferences) }),
-                () => ({ ...getLazyReferences(), ...Object.fromEntries(localContextReferences) }),
-                typeScriptGeneration
-              ),
-            ];
-            localContextReferences.push(subResult);
-          } catch (error) {
-            console.error(
-              "error when converting schemaReference context definition",
-              curr[0],
-              JSON.stringify(curr[1]),
-              error
-            );
-            throw error;
-          }
+            ),
+          ];
+          localContextReferences.push(subResult);
+        } catch (error) {
+          console.error(
+            "jzodWithCarryOnToZodTextAndZodSchema error when converting schemaReference context definition",
+            curr[0],
+            JSON.stringify(curr[1]),
+            error
+          );
+          throw error;
         }
-        const contextSubObjectSchemaAndDescriptionRecord: ZodSchemaAndDescriptionRecord =
-          Object.fromEntries(localContextReferences);
-  
-        return resolveJzodReferenceSchema(
-          castElement,
-          contextSubObjectSchemaAndDescriptionRecord,
-          getSchemaEagerReferences,
-          getLazyReferences,
-          typeScriptGeneration,
-          carryOnZodSchemaAndDescription
-        );
+      }
+      const contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord =
+        Object.fromEntries(localContextReferences);
+
+      return resolveJzodReferenceSchema(
+        castElement,
+        contextSubObjectSchemaAndDescriptionRecord,
+        getSchemaEagerReferences,
+        getLazyReferences,
+        typeScriptGeneration,
+        carryOnZodSchemaAndDescription
+      );
 
       // }
 
       break;
     }
     case "set": {
-      const sub = jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+      const sub = jzodWithCarryOnToZodTextAndZodSchema(
         (element as JzodSet).definition,
         carryOn,
         getSchemaEagerReferences,
@@ -1177,7 +851,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
     case "tuple": {
       if (Array.isArray((element as JzodTuple).definition) && (element as JzodTuple).definition.length > 1) {
         const subs = (element as JzodTuple).definition.map((d) =>
-          jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+          jzodWithCarryOnToZodTextAndZodSchema(
             // name,
             d,
             carryOn,
@@ -1213,7 +887,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
     }
     case "union": {
       const sub: ZodTextAndZodSchema[] = (element as JzodUnion).definition.map((e) =>
-        jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
+        jzodWithCarryOnToZodTextAndZodSchema(
           e,
           carryOn,
           getSchemaEagerReferences,
@@ -1263,7 +937,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
     }
     default:
       throw new Error(
-        "jzodElementSchemaToZodSchemaAndDescription could not convert given Jzod schema, unknown type:" +
+        "jzodToZodTextAndZodSchema could not convert given Jzod schema, unknown type:" +
           element["type"] +
           ", element: " +
           JSON.stringify(element)
@@ -1271,7 +945,7 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
       break;
   }
   throw new Error(
-    "jzodElementSchemaToZodSchemaAndDescription could not convert given Jzod schema, unknown type:" +
+    "jzodWithCarryOnToZodTextAndZodSchema could not convert given Jzod schema, unknown type:" +
       element["type"] +
       ", element: " +
       JSON.stringify(element)
@@ -1279,12 +953,28 @@ export function jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
 }
 
 // ##############################################################################################################
+export function jzodToZodTextAndZodSchema(
+  element: JzodElement,
+  getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
+  getLazyReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
+  typeScriptGeneration: boolean = false,
+): ZodTextAndZodSchema {
+  return jzodWithCarryOnToZodTextAndZodSchema(
+    element,
+    undefined, // carryOn
+    getSchemaEagerReferences,
+    getLazyReferences,
+    typeScriptGeneration
+  );
+}
+
+// ##############################################################################################################
 function resolveJzodReferenceSchema(
   element: JzodReference,
-  contextSubObjectSchemaAndDescriptionRecord: ZodSchemaAndDescriptionRecord,
-  getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord,
-  getLazyReferences: () => ZodSchemaAndDescriptionRecord,
-  typeScriptGeneration: TypeScriptGenerationParams | undefined,
+  contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord,
+  getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord,
+  getLazyReferences: () => ZodTextAndZodSchemaRecord,
+  typeScriptGeneration: boolean = false,
   carryOnZodSchemaAndDescription: ZodTextAndZodSchema | undefined
 ): ZodTextAndZodSchema {
   let eagerReference: ZodTextAndZodSchema | undefined;
@@ -1295,7 +985,7 @@ function resolveJzodReferenceSchema(
   let objectShapeZodText: { [k: string]: string } | undefined;
 
   if (element.definition.eager) {
-    // console.log("jzodElementSchemaToZodSchemaAndDescription schemaReference eager", JSON.stringify(element));
+    // console.log("jzodToZodTextAndZodSchema schemaReference eager", JSON.stringify(element));
     eagerReference = resolveEagerReference(
       element.definition.relativePath, // TODO: can eager references only be relative? This seems to be the case, is there a reason for this limitation?
       element,
@@ -1303,7 +993,7 @@ function resolveJzodReferenceSchema(
       getSchemaEagerReferences
     );
     // console.log(
-    //   "jzodElementSchemaToZodSchemaAndDescription schemaReference eager",
+    //   "jzodToZodTextAndZodSchema schemaReference eager",
     //   JSON.stringify(element),
     //   "resolved to",
     //   JSON.stringify(eagerReference, null, 2)
@@ -1327,14 +1017,14 @@ function resolveJzodReferenceSchema(
       contextSubObjectSchemaAndDescriptionRecord,
       getSchemaEagerReferences,
       getLazyReferences,
-      typeScriptGeneration?.typeScriptLazyReferenceConverter
+      typeScriptGeneration
+      // typeScriptGeneration?.typeScriptLazyReferenceConverter
     );
     objectShapeZodSchema = undefined;
     objectShapeZodText = undefined;
     eagerReference = undefined;
     referenceResolvedSchema = typeScriptGeneration
       ? optionalNullablePartialZodSchema(
-          // typeScriptGeneration.typeScriptLazyReferenceConverter(
           typeScriptLazyReferenceConverter(lazyResolverZodSchema, element.definition.relativePath),
           element.optional,
           element.nullable
@@ -1351,7 +1041,7 @@ function resolveJzodReferenceSchema(
   const contextZodSchema = getZodSchemas(contextSubObjectSchemaAndDescriptionRecord);
 
   // console.log(
-  //   "jzodElementSchemaToZodSchemaAndDescription converting schemaReference",
+  //   "jzodToZodTextAndZodSchema converting schemaReference",
   //   JSON.stringify(element),
   //   "contextSubObjectSchemaAndDescriptionRecord",
   //   JSON.stringify(contextSubObjectSchemaAndDescriptionRecord),
@@ -1374,22 +1064,6 @@ function resolveJzodReferenceSchema(
       : referenceResolvedZodText,
   };
   return result;
-}
-
-// ##############################################################################################################
-export function jzodElementSchemaToZodSchemaAndDescription(
-  element: JzodElement,
-  getSchemaEagerReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  getLazyReferences: () => ZodSchemaAndDescriptionRecord = () => ({}),
-  typeScriptGeneration?: TypeScriptGenerationParams,
-): ZodTextAndZodSchema {
-  return jzodElementSchemaToZodSchemaAndDescriptionWithCarryOn(
-    element,
-    undefined, // carryOn
-    getSchemaEagerReferences,
-    getLazyReferences,
-    typeScriptGeneration
-  );
 }
 
 // ##############################################################################################################
@@ -1439,28 +1113,3 @@ export function referentialElementRelativeDependencies(element: JzodElement | Jz
 
   return result.filter((s) => s != "ZodSimpleBootstrapElementSchema");
 }
-
-// // ##############################################################################################################
-// export function _zodToJsonSchema(
-//   referentialSet: ZodSchemaAndDescriptionRecord,
-//   dependencies: { [k: string]: string[] },
-//   name?: string
-// ): { [k: string]: any } {
-//   const referentialSetEntries = Object.entries(referentialSet);
-//   let result: { [k: string]: any } = {};
-
-//   for (const entry of referentialSetEntries) {
-//     const localDependencies = dependencies[entry[0]];
-//     const localReferentialSet = Object.fromEntries(
-//       Object.entries(referentialSet)
-//         .filter((e) => (localDependencies && localDependencies.includes(e[0])) || e[0] == entry[0])
-//         .map((e) => [e[0], e[1].zodSchema])
-//     );
-//     const convertedCurrent = zodToJsonSchema(entry[1].zodSchema, {
-//       $refStrategy: "relative",
-//       definitions: localReferentialSet,
-//     });
-//     result[entry[0]] = convertedCurrent;
-//   }
-//   return result;
-// }
