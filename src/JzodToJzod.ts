@@ -103,6 +103,7 @@ export function applyCarryOnSchemaOnLevel(
   // if (baseSchema.tag && baseSchema.tag.schema && baseSchema.tag.schema.valueSchema) {
   //   console.log("############# applyCarryOnSchema", "convertedTag", convertedTag)
   // }
+  // console.log("############# applyCarryOnSchemaOnLevel", "baseSchema", JSON.stringify(baseSchema))
 
   switch (baseSchema.type) {
     case "any":
@@ -581,7 +582,7 @@ export function applyCarryOnSchemaOnLevel(
     case "lazy": // TODO: alter the lazy's returned value to "carryOn" it? (becoming z.lazy(()=>carryOn(baseSchema)))
     case "function":
     default: {
-      throw new Error("carryOnType could not handle baseSchema: " + JSON.stringify(baseSchema, null, 2));
+      throw new Error("applyCarryOnSchemaOnLevel could not handle baseSchema: " + JSON.stringify(baseSchema, null, 2));
       break;
     }
   }
