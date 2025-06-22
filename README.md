@@ -205,7 +205,7 @@ One thus has to ensure that any lazy-referenced Zod schema is available as a con
 In the separate [Jzod-ts](https://www.npmjs.com/package/jzod-ts) package, the function
 
 ```ts
-import { jzodToZod } from "jzod-ts"
+import { jzodToTsCode } from "jzod-ts"
 jzodToTsCode("testJzodSchema1", { type: "string" })
 
 // /* returns: */

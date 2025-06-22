@@ -21,9 +21,31 @@ export type ZodTextAndZodSchemaRecord = { [k: string]: ZodTextAndZodSchema };
 export const jzodBootstrapElementSchema: any = {
   type: "schemaReference",
   context: {
+    // more elegant / correct solution to the tag / metaSchema problem?
+    // jzodMetaSchema: {
+    //   type: "object",
+    //   definition: {
+    //     type: { type: "literal", definition: "metaSchema" },
+    //     optional: { type: "boolean", optional: true },
+    //     metaSchema: {
+    //       type: "schemaReference",
+    //       optional: true,
+    //       definition: {
+    //         relativePath: "jzodElement",
+    //       },
+    //     },
+    //     valueSchema: {
+    //       type: "schemaReference",
+    //       optional: true,
+    //       definition: {
+    //         relativePath: "jzodElement",
+    //       },
+    //     },
+    //   },
+    // },
     jzodBaseObject: {
       type: "object",
-      tag: {
+      tag: { // to be removed, (this requires specific interpretation to generate zod/TS type). Use the jzodMetaSchema instead?
         optional: true,
         schema: {
           optional: true,
@@ -54,6 +76,32 @@ export const jzodBootstrapElementSchema: any = {
         optional: { type: "boolean", optional: true },
         nullable: { type: "boolean", optional: true },
         extra: { type: "any", optional: true },
+        // tag: { type: "any", optional: true }, // should follow the jzodBaseObject.tag schema
+        tag: {
+          type: "metaSchema",
+          optional: true,
+          definition: {
+            type: "object",
+            optional: true,
+            definition: {
+              optional: { type: "boolean", optional: true },
+              metaSchema: {
+                type: "schemaReference",
+                optional: true,
+                definition: {
+                  relativePath: "jzodElement",
+                },
+              },
+              valueSchema: {
+                type: "schemaReference",
+                optional: true,
+                definition: {
+                  relativePath: "jzodElement",
+                },
+              },
+            },
+          }
+        }
       },
     },
     jzodArray: {
@@ -481,6 +529,7 @@ export const jzodBootstrapElementSchema: any = {
       extend: { type: "schemaReference", definition: { eager: true, relativePath: "jzodBaseObject" } },
       definition: {
         type: { type: "literal", definition: "union" },
+        optInDiscriminator: { type: "boolean", optional: true },
         discriminator: {
           type: "union",
           optional: true,
