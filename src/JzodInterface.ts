@@ -262,7 +262,7 @@ export const jzodBootstrapElementSchema: any = {
         "boolean",
         "date",
         "never",
-        "null",
+        // "null", // there's no type null, typeof null === "object"
         "number",
         "string",
         "uuid",

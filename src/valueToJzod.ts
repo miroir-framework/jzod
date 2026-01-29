@@ -42,15 +42,15 @@ export function valueToJzod(
   if (Array.isArray(value)) {
     if (arrayResolution === "arrayAsArray") {
       const arrayItemTypes: JzodElement[] = value.length == 0?[{type: "any"}]:value.map(item => valueToJzod(item))
-      const uniqueTypes: JzodElement[] = arrayItemTypes.filter(
+      const getUniqueValuesTypes: JzodElement[] = arrayItemTypes.filter(
         (type, index, self) => self.findIndex(t => equal(t, type)) === index
       );
-      if (uniqueTypes.length === 0) {
+      if (getUniqueValuesTypes.length === 0) {
         return { type: "any" };
-      } else if (uniqueTypes.length === 1) {
-        return { type: "array", definition: uniqueTypes[0] };
+      } else if (getUniqueValuesTypes.length === 1) {
+        return { type: "array", definition: getUniqueValuesTypes[0] };
       } else {
-        return { type: "array", definition: { type: "union", definition: uniqueTypes } };
+        return { type: "array", definition: { type: "union", definition: getUniqueValuesTypes } };
       }
     }
     if (arrayResolution === "arrayAsTuple") {

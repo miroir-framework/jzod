@@ -1,7 +1,7 @@
 {
   "name": "@miroir-framework/jzod",
   "private": false,
-  "version": "0.9.0",
+  "version": "0.8.2",
   "description": "The Json bootstrapper for Zod.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,7 +39,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@miroir-framework/jzod-ts": "*",
+    "@miroir-framework/jzod-ts": "0.8.0",
     "is-module": "^1.0.0",
     "tsconfig-paths": "^4.1.2",
     "tsup": "^8.4.0",

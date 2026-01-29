@@ -58,7 +58,7 @@ const myJzodSchema = {
   type: "object",
   definition: { 
     a: { type: "number", optional: true },
-    b: { type:"array", definition: { type: "boolean" } }
+    b: { type: "array", definition: { type: "boolean" } }
   }
 }
 const myZodSchema = jzodToZod(myJzodSchema);

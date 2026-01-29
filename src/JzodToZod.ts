@@ -272,7 +272,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
   carryOn: ZodTextAndZodSchema | undefined,
   getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
   getLazyReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
-  typeScriptGeneration: boolean = false, // needed to avoid lookup of lazy references when generating typescript types
+  options: jzodToZodConversionOptions = {},
 ): ZodTextAndZodSchema {
   // console.log("jzodWithCarryOnToZodTextAndZodSchema called for type",element.type);
   // console.log("jzodWithCarryOnToZodTextAndZodSchema called for element",JSON.stringify(element, null, 2));
@@ -289,7 +289,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
       undefined, // carryOn
       getSchemaEagerReferences,
       getLazyReferences,
-      typeScriptGeneration
+      options
     );
 
     return {
@@ -311,8 +311,8 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         | JzodAttributePlainDateWithValidations
         | JzodAttributePlainNumberWithValidations
         | JzodAttributePlainStringWithValidations;
-
-      const zodPreSchema = castElement.coerce ? (z.coerce as any)[castElement.type]() : (z as any)[castElement.type]();
+      const currentType = element.type === "date" && options.datesAsString ? "string" : element.type;
+      const zodPreSchema = castElement.coerce ? (z.coerce as any)[currentType]() : (z as any)[currentType]();
       const zodPreSchema2: ZodTypeAny = Array.isArray(castElement.validations)
         ? (castElement.validations as any).reduce(
             (acc: any, curr: any) => (acc as any)[curr.type](curr.parameter) as ZodTypeAny,
@@ -332,8 +332,8 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         jzodSchema: element,
         zodSchema: resultZodSchema,
         zodText: castElement.coerce
-          ? optionalNullablePartialZodDescription(`z.coerce.${castElement.type}()`, element.optional, element.nullable)
-          : optionalNullablePartialZodDescription(`z.${castElement.type}()`, element.optional, element.nullable),
+          ? optionalNullablePartialZodDescription(`z.coerce.${currentType}()`, element.optional, element.nullable)
+          : optionalNullablePartialZodDescription(`z.${currentType}()`, element.optional, element.nullable),
       };
       break;
     }
@@ -342,7 +342,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
     case "boolean":
     // case "date":
     case "never":
-    case "null":
+    // case "null":
     // case "number":
     // case "string":
     case "undefined":
@@ -382,7 +382,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         (element as JzodArray).definition,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       return {
         contextZodText: sub.contextZodText,
@@ -424,7 +424,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
           e[1],
           getSchemaEagerReferences,
           getLazyReferences,
-          typeScriptGeneration
+          options
         )
       );
       const castElement = element as JzodFunction;
@@ -433,7 +433,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
           castElement.definition.returns,
           getSchemaEagerReferences,
           getLazyReferences,
-          typeScriptGeneration
+          options
         );
         return {
           contextZodText: undefined, // function definitions obfuscate any context defined within them
@@ -460,14 +460,14 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         (element as JzodIntersection).definition.left,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       const subRight = jzodToZodTextAndZodSchema(
         // "right",
         (element as JzodIntersection).definition.right,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       return {
         contextZodText: { ...subLeft.contextZodText, ...subRight.contextZodText },
@@ -511,7 +511,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
 
       return {
@@ -529,14 +529,14 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       const sub1 = jzodWithCarryOnToZodTextAndZodSchema(
         (element as JzodMap).definition[1],
         carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       return {
         contextZodText: { ...sub0.contextZodText, ...sub1.contextZodText },
@@ -565,7 +565,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
               undefined,
               getSchemaEagerReferences,
               getLazyReferences,
-              typeScriptGeneration
+              options
             ),
           ]
         : element.extend.length > 0
@@ -575,7 +575,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
               undefined,
               getSchemaEagerReferences,
               getLazyReferences,
-              typeScriptGeneration
+              options
             )
           )
         : undefined;
@@ -585,7 +585,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
             undefined,
             getSchemaEagerReferences,
             getLazyReferences,
-            typeScriptGeneration
+            options
           )
         : carryOn;
 
@@ -627,7 +627,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
                 carryOnZodSchemaAndDescription,
                 getSchemaEagerReferences,
                 getLazyReferences,
-                typeScriptGeneration
+                options
               ),
             ];
           } catch (error) {
@@ -735,7 +735,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       return {
         contextZodText: sub.contextZodText,
@@ -753,7 +753,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       return {
         contextZodText: sub.contextZodText,
@@ -781,7 +781,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
             undefined,
             getSchemaEagerReferences,
             getLazyReferences,
-            typeScriptGeneration
+            options
           )
         : carryOn;
 
@@ -801,7 +801,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
                 ...Object.fromEntries(localContextReferences),
               }),
               () => ({ ...getLazyReferences(), ...Object.fromEntries(localContextReferences) }),
-              typeScriptGeneration
+              options
             ),
           ];
           localContextReferences.push(subResult);
@@ -823,7 +823,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         contextSubObjectSchemaAndDescriptionRecord,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration,
+        options.typeScriptGeneration,
         carryOnZodSchemaAndDescription
       );
 
@@ -837,7 +837,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         carryOn,
         getSchemaEagerReferences,
         getLazyReferences,
-        typeScriptGeneration
+        options
       );
       return {
         contextZodText: sub.contextZodText,
@@ -857,7 +857,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
             carryOn,
             getSchemaEagerReferences,
             getLazyReferences,
-            typeScriptGeneration
+            options
           )
         );
 
@@ -892,7 +892,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
           carryOn,
           getSchemaEagerReferences,
           getLazyReferences,
-          typeScriptGeneration
+          options
         )
       );
       const unionBranches = carryOn ? [...sub, carryOn] : sub;
@@ -953,18 +953,23 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
 }
 
 // ##############################################################################################################
+export type jzodToZodConversionOptions = {
+    typeScriptGeneration?: boolean,
+    datesAsString?: boolean,
+};
+
 export function jzodToZodTextAndZodSchema(
   element: JzodElement,
   getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
   getLazyReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
-  typeScriptGeneration: boolean = false,
+  options: jzodToZodConversionOptions = {},
 ): ZodTextAndZodSchema {
   return jzodWithCarryOnToZodTextAndZodSchema(
     element,
     undefined, // carryOn
     getSchemaEagerReferences,
     getLazyReferences,
-    typeScriptGeneration
+    options
   );
 }
 

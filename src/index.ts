@@ -22,11 +22,5 @@ export {
   zodToZodText
 } from "./ZodToZodText.js"
 export {
-  JzodReferenceResolutionFunction,
-  applyCarryOnSchema,
-  applyCarryOnSchemaOnLevel,
-  forgeCarryOnReferenceName
-} from "./JzodToJzod.js"
-export {
   jzodToZod
 } from "./facade.js"
