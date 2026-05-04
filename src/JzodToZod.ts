@@ -1,6 +1,5 @@
 import { AnyZodObject, ZodLazy, ZodTypeAny, z } from "zod";
 // import zodToJsonSchema from "zod-to-json-schema";
-import { GetType, withGetType } from "zod-to-ts";
 
 import {
   JzodArray,
@@ -33,19 +32,7 @@ export interface JzodElementToTsTypeMessageType {
 }
 
 
-export const typeScriptLazyReferenceConverter = (
-  innerReference: ZodTypeAny & GetType,
-  relativeReference: string | undefined
-) =>
-  withGetType(innerReference, (ts: any) => {
-    const actualTypeName = relativeReference
-      ? relativeReference.replace(/^(.)(.*)$/, (a, b, c) => b.toUpperCase() + c)
-      : "";
-    return ts.factory.createTypeReferenceNode(
-      ts.factory.createIdentifier(actualTypeName ?? "RELATIVEPATH_NOT_DEFINED"),
-      undefined
-    );
-  });
+
 
 // ######################################################################################################
 export const objectToJsStringVariables = (o: Object): string =>
@@ -195,7 +182,7 @@ function getLazyResolverZodSchema(
   contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord,
   getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
   getLazyReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
-  typeScriptGeneration: boolean = false,
+  typeScriptLazyConverter: ((schema: ZodTypeAny, relativePath: string | undefined) => ZodTypeAny) | undefined = undefined,
 ): ZodLazy<any> {
   return z.lazy(() => {
     // console.log("getLazyResolverZodSchema resolving relativePath", element.definition.relativePath, !!typeScriptLazyReferenceConverter);
@@ -205,8 +192,7 @@ function getLazyResolverZodSchema(
      * not be used for validation purposes, please perform separate generations to accomodate each case.
      */
 
-    if (typeScriptGeneration) {
-    // if (typeScriptLazyReferenceConverter) {
+    if (typeScriptLazyConverter) {
       /**
        * in the case of TS conversion, this function is called, but the obtained jzod schema shall not be used for validation purposes!
        * (the actual schema to be used is not known yet, since it's... lazy!).
@@ -276,6 +262,9 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
 ): ZodTextAndZodSchema {
   // console.log("jzodWithCarryOnToZodTextAndZodSchema called for type",element.type);
   // console.log("jzodWithCarryOnToZodTextAndZodSchema called for element",JSON.stringify(element, null, 2));
+  if (!element) {
+    throw new Error("element is missing");
+  }
 
   if ((element as any)?.carryOn && !!carryOn) {
     throw new Error(
@@ -377,6 +366,9 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
       };
     }
     case "array": {
+      if (!element.definition) {
+        throw new Error("array definition is missing for element " + JSON.stringify(element));
+      }
       const sub = jzodToZodTextAndZodSchema(
         // TODO: bug? shouldn't it be jzodElementSchemaToZodSchemaAndDescriptionWithCarrryOn?
         (element as JzodArray).definition,
@@ -394,6 +386,10 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
       break;
     }
     case "enum": {
+      if (!element.definition) {
+        throw new Error("enum definition is missing for element " + JSON.stringify(element));
+      }
+
       const castElement = element as JzodEnum;
       if (Array.isArray(castElement.definition) && castElement.definition.length > 1) {
         return {
@@ -787,8 +783,19 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
 
       const localContextReferences: [string, ZodTextAndZodSchema][] = [];
 
+      const nullEntries = Object.entries((element as JzodReference).context ?? {}).filter((a) => !a[1]);
+      if (nullEntries.length > 0) {
+        throw new Error(
+          "null context references are not allowed, please remove the following null context references: " +
+            nullEntries.map((a) => a[0]).join(", ") +
+            " from elements " +
+            JSON.stringify(Object.keys(element.context ?? {}))
+        );
+      }
       // resolve schemaReference.context
       for (const curr of Object.entries((element as JzodReference).context ?? {})) {
+        // log.info("jzodWithCarryOnToZodTextAndZodSchema resolving schemaReference context definition", curr[0], JSON.stringify(curr[1]));
+        console.log("jzodWithCarryOnToZodTextAndZodSchema resolving schemaReference context definition", curr[0]);
         try {
           const subResult: [string, ZodTextAndZodSchema] = [
             curr[0],
@@ -823,7 +830,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         contextSubObjectSchemaAndDescriptionRecord,
         getSchemaEagerReferences,
         getLazyReferences,
-        options.typeScriptGeneration,
+        options.typeScriptLazyConverter,
         carryOnZodSchemaAndDescription
       );
 
@@ -954,7 +961,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
 
 // ##############################################################################################################
 export type jzodToZodConversionOptions = {
-    typeScriptGeneration?: boolean,
+    typeScriptLazyConverter?: (schema: ZodTypeAny, relativePath: string | undefined) => ZodTypeAny,
     datesAsString?: boolean,
 };
 
@@ -979,7 +986,7 @@ function resolveJzodReferenceSchema(
   contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord,
   getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord,
   getLazyReferences: () => ZodTextAndZodSchemaRecord,
-  typeScriptGeneration: boolean = false,
+  typeScriptLazyConverter: ((schema: ZodTypeAny, relativePath: string | undefined) => ZodTypeAny) | undefined = undefined,
   carryOnZodSchemaAndDescription: ZodTextAndZodSchema | undefined
 ): ZodTextAndZodSchema {
   let eagerReference: ZodTextAndZodSchema | undefined;
@@ -1022,15 +1029,15 @@ function resolveJzodReferenceSchema(
       contextSubObjectSchemaAndDescriptionRecord,
       getSchemaEagerReferences,
       getLazyReferences,
-      typeScriptGeneration
-      // typeScriptGeneration?.typeScriptLazyReferenceConverter
+      typeScriptLazyConverter
+      // typeScriptLazyConverter
     );
     objectShapeZodSchema = undefined;
     objectShapeZodText = undefined;
     eagerReference = undefined;
-    referenceResolvedSchema = typeScriptGeneration
+    referenceResolvedSchema = typeScriptLazyConverter
       ? optionalNullablePartialZodSchema(
-          typeScriptLazyReferenceConverter(lazyResolverZodSchema, element.definition.relativePath),
+          typeScriptLazyConverter(lazyResolverZodSchema, element.definition.relativePath),
           element.optional,
           element.nullable
         )

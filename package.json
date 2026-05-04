@@ -9,8 +9,7 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
@@ -39,7 +38,6 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@miroir-framework/jzod-ts": "0.8.0",
     "is-module": "^1.0.0",
     "tsconfig-paths": "^4.1.2",
     "tsup": "^8.4.0",
