@@ -1,4 +1,4 @@
-import { JzodElement } from "@miroir-framework/jzod-ts";
+// import { JzodElement } from "@miroir-framework/jzod-ts";
 import { ZodLazy, ZodTypeAny } from "zod";
 
 export interface ZodTextAndZodSchema {
@@ -6,7 +6,7 @@ export interface ZodTextAndZodSchema {
   contextZodText?: { [k: string]: string },
   objectShapeZodSchema?: { [k: string]: ZodTypeAny },
   objectShapeZodText?: { [k: string]: string },
-  jzodSchema?: JzodElement, 
+  jzodSchema?: any /*JzodElement */, 
   zodSchema: ZodTypeAny, 
   zodText:string,
 };
