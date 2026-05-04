@@ -1,7 +1,7 @@
 {
   "name": "@miroir-framework/jzod",
   "private": false,
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "The Json bootstrapper for Zod.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
