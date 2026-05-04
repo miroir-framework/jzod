@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "is-module": "^1.0.0",
+    "@miroir-framework/jzod-ts": "*",
     "tsconfig-paths": "^4.1.2",
     "tsup": "^8.4.0",
     "typescript": "5.8.2",
