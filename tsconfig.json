@@ -10,7 +10,8 @@
     "declarationMap": true,
     "rootDir": "./",
     "baseUrl": "./",
-    "types": [],
+    "ignoreDeprecations": "6.0",
+    "types": ["node"],
   },
   "exclude": [
     "./node_modules/**",

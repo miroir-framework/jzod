@@ -8,5 +8,5 @@ export default defineConfig({
   ],
   "dts": true,
   clean: true,
-  external: ['typescript', 'fs', 'source-map-support'],
+  external: ['source-map-support'],
 });
