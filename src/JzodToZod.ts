@@ -666,7 +666,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
         ...plainObjectAttributeSchemas,
       };
       const partialSubObjectZodSchema = optionalNullablePartialZodSchema(
-        element.nonStrict ? z.object(extendedObjectShapeZodSchema) : z.object(extendedObjectShapeZodSchema).strict(),
+        element.nonStrict ? z.object(extendedObjectShapeZodSchema).passthrough() : z.object(extendedObjectShapeZodSchema).strict(),
         undefined, // optional has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
         undefined, // nullable has to be dealt with at upper level, as effective returned schema can be a union, in case carryOn schema is given
         element.partial
