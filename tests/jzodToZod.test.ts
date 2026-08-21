@@ -1572,6 +1572,7 @@ describe(
         testZodToJzodConversion("test7", { type: "undefined" }, "z.undefined()");
         testZodToJzodConversion("test8", { type: "unknown" }, "z.unknown()");
         testZodToJzodConversion("test9", { type: "never" }, "z.never()");
+        testZodToJzodConversion("test10", { type: "null" }, "z.null()");
         testZodToJzodConversion("test11", { type: "literal", definition: "test" }, 'z.literal("test")');
         testZodToJzodConversion("test12", { type: "array", definition: { type: "any" } }, "z.array(z.any())");
         testZodToJzodConversion("test13", { type: "array", definition: { type: "number" } }, "z.array(z.number())");
@@ -1855,6 +1856,16 @@ describe('schemaReference partial (#23)', () => {
     };
     const referenceZodSchema = z.string();
     return compareZodSchemas('test23-eager-non-object-partial', referenceZodSchema, testJzodSchema);
+  });
+});
+
+describe('null base type (#25)', () => {
+  it('jzodToZod converts type null to z.null()', () => {
+    return compareZodSchemas('test25-null-type', z.null(), { type: 'null' });
+  });
+
+  it('zodToJzod maps z.null() to type null', () => {
+    expect(zodToJzod(z.null(), 'testNull')).toEqual({ type: 'null' });
   });
 });
 

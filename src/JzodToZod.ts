@@ -383,7 +383,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
     case "boolean":
     // case "date":
     case "never":
-    // case "null":
+    case "null":
     // case "number":
     // case "string":
     case "undefined":
