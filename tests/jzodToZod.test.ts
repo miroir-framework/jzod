@@ -1806,4 +1806,56 @@ describe('extend partial (#24)', () => {
   });
 });
 
+describe('schemaReference partial (#23)', () => {
+  const objectContext = {
+    o: {
+      type: 'object' as const,
+      definition: {
+        a: { type: 'string' as const },
+        b: { type: 'number' as const },
+      },
+    },
+  };
+
+  it('lazy reference to object: partial makes root keys optional', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'schemaReference',
+      context: objectContext,
+      definition: { partial: true, relativePath: 'o' },
+    };
+    const referenceZodSchema = z.lazy(() => z.object({ a: z.string(), b: z.number() }).strict().partial());
+    return compareZodSchemas('test23-lazy-object-partial', referenceZodSchema, testJzodSchema);
+  });
+
+  it('eager reference to object: partial makes root keys optional', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'schemaReference',
+      context: objectContext,
+      definition: { partial: true, relativePath: 'o', eager: true },
+    };
+    const referenceZodSchema = z.object({ a: z.string(), b: z.number() }).strict().partial();
+    return compareZodSchemas('test23-eager-object-partial', referenceZodSchema, testJzodSchema);
+  });
+
+  it('lazy reference to non-object: partial is ignored', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'schemaReference',
+      context: { s: { type: 'string' as const } },
+      definition: { partial: true, relativePath: 's' },
+    };
+    const referenceZodSchema = z.lazy(() => z.string());
+    return compareZodSchemas('test23-lazy-non-object-partial', referenceZodSchema, testJzodSchema);
+  });
+
+  it('eager reference to non-object: partial is ignored', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'schemaReference',
+      context: { s: { type: 'string' as const } },
+      definition: { partial: true, relativePath: 's', eager: true },
+    };
+    const referenceZodSchema = z.string();
+    return compareZodSchemas('test23-eager-non-object-partial', referenceZodSchema, testJzodSchema);
+  });
+});
+
 

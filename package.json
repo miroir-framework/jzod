@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "cross-env NODE_ENV=test vitest run --poolOptions.threads.singleThread --passWithNoTests -t"
+    "test": "cross-env NODE_ENV=test vitest run --poolOptions.threads.singleThread --passWithNoTests"
   },
   "keywords": [
     "jzod",
@@ -40,6 +40,7 @@
   "devDependencies": {
     "@miroir-framework/jzod-ts": "0.8.3",
     "@types/node": "^25.6.0",
+    "cross-env": "^10.1.0",
     "is-module": "^1.0.0",
     "tsconfig-paths": "^4.1.2",
     "tsup": "^8.4.0",

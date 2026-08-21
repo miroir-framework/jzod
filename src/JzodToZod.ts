@@ -100,13 +100,24 @@ export function getContextZodSchemas(set: ZodTextAndZodSchemaRecord) {
 }
 
 // ######################################################################################################
+function isZodObject(zodElement: ZodTypeAny): zodElement is AnyZodObject {
+  return zodElement instanceof z.ZodObject || (zodElement as AnyZodObject)?._def?.typeName === "ZodObject";
+}
+
+function applyPartialIfZodObject(zodElement: ZodTypeAny, partial?: boolean): ZodTypeAny {
+  if (!partial) {
+    return zodElement;
+  }
+  return isZodObject(zodElement) ? zodElement.partial() : zodElement;
+}
+
 function optionalNullablePartialZodSchema(
   zodElement: ZodTypeAny,
   optional?: boolean,
   nullable?: boolean,
   partial?: boolean
 ): ZodTypeAny {
-  const partialElement: ZodTypeAny = partial ? (zodElement as any as AnyZodObject).partial() : zodElement; // will fail if element is not ZodObject
+  const partialElement: ZodTypeAny = applyPartialIfZodObject(zodElement, partial);
   const optionalElement: ZodTypeAny = optional ? partialElement.optional() : partialElement;
   const nullableElement: ZodTypeAny = nullable ? optionalElement.nullable() : optionalElement;
   return nullableElement;
@@ -131,6 +142,14 @@ function extendEntryHasPartial(element: JzodElement): boolean {
     return !!element.definition?.partial;
   }
   return false;
+}
+
+function referencePartialAppliesToObject(element: JzodReference): boolean {
+  if (!element.definition.partial || !element.definition.relativePath) {
+    return false;
+  }
+  const contextTarget = element.context?.[element.definition.relativePath];
+  return contextTarget?.type === "object";
 }
 
 function partialAwareExtendShape(
@@ -255,9 +274,7 @@ function getLazyResolverZodSchema(
               ).zodSchema
             : lazyReferences[element.definition.relativePath].zodSchema
           : absoluteRef;
-        const relativeRefPartial = element.definition.partial
-          ? (relativeRef as any as AnyZodObject).partial()
-          : relativeRef; // will fail if relativeRef is not a ZodObject
+        const relativeRefPartial = applyPartialIfZodObject(relativeRef, element.definition.partial);
         return relativeRefPartial;
       } else {
         if (element.definition.relativePath) {
@@ -269,10 +286,7 @@ function getLazyResolverZodSchema(
             contextSubObjectSchemaAndDescriptionRecord,
             getSchemaEagerReferences
           ).zodSchema;
-          const relativeRefPartial = element.definition.partial
-            ? (relativeRef as any as AnyZodObject).partial()
-            : relativeRef; // will fail if relativeRef is not a ZodObject
-          return relativeRefPartial;
+          return applyPartialIfZodObject(relativeRef, element.definition.partial);
         } else {
           throw new Error(
             "when converting Jzod to Zod, could not find lazy reference " +
@@ -618,7 +632,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
             options
           )
         : carryOn;
-
+      
       const objectDefinitionWithTag =
       (element as any).tag &&
         ((element as any).tag as any).schema &&
@@ -1048,11 +1062,17 @@ function resolveJzodReferenceSchema(
     // );
     objectShapeZodSchema = eagerReference.objectShapeZodSchema;
     objectShapeZodText = eagerReference.objectShapeZodText;
-    referenceResolvedSchema = eagerReference?.zodSchema ?? z.any();
+    referenceResolvedSchema = optionalNullablePartialZodSchema(
+      eagerReference?.zodSchema ?? z.any(),
+      element.optional,
+      element.nullable,
+      referencePartialAppliesToObject(element) ? true : undefined
+    );
     referenceResolvedZodText = optionalNullablePartialZodDescription(
       `${eagerReference?.zodText}`,
       element.optional,
-      element.nullable
+      element.nullable,
+      referencePartialAppliesToObject(element) ? true : undefined
     );
   } else {
     /**
@@ -1079,7 +1099,9 @@ function resolveJzodReferenceSchema(
         )
       : optionalNullablePartialZodSchema(lazyResolverZodSchema, element.optional, element.nullable);
     referenceResolvedZodText = optionalNullablePartialZodDescription(
-      `z.lazy(() =>${element.definition.relativePath})`,
+      referencePartialAppliesToObject(element)
+        ? `z.lazy(() => ${element.definition.relativePath}.partial())`
+        : `z.lazy(() =>${element.definition.relativePath})`,
       element.optional,
       element.nullable
     );
