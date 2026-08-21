@@ -1859,6 +1859,87 @@ describe('schemaReference partial (#23)', () => {
   });
 });
 
+describe('typeScriptLazyConverter partial flag', () => {
+  const objectContext = {
+    o: {
+      type: 'object' as const,
+      definition: {
+        a: { type: 'string' as const },
+        b: { type: 'number' as const },
+      },
+    },
+  };
+
+  it('passes partial=true for lazy schemaReference to an object target', () => {
+    const calls: Array<{ relativePath?: string; partial?: boolean }> = [];
+    const markerSchema = z.string();
+    const result = jzodToZodTextAndZodSchema(
+      {
+        type: 'schemaReference',
+        context: objectContext,
+        definition: { partial: true, relativePath: 'o' },
+      },
+      () => ({}),
+      () => ({}),
+      {
+        typeScriptLazyConverter: (_schema, relativePath, partial) => {
+          calls.push({ relativePath, partial });
+          return markerSchema;
+        },
+      },
+    );
+    expect(calls).toEqual([{ relativePath: 'o', partial: true }]);
+    expect(result.zodText).toBe('z.lazy(() => o.partial())');
+    expect(result.zodSchema).toBe(markerSchema);
+  });
+
+  it('passes partial=undefined for lazy schemaReference without partial', () => {
+    const calls: Array<{ relativePath?: string; partial?: boolean }> = [];
+    const markerSchema = z.number();
+    const result = jzodToZodTextAndZodSchema(
+      {
+        type: 'schemaReference',
+        context: objectContext,
+        definition: { relativePath: 'o' },
+      },
+      () => ({}),
+      () => ({}),
+      {
+        typeScriptLazyConverter: (_schema, relativePath, partial) => {
+          calls.push({ relativePath, partial });
+          return markerSchema;
+        },
+      },
+    );
+    expect(calls).toEqual([{ relativePath: 'o', partial: undefined }]);
+    expect(result.zodText).toBe('z.lazy(() =>o)');
+    expect(result.zodSchema).toBe(markerSchema);
+  });
+
+  it('passes partial=undefined when partial is set but target is not an object', () => {
+    const calls: Array<{ relativePath?: string; partial?: boolean }> = [];
+    const markerSchema = z.boolean();
+    const result = jzodToZodTextAndZodSchema(
+      {
+        type: 'schemaReference',
+        context: { s: { type: 'string' as const } },
+        definition: { partial: true, relativePath: 's' },
+      },
+      () => ({}),
+      () => ({}),
+      {
+        typeScriptLazyConverter: (_schema, relativePath, partial) => {
+          calls.push({ relativePath, partial });
+          return markerSchema;
+        },
+      },
+    );
+    expect(calls).toEqual([{ relativePath: 's', partial: undefined }]);
+    expect(result.zodText).toBe('z.lazy(() =>s)');
+    expect(result.zodSchema).toBe(markerSchema);
+  });
+});
+
 describe('null base type (#25)', () => {
   it('jzodToZod converts type null to z.null()', () => {
     return compareZodSchemas('test25-null-type', z.null(), { type: 'null' });

@@ -6,6 +6,21 @@ Changelog for [`@miroir-framework/jzod`](https://www.npmjs.com/package/@miroir-f
 
 ---
 
+## 0.8.5
+
+**Status:** in development (`package.json` version `0.8.5`; not yet on npm)
+
+### Features
+
+- **`partial` TS type generation for lazy `schemaReference`** ([#26](https://github.com/miroir-framework/jzod/issues/26)) — follow-up to [#23](https://github.com/miroir-framework/jzod/issues/23) (Zod validation only). Extends `TypeScriptLazyConverter` with an optional `partial` flag; when `definition.partial` applies to an object target, jzod passes it through and `@miroir-framework/jzod-ts` emits `Partial<T>` for the main type alias instead of a bare context reference.
+
+### Tests
+
+- jzod: `typeScriptLazyConverter partial flag` in `jzodToZod.test.ts`.
+- jzod-ts: `partial-ts.test.ts` (host partial, extend partial, eager/lazy schemaReference partial).
+
+---
+
 ## 0.8.4
 
 **Published:** 2026-08-21 ([npm](https://www.npmjs.com/package/@miroir-framework/jzod/v/0.8.4) · [GitHub release](https://github.com/miroir-framework/jzod/releases/tag/0.8.4) · [tag `0.8.4`](https://github.com/miroir-framework/jzod/releases/tag/0.8.4))

@@ -23,6 +23,12 @@ import {
 import { ZodTextAndZodSchema, ZodTextAndZodSchemaRecord } from "./JzodInterface.js";
 import { zodToZodText } from "./ZodToZodText.js";
 
+export type TypeScriptLazyConverter = (
+  schema: ZodTypeAny,
+  relativePath: string | undefined,
+  partial?: boolean,
+) => ZodTypeAny;
+
 // ##############################################################################################################
 export interface JzodElementToTsTypeMessageType {
   key: string;
@@ -239,7 +245,7 @@ function getLazyResolverZodSchema(
   contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord,
   getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
   getLazyReferences: () => ZodTextAndZodSchemaRecord = () => ({}),
-  typeScriptLazyConverter: ((schema: ZodTypeAny, relativePath: string | undefined) => ZodTypeAny) | undefined = undefined,
+  typeScriptLazyConverter: TypeScriptLazyConverter | undefined = undefined,
 ): ZodLazy<any> {
   return z.lazy(() => {
     // console.log("getLazyResolverZodSchema resolving relativePath", element.definition.relativePath, !!typeScriptLazyReferenceConverter);
@@ -1011,7 +1017,7 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
 
 // ##############################################################################################################
 export type jzodToZodConversionOptions = {
-    typeScriptLazyConverter?: (schema: ZodTypeAny, relativePath: string | undefined) => ZodTypeAny,
+    typeScriptLazyConverter?: TypeScriptLazyConverter,
     datesAsString?: boolean,
 };
 
@@ -1036,7 +1042,7 @@ function resolveJzodReferenceSchema(
   contextSubObjectSchemaAndDescriptionRecord: ZodTextAndZodSchemaRecord,
   getSchemaEagerReferences: () => ZodTextAndZodSchemaRecord,
   getLazyReferences: () => ZodTextAndZodSchemaRecord,
-  typeScriptLazyConverter: ((schema: ZodTypeAny, relativePath: string | undefined) => ZodTypeAny) | undefined = undefined,
+  typeScriptLazyConverter: TypeScriptLazyConverter | undefined = undefined,
   carryOnZodSchemaAndDescription: ZodTextAndZodSchema | undefined
 ): ZodTextAndZodSchema {
   let eagerReference: ZodTextAndZodSchema | undefined;
@@ -1093,7 +1099,11 @@ function resolveJzodReferenceSchema(
     eagerReference = undefined;
     referenceResolvedSchema = typeScriptLazyConverter
       ? optionalNullablePartialZodSchema(
-          typeScriptLazyConverter(lazyResolverZodSchema, element.definition.relativePath),
+          typeScriptLazyConverter(
+            lazyResolverZodSchema,
+            element.definition.relativePath,
+            referencePartialAppliesToObject(element) ? true : undefined,
+          ),
           element.optional,
           element.nullable
         )
