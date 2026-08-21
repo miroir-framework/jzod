@@ -1743,3 +1743,67 @@ describe(
 
 
 
+describe('extend partial (#24)', () => {
+  it('partial on extend entry: inherited keys optional, host definition keys required', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'object',
+      extend: {
+        type: 'object',
+        partial: true,
+        definition: { a: { type: 'string' } },
+      },
+      definition: { b: { type: 'number' } },
+    };
+    const referenceZodSchema = z.object({ a: z.string().optional(), b: z.number() }).strict();
+    return compareZodSchemas('test24-partial-extend', referenceZodSchema, testJzodSchema);
+  });
+
+  it('host partial: all root keys optional including host definition', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'object',
+      partial: true,
+      extend: {
+        type: 'object',
+        partial: true,
+        definition: { a: { type: 'string' } },
+      },
+      definition: { b: { type: 'number' } },
+    };
+    const referenceZodSchema = z
+      .object({ a: z.string().optional(), b: z.number() })
+      .strict()
+      .partial();
+    return compareZodSchemas('test24-host-partial', referenceZodSchema, testJzodSchema);
+  });
+
+  it('extend array: partial applies per entry before shape merge', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'object',
+      extend: [
+        { type: 'object', partial: true, definition: { a: { type: 'string' } } },
+        { type: 'object', definition: { c: { type: 'boolean' } } },
+      ],
+      definition: { b: { type: 'number' } },
+    };
+    const referenceZodSchema = z
+      .object({ c: z.boolean(), a: z.string().optional(), b: z.number() })
+      .strict();
+    return compareZodSchemas('test24-extend-array', referenceZodSchema, testJzodSchema);
+  });
+
+  it('host definition wins on name clash over partial extend', () => {
+    const testJzodSchema: JzodElement = {
+      type: 'object',
+      extend: {
+        type: 'object',
+        partial: true,
+        definition: { a: { type: 'string' } },
+      },
+      definition: { a: { type: 'number' } },
+    };
+    const referenceZodSchema = z.object({ a: z.number() }).strict();
+    return compareZodSchemas('test24-clash-host-wins', referenceZodSchema, testJzodSchema);
+  });
+});
+
+

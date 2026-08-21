@@ -123,6 +123,44 @@ function optionalNullablePartialZodDescription(
   return nullableElement;
 }
 
+function extendEntryHasPartial(element: JzodElement): boolean {
+  if (element.type === "object") {
+    return !!element.partial;
+  }
+  if (element.type === "schemaReference") {
+    return !!element.definition?.partial;
+  }
+  return false;
+}
+
+function partialAwareExtendShape(
+  shape: { [k: string]: ZodTypeAny } | undefined,
+  partial: boolean
+): { [k: string]: ZodTypeAny } {
+  if (!shape) {
+    return {};
+  }
+  if (!partial) {
+    return shape;
+  }
+  return Object.fromEntries(Object.entries(shape).map(([key, schema]) => [key, schema.optional()]));
+}
+
+function partialAwareExtendShapeText(
+  shape: { [k: string]: string } | undefined,
+  partial: boolean
+): { [k: string]: string } {
+  if (!shape) {
+    return {};
+  }
+  if (!partial) {
+    return shape;
+  }
+  return Object.fromEntries(
+    Object.entries(shape).map(([key, text]) => [key, text.endsWith(".optional()") ? text : `${text}.optional()`])
+  );
+}
+
 // ################################################################################################
 function resolveEagerReference(
   eagerReference: string | undefined,
@@ -552,29 +590,25 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
       break;
     }
     case "object": {
-      const extendsSubObjects: ZodTextAndZodSchema[] | undefined = !element?.extend
+      const extendElements: JzodElement[] | undefined = !element?.extend
         ? undefined
         : !Array.isArray(element.extend)
-        ? [
-            jzodWithCarryOnToZodTextAndZodSchema(
-              element.extend,
-              undefined,
-              getSchemaEagerReferences,
-              getLazyReferences,
-              options
-            ),
-          ]
+        ? [element.extend]
         : element.extend.length > 0
-        ? (element.extend as JzodElement[]).map((e) =>
-            jzodWithCarryOnToZodTextAndZodSchema(
-              e,
-              undefined,
-              getSchemaEagerReferences,
-              getLazyReferences,
-              options
-            )
-          )
+        ? (element.extend as JzodElement[])
         : undefined;
+      const extendPairs: [JzodElement, ZodTextAndZodSchema][] | undefined = extendElements?.map(
+        (extendElement) => [
+          extendElement,
+          jzodWithCarryOnToZodTextAndZodSchema(
+            extendElement,
+            undefined,
+            getSchemaEagerReferences,
+            getLazyReferences,
+            options
+          ),
+        ]
+      );
       const carryOnZodSchemaAndDescription = (element as any).carryOn
         ? jzodWithCarryOnToZodTextAndZodSchema(
           (element as any).carryOn,
@@ -652,15 +686,15 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
 
       // resolving "extend" clause
       const extendedShapeZodSchema: { [k: string]: ZodTypeAny } =
-        extendsSubObjects && extendsSubObjects?.length > 0
-          ? extendsSubObjects.reduceRight(
-              (acc: { [k: string]: ZodTypeAny }, curr: ZodTextAndZodSchema) => ({
+        extendPairs && extendPairs.length > 0
+          ? extendPairs.reduceRight(
+              (acc: { [k: string]: ZodTypeAny }, [extendElement, converted]) => ({
                 ...acc,
-                ...curr.objectShapeZodSchema,
+                ...partialAwareExtendShape(converted.objectShapeZodSchema, extendEntryHasPartial(extendElement)),
               }),
               {} as { [k: string]: ZodTypeAny }
             )
-          : plainObjectAttributeSchemas;
+          : {};
       const extendedObjectShapeZodSchema = {
         ...extendedShapeZodSchema,
         ...plainObjectAttributeSchemas,
@@ -674,13 +708,15 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
 
       // squashing "extend" clause
       const extendedObjectShapeZodText = {
-        ...extendsSubObjects?.reduceRight(
-          (acc: { [k: string]: string }, curr: ZodTextAndZodSchema) => ({
-            ...acc,
-            ...curr.objectShapeZodText,
-          }),
-          {} as { [k: string]: string }
-        ),
+        ...(extendPairs && extendPairs.length > 0
+          ? extendPairs.reduceRight(
+              (acc: { [k: string]: string }, [extendElement, converted]) => ({
+                ...acc,
+                ...partialAwareExtendShapeText(converted.objectShapeZodText, extendEntryHasPartial(extendElement)),
+              }),
+              {} as { [k: string]: string }
+            )
+          : {}),
         ...plainObjectAttributeZodText,
       };
 
