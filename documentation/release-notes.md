@@ -6,14 +6,26 @@ Changelog for [`@miroir-framework/jzod`](https://www.npmjs.com/package/@miroir-f
 
 ---
 
-## Unreleased — 0.8.4
+## 0.8.4
 
-**Status:** in development (`package.json` version `0.8.4`; not yet on npm)
+**Published:** 2026-08-21 ([npm](https://www.npmjs.com/package/@miroir-framework/jzod/v/0.8.4) · [GitHub release](https://github.com/miroir-framework/jzod/releases/tag/0.8.4) · [tag `0.8.4`](https://github.com/miroir-framework/jzod/releases/tag/0.8.4))
 
-### Changes
+### Features
 
-- **Non-strict objects → `passthrough()`** — `nonStrict` Jzod objects now produce Zod schemas using `.passthrough()` instead of stripping unknown keys silently.
+- **`partial` on `extend` entries** ([#24](https://github.com/miroir-framework/jzod/issues/24)) — aligns with Zod `.partial().extend()`; extend keys marked `partial: true` become optional in the merged object shape.
+- **`partial` on `schemaReference`** ([#23](https://github.com/miroir-framework/jzod/issues/23)) — when the referenced definition is an object, applies `.partial()` (ignored for non-object targets).
+- **Non-strict objects → `passthrough()`** — `nonStrict` Jzod objects now produce Zod schemas using `.passthrough()` instead of silently stripping unknown keys.
+
+### Bug fixes
+
+- **Restore `null` base type** ([#25](https://github.com/miroir-framework/jzod/issues/25)) — `{ type: "null" }` maps to `z.null()` again (regression from 0.8.2).
+
+### Other
+
 - License file corrections.
+- Added `documentation/` folder with welcome page and release notes.
+
+[Full changelog 0.8.3…0.8.4](https://github.com/miroir-framework/jzod/compare/0.8.3...0.8.4)
 
 ---
 
