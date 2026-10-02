@@ -1685,7 +1685,7 @@ describe(
         testZodToJzodConversion("test28",{ type: "map", definition: [ { type: "string" }, { type: "number" }]}, "z.map(z.string(),z.number())");
         testZodToJzodConversion("test29",{ type: "set", definition: { type: "string" }}, "z.set(z.string())");
         testZodToJzodConversion("test30",{ type: "schemaReference", definition: { absolutePath: "test30" }}, "z.lazy(() =>undefined)"); // schemaReference are not really convertible back to Jzod: the inner structure is lost when converting to Zod
-        testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "string" }], returns: { type: "number" } }}, "z.function().args([\"z.string()\"]).returns(z.number())");
+        testZodToJzodConversion("test31",{ type: "function", definition: { args: [{ type: "string" }], returns: { type: "number" } }}, "z.function({ input: [z.string()], output: z.number() })");
         testZodToJzodConversion("test32",{ type: "promise", definition: { type: "string" }}, "z.promise(z.string())");
         testZodToJzodConversion(
           "test33",

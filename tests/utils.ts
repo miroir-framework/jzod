@@ -1,8 +1,5 @@
 import fs from 'fs/promises';
-import { ZodTypeAny } from "zod";
-
-
-import zodToJsonSchema from "zod-to-json-schema";
+import { ZodTypeAny, z } from "zod";
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -20,11 +17,8 @@ export async function convertZodSchemaToJsonSchemaAndWriteToFile(
   path: string | undefined,
   definitions?: { [k: string]: ZodTypeAny }
 ): Promise<string> {
-  const zodSchemaJsonSchema = zodToJsonSchema(zodSchema, {
-    // $refStrategy: "relative",
-    $refStrategy: "root",
-    definitions: definitions??{}
-  });
+  // definitions are kept in the signature for callers; zod 4 inlines or references them by itself
+  const zodSchemaJsonSchema = z.toJSONSchema(zodSchema, { unrepresentable: "any", cycles: "ref" });
   const zodSchemaJsonSchemaString = JSON.stringify(zodSchemaJsonSchema, undefined, 2);
 
   if (path) {

@@ -1,4 +1,4 @@
-import { AnyZodObject, ZodLazy, ZodTypeAny, z } from "zod";
+import { ZodLazy, ZodObject, ZodTypeAny, z } from "zod";
 // import zodToJsonSchema from "zod-to-json-schema";
 
 import {
@@ -106,8 +106,9 @@ export function getContextZodSchemas(set: ZodTextAndZodSchemaRecord) {
 }
 
 // ######################################################################################################
-function isZodObject(zodElement: ZodTypeAny): zodElement is AnyZodObject {
-  return zodElement instanceof z.ZodObject || (zodElement as AnyZodObject)?._def?.typeName === "ZodObject";
+function isZodObject(zodElement: ZodTypeAny): zodElement is ZodObject {
+  // the def check also recognizes objects built by another copy of zod
+  return zodElement instanceof z.ZodObject || (zodElement as any)?._zod?.def?.type === "object";
 }
 
 function applyPartialIfZodObject(zodElement: ZodTypeAny, partial?: boolean): ZodTypeAny {
@@ -493,17 +494,16 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
           contextZodText: undefined, // function definitions obfuscate any context defined within them
           contextZodSchema: undefined,
           jzodSchema: element,
-          zodSchema: (z.function().args as any)(...args.map((z) => z.zodSchema)) // avoid casting the parameters to z.function().args(), since this cast impacts the produced zod schema
-            .returns(returns.zodSchema),
-          zodText: `z.function().args(${JSON.stringify(args.map((z) => z.zodText))}).returns(${returns.zodText})`,
+          zodSchema: z.function({ input: args.map((a) => a.zodSchema) as any, output: returns.zodSchema }),
+          zodText: `z.function({ input: [${args.map((a) => a.zodText).join(", ")}], output: ${returns.zodText} })`,
         };
       } else {
         return {
           contextZodText: undefined, // function definitions obfuscate any context defined within them
           contextZodSchema: undefined,
           jzodSchema: element,
-          zodSchema: (z.function().args as any)(...args.map((z) => z.zodSchema)), //avoiding to type parameters to z.function().args, since this cast impacts the obtained zod schema
-          zodText: `z.function().args(${JSON.stringify(args.map((z) => z.zodText))})`,
+          zodSchema: z.function({ input: args.map((a) => a.zodSchema) as any }),
+          zodText: `z.function({ input: [${args.map((a) => a.zodText).join(", ")}] })`,
         };
       }
       break;

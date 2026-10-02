@@ -73,8 +73,8 @@ describe("zodToZodText", () => {
   });
 
   it("converts ZodFunction", () => {
-    const schema = z.function().args(z.string()).returns(z.number());
-    expect(zodToZodText(schema, identifier)).toBe("z.function().args(z.string()).returns(z.number())");
+    const schema = z.function({ input: [z.string()], output: z.number() });
+    expect(zodToZodText(schema, identifier)).toBe("z.function({ input: [z.string()], output: z.number() })");
   });
 
   it("converts ZodLazy", () => {
