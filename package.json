@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "cross-env NODE_ENV=test vitest run --poolOptions.threads.singleThread --passWithNoTests"
+    "test": "cross-env NODE_ENV=test vitest run --passWithNoTests"
   },
   "keywords": [
     "jzod",
