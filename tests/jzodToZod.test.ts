@@ -159,7 +159,7 @@ describe(
           optional: true
         };
 
-        const reference22ZodSchema:ZodTypeAny = z.string().uuid().optional();
+        const reference22ZodSchema:ZodTypeAny = z.guid().optional();
 
         compareZodSchemas("test22", reference22ZodSchema, test22JzodSchema);
 
@@ -170,9 +170,18 @@ describe(
           validations: [ { type: "uuid" } ]
         };
 
-        const reference22bZodSchema:ZodTypeAny = z.string().uuid().optional();
+        const reference22bZodSchema:ZodTypeAny = z.string().guid().optional();
 
         compareZodSchemas("test22b", reference22bZodSchema, test22bJzodSchema);
+
+        // uuids keep jzod 0.8's check: any 8-4-4-4-12 hex string, RFC version bits or not
+        for (const uuidJzodSchema of [test22JzodSchema, test22bJzodSchema]) {
+          const uuidZodSchema = jzodToZodTextAndZodSchema(uuidJzodSchema).zodSchema;
+          expect(uuidZodSchema.safeParse("00000000-0000-0000-0000-000000000001").success).toBe(true);
+          expect(uuidZodSchema.safeParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee").success).toBe(true);
+          expect(uuidZodSchema.safeParse("6fa31d02-3d5a-4f59-a3d1-2f8b1d4c9e10").success).toBe(true);
+          expect(uuidZodSchema.safeParse("not-a-uuid").success).toBe(false);
+        }
 
         // ########################################################################################
         const test23JzodSchema:any = {
