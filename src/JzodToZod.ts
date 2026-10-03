@@ -363,7 +363,8 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
       const zodPreSchema = castElement.coerce ? (z.coerce as any)[currentType]() : (z as any)[currentType]();
       const zodPreSchema2: ZodTypeAny = Array.isArray(castElement.validations)
         ? (castElement.validations as any).reduce(
-            (acc: any, curr: any) => (acc as any)[curr.type](curr.parameter) as ZodTypeAny,
+            // a "uuid" validation keeps jzod 0.8's loose 8-4-4-4-12 check: zod 4's .uuid() also checks RFC version bits
+            (acc: any, curr: any) => (acc as any)[curr.type === "uuid" ? "guid" : curr.type](curr.parameter) as ZodTypeAny,
             zodPreSchema
           )
         : zodPreSchema;
@@ -410,12 +411,12 @@ export function jzodWithCarryOnToZodTextAndZodSchema(
       break;
     }
     case "uuid": {
-      // const castElement = element as (JzodAttributeDateWithValidations | JzodAttributeNumberWithValidations | JzodAttributeStringWithValidations );
-      const zodPreSchema: ZodTypeAny = z.string().uuid();
+      // z.guid() is zod 3's .uuid() check (8-4-4-4-12 hex); zod 4's .uuid() also requires RFC 9562 version bits
+      const zodPreSchema: ZodTypeAny = z.guid();
       const zodPre2Schema = element.optional ? zodPreSchema.optional() : zodPreSchema;
       const zodSchema = element.nullable ? zodPre2Schema.nullable() : zodPre2Schema;
       const zodText: string =
-        "z.string().uuid()" + (element.optional ? `.optional()` : ``) + (element.nullable ? `.nullable()` : ``);
+        "z.guid()" + (element.optional ? `.optional()` : ``) + (element.nullable ? `.nullable()` : ``);
       return {
         contextZodText: undefined,
         contextZodSchema: undefined,
